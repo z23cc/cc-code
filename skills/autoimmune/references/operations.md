@@ -56,23 +56,23 @@ printf 'timestamp\titeration\tmode\tarea\ttask_id\tdescription\tstatus\tfiles_ch
 - [ ] Add docstrings to exported functions
 ```
 
-### Option 2: .tasks/ (structured, with taskctl)
+### Option 2: .tasks/ (structured, with cc-flow)
 
 ```bash
-TASKCTL="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/taskctl.py"
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
 # Mode D auto-generates an epic:
-$TASKCTL epic create --title "Autoimmune scan 2026-03-21"
+$CCFLOW epic create --title "Autoimmune scan 2026-03-21"
 
 # With tasks from scan results:
-$TASKCTL task create --epic epic-N-autoimmune-scan --title "[P1] Fix bandit HIGH: hardcoded secret in config.py:42"
-$TASKCTL task create --epic epic-N-autoimmune-scan --title "[P2] Fix mypy: missing return type on process_order"
-$TASKCTL task create --epic epic-N-autoimmune-scan --title "[P3] Fix ruff F401: unused import os in utils.py"
+$CCFLOW task create --epic epic-N-autoimmune-scan --title "[P1] Fix bandit HIGH: hardcoded secret in config.py:42"
+$CCFLOW task create --epic epic-N-autoimmune-scan --title "[P2] Fix mypy: missing return type on process_order"
+$CCFLOW task create --epic epic-N-autoimmune-scan --title "[P3] Fix ruff F401: unused import os in utils.py"
 
 # During Mode A, the loop uses:
-$TASKCTL ready --epic epic-N-autoimmune-scan  # Find next task
-$TASKCTL start <task-id>                       # Claim it
-$TASKCTL done <task-id> --summary "..."        # Mark done after commit
+$CCFLOW ready --epic epic-N-autoimmune-scan  # Find next task
+$CCFLOW start <task-id>                       # Claim it
+$CCFLOW done <task-id> --summary "..."        # Mark done after commit
 ```
 
 Use `.tasks/` when:
@@ -100,7 +100,7 @@ Use `improvement-program.md` when:
 
 1. Check `improvement-results.tsv` for last completed iteration
 2. Check task source:
-   - `.tasks/`: `$TASKCTL progress` → see what's left
+   - `.tasks/`: `$CCFLOW progress` → see what's left
    - `improvement-program.md`: look for last `[x]`
 3. `git log --oneline -5` to see branch state
 4. Run verify command to confirm clean baseline
@@ -139,6 +139,6 @@ Use `improvement-program.md` when:
 
 ### Next Steps
 - Review: `git log --oneline <SHA>..HEAD`
-- Remaining tasks: `$TASKCTL progress` or check improvement-program.md
+- Remaining tasks: `$CCFLOW progress` or check improvement-program.md
 - Skipped areas need manual investigation
 ```

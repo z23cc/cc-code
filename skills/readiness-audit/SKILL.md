@@ -131,10 +131,10 @@ After running `/audit`, auto-fixable findings can feed directly into `/autoimmun
 # "Convert the audit findings into improvement-program.md for autoimmune"
 
 # Option 2: Generate .tasks/ entries
-TASKCTL="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/taskctl.py"
-$TASKCTL epic create --title "Audit fixes $(date +%Y-%m-%d)"
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
+$CCFLOW epic create --title "Audit fixes $(date +%Y-%m-%d)"
 # For each Pillar 1-5 finding:
-$TASKCTL task create --epic <epic-id> --title "[P1] Fix ruff: 3 unused imports"
+$CCFLOW task create --epic <epic-id> --title "[P1] Fix ruff: 3 unused imports"
 
 # Option 3: Run autoimmune scan directly
 # /autoimmune scan — does a similar scan + auto-generates the task list

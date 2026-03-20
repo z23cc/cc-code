@@ -80,12 +80,12 @@ Assemble findings into `improvement-program.md` by priority:
 - **P3**: Lint errors (ruff violations)
 - **P4**: Quality (dead code, complexity, missing type hints)
 
-If `.tasks/` exists, optionally create an epic + tasks via taskctl instead:
+If `.tasks/` exists, optionally create an epic + tasks via cc-flow instead:
 ```bash
-TASKCTL="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/taskctl.py"
-$TASKCTL epic create --title "Autoimmune scan $(date +%Y-%m-%d)"
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
+$CCFLOW epic create --title "Autoimmune scan $(date +%Y-%m-%d)"
 # For each finding:
-$TASKCTL task create --epic <epic-id> --title "Fix: <description>"
+$CCFLOW task create --epic <epic-id> --title "Fix: <description>"
 ```
 
 Then proceed to **Mode A**.
@@ -98,7 +98,7 @@ Create branch `auto/improve-YYYYMMDD-HHMM`, then iterate:
 
 ### A1: SELECT
 1. Re-read task source every iteration (never cache):
-   - If `.tasks/` has an active autoimmune epic → use `$TASKCTL ready`
+   - If `.tasks/` has an active autoimmune epic → use `$CCFLOW ready`
    - Else → read `improvement-program.md`, pick first unchecked `- [ ]`
 2. Skip items in `skipped_areas`
 3. If user specified focus topic → only pick from matching section
@@ -129,7 +129,7 @@ Run the project's verification command:
 1. `git add <specific files>` (NEVER `git add -A`)
 2. `git commit`: `"improve(<area>): <description>"`
 3. Mark task done:
-   - `.tasks/`: `$TASKCTL done <task-id> --summary "..."`
+   - `.tasks/`: `$CCFLOW done <task-id> --summary "..."`
    - `improvement-program.md`: mark `[x]`
 4. Append KEPT to `improvement-results.tsv`
 5. Reset `consecutive_fail[area] = 0`

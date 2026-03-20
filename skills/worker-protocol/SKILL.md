@@ -129,23 +129,23 @@ This is useful when autoimmune tasks are complex enough to benefit from isolated
 ## Integration with Task Tracking
 
 ```bash
-TASKCTL="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/taskctl.py"
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
 # Before dispatching worker:
-TASK_ID=$($TASKCTL ready --epic epic-1 | python3 -c "import sys,json; r=json.load(sys.stdin)['ready']; print(r[0]['id'] if r else '')")
-$TASKCTL start $TASK_ID
+TASK_ID=$($CCFLOW ready --epic epic-1 | python3 -c "import sys,json; r=json.load(sys.stdin)['ready']; print(r[0]['id'] if r else '')")
+$CCFLOW start $TASK_ID
 
 # Worker receives task spec:
-$TASKCTL show $TASK_ID  # Read spec for worker prompt
+$CCFLOW show $TASK_ID  # Read spec for worker prompt
 
 # After worker completes:
-$TASKCTL done $TASK_ID --summary "Implemented X"
+$CCFLOW done $TASK_ID --summary "Implemented X"
 ```
 
 ## Related Skills
 
 - **plan** — the plan that workers execute
-- **task-tracking** — workers consume tasks from .tasks/ via taskctl
+- **task-tracking** — workers consume tasks from .tasks/ via cc-flow
 - **parallel-agents** — parallel worker dispatch patterns
 - **autoimmune** — similar loop but for improvement tasks, not plan execution
 - **code-review-loop** — review each worker's output with verdict gates

@@ -1,25 +1,25 @@
 #!/usr/bin/env python3
-"""taskctl — lightweight file-based task manager for cc-code plugin.
+"""cc-flow — lightweight file-based task manager for cc-code plugin.
 
 Usage:
-    taskctl init
-    taskctl epic create --title "Epic title"
-    taskctl epic close <epic-id>
-    taskctl task create --epic <epic-id> --title "Task title" [--deps id1,id2]
-    taskctl task reset <task-id>
-    taskctl dep add <task-id> <dep-id>
-    taskctl list
-    taskctl epics
-    taskctl tasks [--epic <epic-id>] [--status todo|in_progress|done|blocked]
-    taskctl show <id>
-    taskctl ready [--epic <epic-id>]
-    taskctl next [--epic <epic-id>]
-    taskctl start <task-id>
-    taskctl done <task-id> [--summary "What was done"]
-    taskctl block <task-id> --reason "Why blocked"
-    taskctl progress [--epic <epic-id>]
-    taskctl status
-    taskctl validate
+    cc-flow init
+    cc-flow epic create --title "Epic title"
+    cc-flow epic close <epic-id>
+    cc-flow task create --epic <epic-id> --title "Task title" [--deps id1,id2]
+    cc-flow task reset <task-id>
+    cc-flow dep add <task-id> <dep-id>
+    cc-flow list
+    cc-flow epics
+    cc-flow tasks [--epic <epic-id>] [--status todo|in_progress|done|blocked]
+    cc-flow show <id>
+    cc-flow ready [--epic <epic-id>]
+    cc-flow next [--epic <epic-id>]
+    cc-flow start <task-id>
+    cc-flow done <task-id> [--summary "What was done"]
+    cc-flow block <task-id> --reason "Why blocked"
+    cc-flow progress [--epic <epic-id>]
+    cc-flow status
+    cc-flow validate
 """
 
 import argparse
@@ -146,7 +146,7 @@ def cmd_list(_args):
             print(f"  {marker.get(status, '?')} [{status:12}] {t['id']}: {t['title']}")
 
     if not epics:
-        print("No epics found. Run: taskctl init && taskctl epic create --title '...'")
+        print("No epics found. Run: cc-flow init && cc-flow epic create --title '...'")
 
 
 def cmd_epics(_args):
@@ -501,7 +501,7 @@ def cmd_dep_add(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="taskctl", description="cc-code task manager")
+    parser = argparse.ArgumentParser(prog="cc-flow", description="cc-code task manager")
     sub = parser.add_subparsers(dest="command")
 
     sub.add_parser("init")
