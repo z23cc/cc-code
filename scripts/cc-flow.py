@@ -203,7 +203,7 @@ def cmd_task_create(args):
     print(json.dumps({"success": True, "id": task_id, "epic": epic_id}))
 
 
-def cmd_list(_args):
+def cmd_list(args):
     epics = {}
     for f in sorted(EPICS_DIR.glob("*.md")):
         epic_id = f.stem
@@ -214,6 +214,10 @@ def cmd_list(_args):
         epic = t.get("epic", "")
         if epic in epics:
             epics[epic]["tasks"].append(t)
+
+    if getattr(args, "json", False):
+        print(json.dumps({"success": True, "epics": list(epics.values()), "count": len(epics)}))
+        return
 
     for epic_id, epic in epics.items():
         done = sum(1 for t in epic["tasks"] if t["status"] == "done")
@@ -902,7 +906,8 @@ def main():
     tc_create.add_argument("--title", required=True)
     tc_create.add_argument("--deps", default="")
 
-    sub.add_parser("list")
+    list_p = sub.add_parser("list")
+    list_p.add_argument("--json", action="store_true", default=False)
     sub.add_parser("epics")
 
     tasks_p = sub.add_parser("tasks")
