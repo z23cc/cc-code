@@ -60,6 +60,43 @@ This skill covers **S** (Specification) and **A** (Architecture). The plan skill
 - Follow existing patterns
 - Only include targeted improvements where they serve the current goal
 
+## Design Spec Template
+
+```markdown
+# Design: [Feature Name]
+
+## Goal
+[One sentence — what this achieves]
+
+## Acceptance Criteria
+- [ ] [Measurable criterion 1]
+- [ ] [Measurable criterion 2]
+
+## Architecture
+[Components, data flow, key interfaces]
+
+## API Contract (if applicable)
+- `POST /api/resource` → 201 (create)
+- `GET /api/resource/{id}` → 200 | 404
+
+## Data Model
+- `Resource(id, name, owner_id, created_at)`
+- Relationships: Resource → User (many-to-one)
+
+## Error Scenarios
+| Scenario | Response |
+|----------|----------|
+| Invalid input | 422 with field errors |
+| Not found | 404 |
+| Unauthorized | 401 |
+
+## Out of Scope
+- [Explicitly list what we're NOT building]
+
+## Open Questions
+- [Questions needing user input]
+```
+
 ## After the Design
 
 - Write spec to `docs/specs/YYYY-MM-DD-<topic>-design.md`

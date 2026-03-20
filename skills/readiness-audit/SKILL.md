@@ -121,8 +121,28 @@ Shall I fix the auto-fixable issues? (Pillars 1, 3, 4)
 These require your judgment — see recommendations below.
 ```
 
+## Bridge to Autoimmune
+
+After running `/audit`, auto-fixable findings can feed directly into `/autoimmune`:
+
+```bash
+# Option 1: Generate improvement-program.md from audit findings
+# After audit prints the report, ask Claude to:
+# "Convert the audit findings into improvement-program.md for autoimmune"
+
+# Option 2: Generate .tasks/ entries
+TASKCTL="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/taskctl.py"
+$TASKCTL epic create --title "Audit fixes $(date +%Y-%m-%d)"
+# For each Pillar 1-5 finding:
+$TASKCTL task create --epic <epic-id> --title "[P1] Fix ruff: 3 unused imports"
+
+# Option 3: Run autoimmune scan directly
+# /autoimmune scan — does a similar scan + auto-generates the task list
+```
+
 ## Related Skills
 
+- **autoimmune** — audit findings feed into improvement loop (Mode D does similar scan)
 - **scaffold** — generates a project that passes all 8 pillars from the start
 - **security-review** — deep dive for Pillar 7 findings
 - **deploy** — addresses Pillar 6 and 8 patterns

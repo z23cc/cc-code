@@ -4,17 +4,20 @@
 - New feature → `/brainstorm` → `/plan` → `/tdd` → `/refine` → `/commit`
 - Unfamiliar code → `/research` → then plan/fix
 - Bug/error → `/debug` → `/fix` → `/commit`
-- Code review → `/review` or `/pr-review` (auto-dispatches security-reviewer)
+- Code review → `/review` or `/pr-review`
 - Performance → `/perf`
 - Cleanup → `/simplify` → `/commit`
 - New project → `/scaffold`
-- Autonomous → `/autoimmune` (scan / code / test / full)
+- Project health → `/audit` → feeds into `/autoimmune`
 - Task management → `/tasks` (list / create / start / done / progress)
-- Project health → `/audit`
+
+**Autonomous improvement:**
+- `/autoimmune scan` — auto-detect issues, generate tasks, then fix
+- `/autoimmune` — pick from task list, implement, verify, commit/revert
+- `/autoimmune test` — auto-fix lint + type + test errors
+- `/autoimmune full` — scan → improve → fix (all three)
 
 **Gates:**
 - DO NOT implement without design approval (`/brainstorm` first)
 - DO NOT commit without verification (`/commit` runs lint+typecheck)
 - DO NOT claim success without test evidence (verification skill)
-
-**All commands:** `/brainstorm` `/research` `/plan` `/tdd` `/refine` `/debug` `/fix` `/review` `/pr-review` `/commit` `/simplify` `/scaffold` `/perf` `/autoimmune` `/audit` `/tasks`
