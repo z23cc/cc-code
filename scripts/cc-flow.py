@@ -371,30 +371,37 @@ def cmd_progress(args):
         if epic in epics:
             epics[epic].append(t)
 
+    json_output = []
     for epic_id, epic_tasks in epics.items():
         if args.epic and epic_id != args.epic:
             continue
         total = len(epic_tasks)
-        if total == 0:
-            print(f"{epic_id}: no tasks")
-            continue
         done = sum(1 for t in epic_tasks if t["status"] == "done")
         in_prog = sum(1 for t in epic_tasks if t["status"] == "in_progress")
         blocked = sum(1 for t in epic_tasks if t["status"] == "blocked")
         todo = total - done - in_prog - blocked
-        pct = int(done / total * 100)
+        pct = int(done / total * 100) if total > 0 else 0
+        entry = {"epic": epic_id, "total": total, "done": done,
+                 "in_progress": in_prog, "blocked": blocked, "todo": todo, "pct": pct}
+        json_output.append(entry)
 
-        bar_len = 20
-        filled = int(bar_len * done / total)
-        bar = "█" * filled + "░" * (bar_len - filled)
+        if not getattr(args, "json", False):
+            if total == 0:
+                print(f"{epic_id}: no tasks")
+            else:
+                bar_len = 20
+                filled = int(bar_len * done / total)
+                bar = "█" * filled + "░" * (bar_len - filled)
+                print(f"{epic_id}: {bar} {pct}% ({done}/{total})")
+                if in_prog:
+                    print(f"  ◐ {in_prog} in progress")
+                if blocked:
+                    print(f"  ✗ {blocked} blocked")
+                if todo:
+                    print(f"  ○ {todo} todo")
 
-        print(f"{epic_id}: {bar} {pct}% ({done}/{total})")
-        if in_prog:
-            print(f"  ◐ {in_prog} in progress")
-        if blocked:
-            print(f"  ✗ {blocked} blocked")
-        if todo:
-            print(f"  ○ {todo} todo")
+    if getattr(args, "json", False):
+        print(json.dumps({"success": True, "epics": json_output}))
 
 
 def cmd_status(_args):
@@ -921,6 +928,7 @@ def main():
 
     progress_p = sub.add_parser("progress")
     progress_p.add_argument("--epic", default="")
+    progress_p.add_argument("--json", action="store_true", default=False)
 
     sub.add_parser("status")
     sub.add_parser("validate")
