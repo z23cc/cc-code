@@ -8,7 +8,7 @@
   "license": "MIT",
   "homepage": "https://github.com/z23cc/cc-code",
   "repository": "https://github.com/z23cc/cc-code",
-  "keywords": ["python", "tdd", "code-review", "debugging", "planning", "git", "docker", "performance"],
+  "keywords": ["python", "tdd", "code-review", "debugging", "planning", "git", "docker", "performance", "fastapi", "celery", "clean-architecture", "autoimmune", "task-management", "prompt-engineering"],
   "agents": [
     "./agents/python-reviewer.md",
     "./agents/code-reviewer.md",
