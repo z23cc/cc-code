@@ -560,6 +560,46 @@ def cmd_task_reset(args):
     print(json.dumps({"success": True, "id": args.id, "status": "todo"}))
 
 
+def cmd_task_set_spec(args):
+    """Update task spec from file."""
+    task_id = args.id
+    spec_path = TASKS_SUBDIR / f"{task_id}.md"
+    json_path = TASKS_SUBDIR / f"{task_id}.json"
+
+    if not json_path.exists():
+        print(json.dumps({"success": False, "error": f"Task not found: {task_id}"}))
+        sys.exit(1)
+
+    src = Path(args.file)
+    if not src.exists():
+        print(json.dumps({"success": False, "error": f"File not found: {args.file}"}))
+        sys.exit(1)
+
+    spec_path.write_text(src.read_text())
+    print(json.dumps({"success": True, "id": task_id, "spec": str(spec_path)}))
+
+
+def cmd_epic_reset(args):
+    """Reset all tasks in an epic to todo."""
+    epic_id = args.id
+    tasks = all_tasks()
+    epic_tasks = [t for t in tasks.values() if t.get("epic") == epic_id]
+    if not epic_tasks:
+        print(json.dumps({"success": False, "error": f"No tasks found for: {epic_id}"}))
+        sys.exit(1)
+
+    reset_count = 0
+    for t in epic_tasks:
+        if t["status"] != "todo":
+            t["status"] = "todo"
+            for field in ("started", "completed", "summary", "blocked_reason", "blocked_at"):
+                t.pop(field, None)
+            save_task(TASKS_SUBDIR / f"{t['id']}.json", t)
+            reset_count += 1
+
+    print(json.dumps({"success": True, "epic": epic_id, "reset": reset_count}))
+
+
 def cmd_scan(args):
     """Scan codebase for issues, generate improvement epic + tasks."""
     import subprocess
@@ -926,6 +966,13 @@ def main():
     task_reset = task_sub.add_parser("reset")
     task_reset.add_argument("id")
 
+    task_set_spec = task_sub.add_parser("set-spec")
+    task_set_spec.add_argument("id")
+    task_set_spec.add_argument("--file", required=True)
+
+    epic_reset = epic_sub.add_parser("reset")
+    epic_reset.add_argument("id")
+
     args = parser.parse_args()
 
     cmds = {
@@ -957,6 +1004,8 @@ def main():
             cmd_epic_close(args)
         elif ec == "import":
             cmd_epic_import(args)
+        elif ec == "reset":
+            cmd_epic_reset(args)
         else:
             parser.print_help()
             sys.exit(1)
@@ -966,6 +1015,8 @@ def main():
             cmd_task_create(args)
         elif tc == "reset":
             cmd_task_reset(args)
+        elif tc == "set-spec":
+            cmd_task_set_spec(args)
         else:
             parser.print_help()
             sys.exit(1)
