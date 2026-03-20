@@ -99,6 +99,12 @@ pytest -k "test_user"                               # Pattern match
 | "TDD will slow me down" | TDD is faster than debugging. |
 | "Just this once" | That's rationalization. |
 
+## Related Skills
+
+- **verification** — use before claiming TDD cycle is complete
+- **python-testing** — pytest patterns, fixtures, parametrization
+- **debugging** — when tests fail unexpectedly, switch to systematic debugging
+
 ## Verification Checklist
 
 - [ ] Every new function has a test

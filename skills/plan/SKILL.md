@@ -73,6 +73,12 @@ Break large features into independently deliverable phases:
 
 Each phase should be mergeable independently.
 
+## Related Skills
+
+- **brainstorming** — use BEFORE planning to explore intent and design
+- **tdd** — every task in the plan should follow Red-Green-Refactor
+- **verification** — verify each phase before moving to the next
+
 ## Remember
 - Exact file paths always
 - Complete code in plan (not "add validation")

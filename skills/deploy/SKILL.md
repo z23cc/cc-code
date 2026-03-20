@@ -139,6 +139,12 @@ class Settings(BaseSettings):
 settings = Settings()
 ```
 
+## Related Skills
+
+- **security-review** — security checklist before deployment
+- **verification** — verify build/tests before deploying
+- **scaffold** — initial project setup with Docker and CI
+
 ## Deployment Checklist
 
 - [ ] `DEBUG=False` in production

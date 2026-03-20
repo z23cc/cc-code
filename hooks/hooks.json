@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cat ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.md 2>/dev/null || true"
+          }
+        ],
+        "description": "Inject cc-code skills overview at session start"
+      }
+    ]
+  }
+}

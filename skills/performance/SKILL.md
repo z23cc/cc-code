@@ -128,6 +128,11 @@ def benchmark(func):
     return wrapper
 ```
 
+## Related Skills
+
+- **python-patterns** — foundational patterns including concurrency
+- **deploy** — production performance considerations
+
 ## Quick Wins Checklist
 
 - [ ] Use `set` for membership tests instead of `list`

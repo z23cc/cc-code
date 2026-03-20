@@ -93,6 +93,12 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 - Proposing solutions before tracing data flow
 - "One more fix attempt" after 2+ failures
 
+## Related Skills
+
+- **verification** — verify fix with evidence before claiming success
+- **tdd** — create failing test to prove the bug, then fix
+- **python-testing** — pytest patterns for regression tests
+
 ## Quick Reference
 
 | Phase | Key Activities | Success Criteria |

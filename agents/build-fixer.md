@@ -1,6 +1,6 @@
 ---
 name: build-fixer
-description: Build and type error resolution specialist. Use when build fails, type errors occur, or tests break. Fixes with minimal diffs — no refactoring, no architecture changes.
+description: Python build, type, and test error resolution specialist. Use when Python build fails, mypy errors occur, or pytest breaks. Fixes with minimal diffs — no refactoring, no architecture changes.
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 model: sonnet
 ---
