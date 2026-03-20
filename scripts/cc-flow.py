@@ -28,8 +28,6 @@ Usage:
 
 import argparse
 import json
-import glob
-import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -755,15 +753,15 @@ def cmd_summary(_args):
         return
 
     lines = LOG_FILE.read_text().strip().split("\n")[1:]  # Skip header
-    kept = sum(1 for l in lines if "KEPT" in l)
-    discarded = sum(1 for l in lines if "DISCARDED" in l)
-    skipped = sum(1 for l in lines if "SKIPPED" in l)
+    kept = sum(1 for row in lines if "KEPT" in row)
+    discarded = sum(1 for row in lines if "DISCARDED" in row)
+    skipped = sum(1 for row in lines if "SKIPPED" in row)
     total = len(lines)
     pct = int(kept / total * 100) if total > 0 else 0
 
-    print(f"## Autoimmune Summary")
-    print(f"| Metric | Value |")
-    print(f"|--------|-------|")
+    print("## Autoimmune Summary")
+    print("| Metric | Value |")
+    print("|--------|-------|")
     print(f"| Iterations | {total} |")
     print(f"| Kept | {kept} ({pct}%) |")
     print(f"| Discarded | {discarded} |")
@@ -845,9 +843,9 @@ def cmd_stats(_args):
     total_attempts = stats["totals"]["kept"] + stats["totals"]["discarded"]
     success_rate = int(stats["totals"]["kept"] / total_attempts * 100) if total_attempts > 0 else 0
 
-    print(f"## Productivity Stats")
-    print(f"| Metric | Value |")
-    print(f"|--------|-------|")
+    print("## Productivity Stats")
+    print("| Metric | Value |")
+    print("|--------|-------|")
     print(f"| Active epics | {len(epic_stats)} |")
     print(f"| Total tasks | {len(tasks)} |")
     print(f"| Done | {sum(e['done'] for e in epic_stats.values())} |")
