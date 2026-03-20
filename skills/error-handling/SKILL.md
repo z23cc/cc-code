@@ -177,3 +177,4 @@ async def get_user_profile(user_id: str) -> UserProfile:
 - **fastapi** — FastAPI error handlers and responses
 - **async-patterns** — async error handling, TaskGroup cancellation
 - **debugging** — when errors are unexpected, switch to systematic debugging
+- **task-queues** — Celery retry strategies and error handling

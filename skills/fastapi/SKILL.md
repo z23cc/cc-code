@@ -217,4 +217,7 @@ async def login(request: Request, data: LoginRequest):
 - **database** — SQLAlchemy async session, models, queries
 - **security-review** — auth checklist, CORS, rate limiting
 - **logging** — request/response logging middleware
+- **clean-architecture** — layer design (domain/use_cases/adapters) for FastAPI projects
+- **prompt-engineering** — integrating LLM calls into API endpoints
+- **task-queues** — Celery for background jobs behind API endpoints
 - **python-testing** — testing FastAPI with `httpx.AsyncClient`
