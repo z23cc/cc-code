@@ -1,16 +1,9 @@
 ---
 name: autoimmune
 description: >
-  Autonomous project improvement loop with 4 modes.
-  Mode A (code): pick task from improvement-program.md or .tasks/, implement, verify, commit or revert.
-  Mode B (test): run pytest/ruff/mypy, discover failures, auto-fix, re-verify.
-  Mode C (full): Mode A then Mode B.
-  Mode D (scan): auto-detect issues, generate improvement-program.md, then run Mode A.
-  Triggers: "autoimmune", "auto improve", "自动改进", "跑改进循环",
-  "autoimmune test", "test loop", "测试改进",
-  "autoimmune full", "全量改进",
-  "autoimmune scan", "auto scan", "自动扫描".
-  User may append a focus topic (e.g. "autoimmune 数据库层") to scope Mode A/D.
+  Autonomous improvement loop: scan→implement→verify→commit/revert.
+  4 modes: A(code), B(lint+type+test fix), C(full: D→A→B), D(scan: auto-detect issues).
+  TRIGGER: 'autoimmune', 'auto improve', 'auto scan', '自动改进', '自动扫描'.
 ---
 
 # Autoimmune — Autonomous Project Improvement Loop
