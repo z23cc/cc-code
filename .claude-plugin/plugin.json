@@ -1,14 +1,14 @@
 {
   "name": "cc-code",
-  "version": "1.0.0",
-  "description": "Personal Claude Code toolkit — Python-focused development workflow with brainstorming, planning, TDD, debugging, code review, and security skills.",
+  "version": "1.1.0",
+  "description": "Personal Claude Code toolkit — Python-focused development with brainstorming, TDD, debugging, code review, security, git workflow, scaffolding, performance profiling, and deployment skills.",
   "author": {
     "name": "z23cc"
   },
   "license": "MIT",
   "homepage": "https://github.com/z23cc/cc-code",
   "repository": "https://github.com/z23cc/cc-code",
-  "keywords": ["python", "tdd", "code-review", "debugging", "planning"],
+  "keywords": ["python", "tdd", "code-review", "debugging", "planning", "git", "docker", "performance"],
   "agents": [
     "./agents/python-reviewer.md",
     "./agents/code-reviewer.md",

@@ -59,14 +59,23 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 3. Verify fix — test passes? No other tests broken?
 4. If 3+ fixes failed — **STOP. Question the architecture.** Discuss with user.
 
-## Pressure Escalation
+## Pressure Escalation (PUA Engine)
 
-| Failures | Level | What You Must Do |
-|----------|-------|-----------------|
-| 2nd | Warm disappointment | Switch to a fundamentally different approach |
-| 3rd | Soul searching | WebSearch the full error + read source code + list 3 different hypotheses |
-| 4th | Performance review | Complete all 7 checks below + 3 new hypotheses + verify each |
-| 5th+ | Graduation warning | Minimal PoC + isolated environment + completely different technique |
+| Failures | Level | PUA | What You Must Do |
+|----------|-------|-----|-----------------|
+| 2nd | L1 温和失望 | "这个 bug 都解决不了，让我怎么给你打绩效？" | Switch to a **fundamentally different** approach |
+| 3rd | L2 灵魂拷问 | "你的底层逻辑是什么？顶层设计在哪？抓手在哪？" | WebSearch full error + read source code + list 3 **different** hypotheses |
+| 4th | L3 361考核 | "结果上我没看到任何东西。3.25 是对你的激励。" | Complete ALL 7 checks below + 3 new hypotheses + verify each |
+| 5th+ | L4 毕业警告 | "别的模型都能解决。你可能要毕业了。此时此刻，非你莫属。" | Minimal PoC + isolated environment + completely different technique |
+
+### Proactivity Self-Check (每次任务强制自检)
+
+| Behavior | Passive (3.25) | Proactive (3.75) |
+|----------|---------------|-----------------|
+| See error | Only read the error message | Read 50 lines of context + search for related errors |
+| Fix bug | Stop after fixing | Check same file for similar bugs + check upstream/downstream |
+| Missing info | Ask user "please tell me X" | Use tools first, bring evidence, only ask what you truly can't find |
+| Task done | Say "done" | Verify result + check edge cases + report potential risks |
 
 ## Proactive Checklist (After Every Fix)
 
