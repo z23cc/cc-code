@@ -1,35 +1,58 @@
 ---
 name: task-tracking
 description: >
-  File-based task management with epic/task lifecycle. Uses markdown files
-  in .tasks/ directory for tracking progress across sessions.
+  File-based task management with epic/task lifecycle, dependency tracking,
+  and progress visualization. Uses taskctl CLI and .tasks/ directory.
   TRIGGER: 'show tasks', 'what needs to be done', 'task status', 'create task',
-  'list epics', '任务列表', '查看进度', '创建任务'.
+  'list epics', 'next task', 'progress', '任务列表', '查看进度', '创建任务'.
 ---
 
 # Task Tracking — File-Based Project Management
 
-## Concept
+## Setup
 
-Lightweight task tracking using plain files. No external tools needed — just markdown and JSON in a `.tasks/` directory. Works across sessions, survives git operations, and is human-readable.
+taskctl is BUNDLED with cc-code. Always use:
 
-Inspired by flow-next's `.flow/` system, simplified for single-developer Python projects.
-
-## Directory Structure
-
+```bash
+TASKCTL="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/taskctl.py"
 ```
-.tasks/
-├── meta.json                    # Next epic/task IDs
-├── epics/
-│   ├── epic-1-add-auth.md       # Epic spec (requirements)
-│   └── epic-2-api-redesign.md
-├── tasks/
-│   ├── epic-1.1.json            # Task state (status, assignee)
-│   ├── epic-1.1.md              # Task spec (description, acceptance)
-│   ├── epic-1.2.json
-│   ├── epic-1.2.md
-│   └── ...
-└── completed/                   # Archive for done tasks
+
+## Quick Reference
+
+```bash
+# Initialize .tasks/ directory
+$TASKCTL init
+
+# Create epic
+$TASKCTL epic create --title "Add user authentication"
+
+# Create tasks under epic
+$TASKCTL task create --epic epic-1-add-user-auth --title "Create User model"
+$TASKCTL task create --epic epic-1-add-user-auth --title "Add login endpoint" --deps "epic-1-add-user-auth.1"
+$TASKCTL task create --epic epic-1-add-user-auth --title "Add JWT middleware" --deps "epic-1-add-user-auth.2"
+
+# View everything
+$TASKCTL list                                         # All epics + tasks
+$TASKCTL epics                                        # Epics only (JSON)
+$TASKCTL tasks --epic epic-1-add-user-auth            # Tasks for one epic
+$TASKCTL tasks --status todo                          # Filter by status
+$TASKCTL show epic-1-add-user-auth                    # Epic detail + spec
+$TASKCTL show epic-1-add-user-auth.2                  # Task detail + spec
+
+# What's ready to work on?
+$TASKCTL ready --epic epic-1-add-user-auth
+
+# Work on a task
+$TASKCTL start epic-1-add-user-auth.1
+# ... implement ...
+$TASKCTL done epic-1-add-user-auth.1 --summary "Created User model with SQLAlchemy"
+
+# Block a task
+$TASKCTL block epic-1-add-user-auth.3 --reason "Waiting for auth library decision"
+
+# Progress bar
+$TASKCTL progress
+# epic-1-add-user-auth: ██████░░░░░░░░░░░░░░ 33% (1/3)
 ```
 
 ## Task States
@@ -39,132 +62,80 @@ todo → in_progress → done
                   ↘ blocked (with reason)
 ```
 
-## Operations
+Dependencies are enforced: `$TASKCTL start` fails if dependencies aren't done. `$TASKCTL ready` only shows tasks with all deps satisfied.
 
-### Initialize
+## Directory Structure
+
+```
+.tasks/
+├── meta.json                          # Auto-increment IDs
+├── epics/
+│   └── epic-1-add-user-auth.md        # Epic spec (editable markdown)
+├── tasks/
+│   ├── epic-1-add-user-auth.1.json    # Task state (status, dates)
+│   ├── epic-1-add-user-auth.1.md      # Task spec (description, acceptance)
+│   └── ...
+└── completed/                         # Archive
+```
+
+## Workflow: Plan → Track → Execute
+
+### 1. From Plan to Tasks
+
+After creating a plan (see plan skill), convert each task to tracked items:
 
 ```bash
-mkdir -p .tasks/{epics,tasks,completed}
-echo '{"next_epic": 1}' > .tasks/meta.json
+$TASKCTL init
+$TASKCTL epic create --title "Feature name from plan"
+
+# For each task in the plan:
+$TASKCTL task create --epic epic-N-slug --title "Task from plan step 1"
+$TASKCTL task create --epic epic-N-slug --title "Task from plan step 2" --deps "epic-N-slug.1"
 ```
 
-### Create Epic
+Then edit each `.tasks/tasks/epic-N-slug.M.md` to add description and acceptance criteria from the plan.
 
-Write a spec file:
-
-```markdown
-<!-- .tasks/epics/epic-1-add-auth.md -->
-# Epic: Add Authentication
-
-## Goal
-Add JWT-based auth to the FastAPI backend.
-
-## Requirements
-- [ ] User registration with email/password
-- [ ] Login endpoint returning JWT
-- [ ] Protected route middleware
-- [ ] Token refresh mechanism
-
-## Acceptance Criteria
-- All endpoints tested with pytest
-- Security review passes (bandit clean)
-- API docs updated
-```
-
-### Create Task
-
-```json
-// .tasks/tasks/epic-1.1.json
-{
-  "id": "epic-1.1",
-  "epic": "epic-1-add-auth",
-  "title": "Create User model and registration endpoint",
-  "status": "todo",
-  "depends_on": [],
-  "created": "2026-03-21"
-}
-```
-
-```markdown
-<!-- .tasks/tasks/epic-1.1.md -->
-# Task: Create User model and registration endpoint
-
-## Description
-Create SQLAlchemy User model and POST /api/register endpoint.
-
-## Acceptance Criteria
-- [ ] User model with email, hashed_password, created_at
-- [ ] POST /api/register validates email, hashes password, returns 201
-- [ ] Duplicate email returns 409
-- [ ] Unit tests for model and endpoint
-```
-
-### Update Task Status
+### 2. Execute with Worker Protocol
 
 ```bash
-# Start working (update JSON)
-python3 -c "
-import json; f='.tasks/tasks/epic-1.1.json'
-d=json.load(open(f)); d['status']='in_progress'; d['started']='2026-03-21'
-json.dump(d, open(f,'w'), indent=2)
-"
+# Find next task
+$TASKCTL ready --epic epic-1-add-user-auth
+# → {"ready": [{"id": "epic-1-add-user-auth.2", "title": "Add login endpoint"}]}
 
-# Mark done
-python3 -c "
-import json; f='.tasks/tasks/epic-1.1.json'
-d=json.load(open(f)); d['status']='done'; d['completed']='2026-03-21'
-json.dump(d, open(f,'w'), indent=2)
-"
+# Start it
+$TASKCTL start epic-1-add-user-auth.2
+
+# Dispatch worker agent with the task spec
+# Worker reads: .tasks/tasks/epic-1-add-user-auth.2.md
+
+# When worker completes
+$TASKCTL done epic-1-add-user-auth.2 --summary "Added POST /api/login with JWT"
+
+# Check progress
+$TASKCTL progress
 ```
 
-### List Tasks
+### 3. With Autoimmune
+
+For improvement loops, create an epic with improvement tasks:
 
 ```bash
-# Quick status overview
-for f in .tasks/tasks/*.json; do
-  python3 -c "import json; d=json.load(open('$f')); print(f'[{d[\"status\"]:12}] {d[\"id\"]}: {d[\"title\"]}')"
-done
+$TASKCTL epic create --title "Code quality improvements"
+$TASKCTL task create --epic epic-2-code-quality --title "Add type hints to api module"
+$TASKCTL task create --epic epic-2-code-quality --title "Extract validation logic"
+$TASKCTL task create --epic epic-2-code-quality --title "Add missing docstrings"
 ```
 
-Output:
-```
-[todo        ] epic-1.1: Create User model and registration endpoint
-[in_progress ] epic-1.2: Add login endpoint with JWT
-[done        ] epic-1.3: Add password hashing utility
-[blocked     ] epic-1.4: Add token refresh (depends on epic-1.2)
-```
+Then run autoimmune referencing these tasks.
 
-### Find Ready Tasks
+## JSON Output
+
+All commands output JSON for machine parsing. Use in scripts:
 
 ```bash
-# Tasks with status=todo and no unfinished dependencies
-python3 -c "
-import json, glob
-tasks = {}
-for f in glob.glob('.tasks/tasks/*.json'):
-    d = json.load(open(f))
-    tasks[d['id']] = d
-
-for t in tasks.values():
-    if t['status'] != 'todo': continue
-    deps_done = all(tasks.get(d, {}).get('status') == 'done' for d in t.get('depends_on', []))
-    if deps_done:
-        print(f'READY: {t[\"id\"]}: {t[\"title\"]}')
-"
+READY=$($TASKCTL ready --epic epic-1-add-user-auth)
+NEXT_ID=$(echo "$READY" | python3 -c "import sys,json; r=json.load(sys.stdin)['ready']; print(r[0]['id'] if r else '')")
 ```
-
-## Integration with Worker Protocol
-
-When executing tasks with the worker-protocol skill:
-
-1. **Start**: Update task status to `in_progress`
-2. **Dispatch**: Worker agent gets task spec from `.tasks/tasks/epic-N.M.md`
-3. **Done**: Update status to `done`, move to `completed/`
-4. **Failed**: Update status to `blocked` with reason
-
-## Integration with Autoimmune
-
-The autoimmune skill's `improvement-program.md` is effectively a flat task list. For larger projects, use `.tasks/` for structured tracking and have autoimmune reference task IDs.
 
 ## When to Use .tasks/ vs improvement-program.md
 
@@ -173,11 +144,12 @@ The autoimmune skill's `improvement-program.md` is effectively a flat task list.
 | Quick improvements, single session | `improvement-program.md` (flat list) |
 | Multi-session project, dependencies | `.tasks/` (structured) |
 | Multiple epics in parallel | `.tasks/` (epic grouping) |
-| Team coordination | `.tasks/` (assignee tracking) |
+| Need progress tracking | `.tasks/` (progress bars) |
 
 ## Related Skills
 
-- **plan** — plan creates the tasks; this skill tracks their execution
+- **plan** — creates the task list; this skill tracks execution
 - **worker-protocol** — workers consume tasks from .tasks/
 - **autoimmune** — can reference .tasks/ for structured improvement tracking
 - **git-workflow** — commit task state changes alongside code changes
+- **code-review-loop** — review each completed task before marking done
