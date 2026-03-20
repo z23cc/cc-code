@@ -1,5 +1,5 @@
 ---
-description: "Start TDD workflow. Write failing tests first, then implement."
+description: "Start TDD workflow. TRIGGER: 'implement X', 'add feature', 'write X', '写功能', '加功能'. NOT for: fixing existing bugs (/fix), reviewing code (/review)."
 ---
 
 Activate the TDD skill for the current task.

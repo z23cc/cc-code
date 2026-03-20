@@ -1,5 +1,5 @@
 ---
-description: "Create an implementation plan. Use the plan skill to create a detailed, TDD-based implementation plan."
+description: "Create implementation plan with TDD tasks. TRIGGER: 'plan this', 'how should we build', 'design X', '规划', '写计划'. Use AFTER brainstorming, BEFORE /tdd."
 ---
 
 Use the plan skill to create a comprehensive implementation plan.

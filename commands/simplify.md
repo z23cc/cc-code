@@ -1,5 +1,5 @@
 ---
-description: "Simplify and clean up recent code changes. Dispatches refactor-cleaner agent."
+description: "Simplify and clean up code. TRIGGER: 'clean up', 'simplify', 'remove dead code', 'refactor', '简化', '清理代码'. NOT for: build errors (/fix), new features (/tdd)."
 ---
 
 Review recently changed code for simplification opportunities. Dispatch the **refactor-cleaner** agent to:

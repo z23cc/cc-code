@@ -5,11 +5,11 @@ Personal Claude Code plugin for Python-focused development.
 ## Architecture
 
 - `agents/` — 6 specialized agents (python-reviewer, code-reviewer, security-reviewer, refactor-cleaner, planner[opus], build-fixer)
-- `skills/` — 17 workflow skills:
+- `skills/` — 19 workflow skills:
   - **Flow**: brainstorming, plan, tdd, verification, debugging, parallel-agents, autoimmune
-  - **Python**: python-patterns, python-testing, async-patterns, database, performance, logging, security-review
+  - **Python**: python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review
   - **Infra**: git-workflow, scaffold, deploy
-- `commands/` — 9 slash commands: `/review`, `/plan`, `/simplify`, `/tdd`, `/fix`, `/commit`, `/scaffold`, `/perf`, `/autoimmune`
+- `commands/` — 9 slash commands (with trigger phrases): `/review`, `/plan`, `/simplify`, `/tdd`, `/fix`, `/commit`, `/scaffold`, `/perf`, `/autoimmune`
 - `rules/` — 4 always-on rules: python-style, testing, security, git
 - `hooks/` — SessionStart context injection
 

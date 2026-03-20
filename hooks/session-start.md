@@ -1,15 +1,17 @@
 ## cc-code — Python Development Toolkit
 
-Available commands:
-- `/review` — code review (python-reviewer + security-reviewer)
-- `/plan` — create implementation plan with TDD
-- `/tdd` — test-driven development workflow
-- `/fix` — fix build/type/test errors minimally
-- `/commit` — conventional commit with verification
-- `/simplify` — refactor and clean up code
-- `/scaffold` — bootstrap new Python project
-- `/perf` — profile and optimize performance
+**Workflows:**
+- New feature → brainstorming → `/plan` → `/tdd` → `/commit`
+- Bug/error → debugging skill → `/fix` → `/commit`
+- Code review → `/review` (auto-dispatches security-reviewer for auth/API code)
+- Performance → `/perf`
+- Cleanup → `/simplify` → `/commit`
+- New project → `/scaffold`
+- Autonomous → `/autoimmune` (code / test / full)
 
-Workflow: brainstorming → plan → tdd → verification → commit
-Debugging: debugging skill (systematic + escalation)
-Autonomous: `/autoimmune` — auto-improve loop (code / test / full)
+**Gates:**
+- DO NOT implement without design approval (brainstorming first)
+- DO NOT commit without verification (`/commit` runs lint+typecheck)
+- DO NOT claim success without test evidence (verification skill)
+
+**Commands:** `/review` `/plan` `/tdd` `/fix` `/commit` `/simplify` `/scaffold` `/perf` `/autoimmune`

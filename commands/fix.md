@@ -1,5 +1,5 @@
 ---
-description: "Fix build/type/test errors with minimal changes. Dispatches build-fixer agent."
+description: "Fix build/type/test errors minimally. TRIGGER: 'build broken', 'type errors', 'mypy errors', 'tests failing', 'ruff errors', '构建失败', '修复报错'. NOT for: new features (/tdd), refactoring (/simplify)."
 ---
 
 Dispatch the **build-fixer** agent to resolve build errors with minimal changes.

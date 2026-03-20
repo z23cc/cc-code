@@ -1,5 +1,5 @@
 ---
-description: "Profile and optimize Python code. Identifies bottlenecks and suggests targeted fixes."
+description: "Profile and optimize Python code. TRIGGER: 'slow', 'optimize', 'bottleneck', 'performance', 'speed up', '太慢了', '优化性能'. Profiles first, then fixes."
 ---
 
 Use the performance skill to analyze and optimize code.

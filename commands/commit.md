@@ -1,5 +1,5 @@
 ---
-description: "Create a conventional commit. Analyzes staged changes, drafts a message following commit conventions, and commits."
+description: "Conventional commit with pre-commit verification. TRIGGER: 'commit', 'save changes', '提交', '保存'. Runs lint+typecheck before committing."
 ---
 
 Follow the git-workflow skill's conventional commits format to create a commit.
