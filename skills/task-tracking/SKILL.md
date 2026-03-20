@@ -32,10 +32,12 @@ $TASKCTL task create --epic epic-1-add-user-auth --title "Add login endpoint" --
 $TASKCTL task create --epic epic-1-add-user-auth --title "Add JWT middleware" --deps "epic-1-add-user-auth.2"
 
 # View everything
-$TASKCTL list                                         # All epics + tasks
+$TASKCTL list                                         # All epics + tasks (human)
 $TASKCTL epics                                        # Epics only (JSON)
 $TASKCTL tasks --epic epic-1-add-user-auth            # Tasks for one epic
 $TASKCTL tasks --status todo                          # Filter by status
+$TASKCTL status                                       # Global overview (JSON)
+$TASKCTL next --epic epic-1-add-user-auth             # Smart next task (priority-aware)
 $TASKCTL show epic-1-add-user-auth                    # Epic detail + spec
 $TASKCTL show epic-1-add-user-auth.2                  # Task detail + spec
 
@@ -50,9 +52,21 @@ $TASKCTL done epic-1-add-user-auth.1 --summary "Created User model with SQLAlche
 # Block a task
 $TASKCTL block epic-1-add-user-auth.3 --reason "Waiting for auth library decision"
 
+# Reset a task back to todo
+$TASKCTL task reset epic-1-add-user-auth.3
+
+# Add dependency after creation
+$TASKCTL dep add epic-1-add-user-auth.3 epic-1-add-user-auth.1
+
 # Progress bar
 $TASKCTL progress
 # epic-1-add-user-auth: ██████░░░░░░░░░░░░░░ 33% (1/3)
+
+# Close epic (requires all tasks done) — archives to completed/
+$TASKCTL epic close epic-1-add-user-auth
+
+# Validate structure (deps, cycles, missing specs)
+$TASKCTL validate
 ```
 
 ## Task States
