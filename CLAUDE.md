@@ -9,14 +9,14 @@ Personal Claude Code plugin for Python-focused development.
   - **Flow**: brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, autoimmune, readiness-audit
   - **Python**: python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, clean-architecture, prompt-engineering, task-queues
   - **Infra**: git-workflow, scaffold, deploy, search-strategy
-- `commands/` — 12 slash commands (with trigger phrases): `/review`, `/pr-review`, `/plan`, `/simplify`, `/tdd`, `/fix`, `/commit`, `/scaffold`, `/perf`, `/autoimmune`, `/audit`, `/tasks`
+- `commands/` — 16 slash commands: `/brainstorm`, `/research`, `/plan`, `/tdd`, `/refine`, `/debug`, `/fix`, `/review`, `/pr-review`, `/commit`, `/simplify`, `/scaffold`, `/perf`, `/autoimmune`, `/audit`, `/tasks`
 - `rules/` — 4 always-on rules: python-style, testing, security, git
 - `hooks/` — SessionStart context injection
 
 ## Key Workflow
 
 ```
-brainstorming → plan → tdd → refinement → code-review-loop → verification → commit
+/brainstorm → /plan → /tdd → /refine → /review → /commit
                                     ↑
                     debugging ──────┘ (when stuck)
 
