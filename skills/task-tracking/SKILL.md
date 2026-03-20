@@ -2,7 +2,7 @@
 name: task-tracking
 description: >
   File-based task management with epic/task lifecycle, dependency tracking,
-  and progress visualization. Uses taskctl CLI and .tasks/ directory.
+  and progress visualization. Uses cc-flow CLI and .tasks/ directory.
   TRIGGER: 'show tasks', 'what needs to be done', 'task status', 'create task',
   'list epics', 'next task', 'progress', '任务列表', '查看进度', '创建任务'.
 ---
@@ -11,62 +11,62 @@ description: >
 
 ## Setup
 
-taskctl is BUNDLED with cc-code. Always use:
+cc-flow is BUNDLED with cc-code. Always use:
 
 ```bash
-TASKCTL="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/taskctl.py"
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 ```
 
 ## Quick Reference
 
 ```bash
 # Initialize .tasks/ directory
-$TASKCTL init
+$CCFLOW init
 
 # Create epic
-$TASKCTL epic create --title "Add user authentication"
+$CCFLOW epic create --title "Add user authentication"
 
 # Create tasks under epic
-$TASKCTL task create --epic epic-1-add-user-auth --title "Create User model"
-$TASKCTL task create --epic epic-1-add-user-auth --title "Add login endpoint" --deps "epic-1-add-user-auth.1"
-$TASKCTL task create --epic epic-1-add-user-auth --title "Add JWT middleware" --deps "epic-1-add-user-auth.2"
+$CCFLOW task create --epic epic-1-add-user-auth --title "Create User model"
+$CCFLOW task create --epic epic-1-add-user-auth --title "Add login endpoint" --deps "epic-1-add-user-auth.1"
+$CCFLOW task create --epic epic-1-add-user-auth --title "Add JWT middleware" --deps "epic-1-add-user-auth.2"
 
 # View everything
-$TASKCTL list                                         # All epics + tasks (human)
-$TASKCTL epics                                        # Epics only (JSON)
-$TASKCTL tasks --epic epic-1-add-user-auth            # Tasks for one epic
-$TASKCTL tasks --status todo                          # Filter by status
-$TASKCTL status                                       # Global overview (JSON)
-$TASKCTL next --epic epic-1-add-user-auth             # Smart next task (priority-aware)
-$TASKCTL show epic-1-add-user-auth                    # Epic detail + spec
-$TASKCTL show epic-1-add-user-auth.2                  # Task detail + spec
+$CCFLOW list                                         # All epics + tasks (human)
+$CCFLOW epics                                        # Epics only (JSON)
+$CCFLOW tasks --epic epic-1-add-user-auth            # Tasks for one epic
+$CCFLOW tasks --status todo                          # Filter by status
+$CCFLOW status                                       # Global overview (JSON)
+$CCFLOW next --epic epic-1-add-user-auth             # Smart next task (priority-aware)
+$CCFLOW show epic-1-add-user-auth                    # Epic detail + spec
+$CCFLOW show epic-1-add-user-auth.2                  # Task detail + spec
 
 # What's ready to work on?
-$TASKCTL ready --epic epic-1-add-user-auth
+$CCFLOW ready --epic epic-1-add-user-auth
 
 # Work on a task
-$TASKCTL start epic-1-add-user-auth.1
+$CCFLOW start epic-1-add-user-auth.1
 # ... implement ...
-$TASKCTL done epic-1-add-user-auth.1 --summary "Created User model with SQLAlchemy"
+$CCFLOW done epic-1-add-user-auth.1 --summary "Created User model with SQLAlchemy"
 
 # Block a task
-$TASKCTL block epic-1-add-user-auth.3 --reason "Waiting for auth library decision"
+$CCFLOW block epic-1-add-user-auth.3 --reason "Waiting for auth library decision"
 
 # Reset a task back to todo
-$TASKCTL task reset epic-1-add-user-auth.3
+$CCFLOW task reset epic-1-add-user-auth.3
 
 # Add dependency after creation
-$TASKCTL dep add epic-1-add-user-auth.3 epic-1-add-user-auth.1
+$CCFLOW dep add epic-1-add-user-auth.3 epic-1-add-user-auth.1
 
 # Progress bar
-$TASKCTL progress
+$CCFLOW progress
 # epic-1-add-user-auth: ██████░░░░░░░░░░░░░░ 33% (1/3)
 
 # Close epic (requires all tasks done) — archives to completed/
-$TASKCTL epic close epic-1-add-user-auth
+$CCFLOW epic close epic-1-add-user-auth
 
 # Validate structure (deps, cycles, missing specs)
-$TASKCTL validate
+$CCFLOW validate
 ```
 
 ## Task States
@@ -76,7 +76,7 @@ todo → in_progress → done
                   ↘ blocked (with reason)
 ```
 
-Dependencies are enforced: `$TASKCTL start` fails if dependencies aren't done. `$TASKCTL ready` only shows tasks with all deps satisfied.
+Dependencies are enforced: `$CCFLOW start` fails if dependencies aren't done. `$CCFLOW ready` only shows tasks with all deps satisfied.
 
 ## Directory Structure
 
@@ -99,12 +99,12 @@ Dependencies are enforced: `$TASKCTL start` fails if dependencies aren't done. `
 After creating a plan (see plan skill), convert each task to tracked items:
 
 ```bash
-$TASKCTL init
-$TASKCTL epic create --title "Feature name from plan"
+$CCFLOW init
+$CCFLOW epic create --title "Feature name from plan"
 
 # For each task in the plan:
-$TASKCTL task create --epic epic-N-slug --title "Task from plan step 1"
-$TASKCTL task create --epic epic-N-slug --title "Task from plan step 2" --deps "epic-N-slug.1"
+$CCFLOW task create --epic epic-N-slug --title "Task from plan step 1"
+$CCFLOW task create --epic epic-N-slug --title "Task from plan step 2" --deps "epic-N-slug.1"
 ```
 
 Then edit each `.tasks/tasks/epic-N-slug.M.md` to add description and acceptance criteria from the plan.
@@ -113,20 +113,20 @@ Then edit each `.tasks/tasks/epic-N-slug.M.md` to add description and acceptance
 
 ```bash
 # Find next task
-$TASKCTL ready --epic epic-1-add-user-auth
+$CCFLOW ready --epic epic-1-add-user-auth
 # → {"ready": [{"id": "epic-1-add-user-auth.2", "title": "Add login endpoint"}]}
 
 # Start it
-$TASKCTL start epic-1-add-user-auth.2
+$CCFLOW start epic-1-add-user-auth.2
 
 # Dispatch worker agent with the task spec
 # Worker reads: .tasks/tasks/epic-1-add-user-auth.2.md
 
 # When worker completes
-$TASKCTL done epic-1-add-user-auth.2 --summary "Added POST /api/login with JWT"
+$CCFLOW done epic-1-add-user-auth.2 --summary "Added POST /api/login with JWT"
 
 # Check progress
-$TASKCTL progress
+$CCFLOW progress
 ```
 
 ### 3. With Autoimmune
@@ -134,10 +134,10 @@ $TASKCTL progress
 For improvement loops, create an epic with improvement tasks:
 
 ```bash
-$TASKCTL epic create --title "Code quality improvements"
-$TASKCTL task create --epic epic-2-code-quality --title "Add type hints to api module"
-$TASKCTL task create --epic epic-2-code-quality --title "Extract validation logic"
-$TASKCTL task create --epic epic-2-code-quality --title "Add missing docstrings"
+$CCFLOW epic create --title "Code quality improvements"
+$CCFLOW task create --epic epic-2-code-quality --title "Add type hints to api module"
+$CCFLOW task create --epic epic-2-code-quality --title "Extract validation logic"
+$CCFLOW task create --epic epic-2-code-quality --title "Add missing docstrings"
 ```
 
 Then run autoimmune referencing these tasks.
@@ -147,7 +147,7 @@ Then run autoimmune referencing these tasks.
 All commands output JSON for machine parsing. Use in scripts:
 
 ```bash
-READY=$($TASKCTL ready --epic epic-1-add-user-auth)
+READY=$($CCFLOW ready --epic epic-1-add-user-auth)
 NEXT_ID=$(echo "$READY" | python3 -c "import sys,json; r=json.load(sys.stdin)['ready']; print(r[0]['id'] if r else '')")
 ```
 

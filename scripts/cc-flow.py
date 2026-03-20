@@ -1,25 +1,29 @@
 #!/usr/bin/env python3
-"""taskctl — lightweight file-based task manager for cc-code plugin.
+"""cc-flow — lightweight file-based task manager for cc-code plugin.
 
 Usage:
-    taskctl init
-    taskctl epic create --title "Epic title"
-    taskctl epic close <epic-id>
-    taskctl task create --epic <epic-id> --title "Task title" [--deps id1,id2]
-    taskctl task reset <task-id>
-    taskctl dep add <task-id> <dep-id>
-    taskctl list
-    taskctl epics
-    taskctl tasks [--epic <epic-id>] [--status todo|in_progress|done|blocked]
-    taskctl show <id>
-    taskctl ready [--epic <epic-id>]
-    taskctl next [--epic <epic-id>]
-    taskctl start <task-id>
-    taskctl done <task-id> [--summary "What was done"]
-    taskctl block <task-id> --reason "Why blocked"
-    taskctl progress [--epic <epic-id>]
-    taskctl status
-    taskctl validate
+    cc-flow init
+    cc-flow epic create --title "Epic title"
+    cc-flow epic close <epic-id>
+    cc-flow task create --epic <epic-id> --title "Task title" [--deps id1,id2]
+    cc-flow task reset <task-id>
+    cc-flow dep add <task-id> <dep-id>
+    cc-flow list
+    cc-flow epics
+    cc-flow tasks [--epic <epic-id>] [--status todo|in_progress|done|blocked]
+    cc-flow show <id>
+    cc-flow ready [--epic <epic-id>]
+    cc-flow next [--epic <epic-id>]
+    cc-flow start <task-id>
+    cc-flow done <task-id> [--summary "What was done"]
+    cc-flow block <task-id> --reason "Why blocked"
+    cc-flow progress [--epic <epic-id>]
+    cc-flow status
+    cc-flow validate
+    cc-flow scan [--create-tasks]
+    cc-flow log --status KEPT --task-id <id> --description "..." [--iteration N]
+    cc-flow log --show 10
+    cc-flow summary
 """
 
 import argparse
@@ -146,7 +150,7 @@ def cmd_list(_args):
             print(f"  {marker.get(status, '?')} [{status:12}] {t['id']}: {t['title']}")
 
     if not epics:
-        print("No epics found. Run: taskctl init && taskctl epic create --title '...'")
+        print("No epics found. Run: cc-flow init && cc-flow epic create --title '...'")
 
 
 def cmd_epics(_args):
@@ -479,6 +483,176 @@ def cmd_task_reset(args):
     print(json.dumps({"success": True, "id": args.id, "status": "todo"}))
 
 
+def cmd_scan(args):
+    """Scan codebase for issues, generate improvement epic + tasks."""
+    import subprocess
+
+    findings = {"P1": [], "P2": [], "P3": [], "P4": []}
+
+    # Ruff scan
+    try:
+        result = subprocess.run(
+            ["ruff", "check", ".", "--output-format", "json"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.stdout.strip():
+            issues = json.loads(result.stdout)
+            by_rule = {}
+            for i in issues:
+                by_rule.setdefault(i.get("code", "?"), []).append(i)
+            for rule, items in sorted(by_rule.items(), key=lambda x: -len(x[1]))[:10]:
+                findings["P3"].append(f"Fix {len(items)}x ruff {rule}: {items[0].get('message', '')}")
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    # Mypy scan
+    try:
+        result = subprocess.run(
+            ["mypy", ".", "--no-error-summary"],
+            capture_output=True, text=True, timeout=60,
+        )
+        for line in result.stdout.strip().split("\n")[:10]:
+            if line.strip() and "error:" in line:
+                findings["P2"].append(f"Fix mypy: {line.strip()}")
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    # Bandit scan
+    try:
+        result = subprocess.run(
+            ["bandit", "-r", ".", "-f", "json", "-q"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.stdout.strip():
+            data = json.loads(result.stdout)
+            for r in data.get("results", [])[:10]:
+                sev = r.get("issue_severity", "MEDIUM")
+                priority = "P1" if sev in ("HIGH", "CRITICAL") else "P3"
+                findings[priority].append(
+                    f"[{sev}] {r.get('issue_text', '')} ({r.get('filename', '')}:{r.get('line_number', '')})"
+                )
+    except (FileNotFoundError, subprocess.TimeoutExpired, json.JSONDecodeError):
+        pass
+
+    # Count totals
+    total = sum(len(v) for v in findings.values())
+
+    if args.create_tasks and total > 0:
+        # Auto-create epic + tasks
+        cmd_init(argparse.Namespace())
+
+        meta = load_meta()
+        epic_num = meta["next_epic"]
+        date_slug = datetime.now(timezone.utc).strftime("%Y%m%d")
+        epic_id = f"epic-{epic_num}-scan-{date_slug}"
+        meta["next_epic"] = epic_num + 1
+        save_meta(meta)
+
+        spec_lines = [f"# Epic: Code scan {date_slug}\n\n## Findings\n"]
+        task_num = 0
+        for priority in ("P1", "P2", "P3", "P4"):
+            for finding in findings[priority]:
+                task_num += 1
+                task_id = f"{epic_id}.{task_num}"
+                state = {
+                    "id": task_id,
+                    "epic": epic_id,
+                    "title": f"[{priority}] {finding}",
+                    "status": "todo",
+                    "depends_on": [],
+                    "priority": {"P1": 1, "P2": 2, "P3": 3, "P4": 4}[priority],
+                    "created": now_iso(),
+                }
+                save_task(TASKS_SUBDIR / f"{task_id}.json", state)
+                spec_path = TASKS_SUBDIR / f"{task_id}.md"
+                spec_path.write_text(f"# Task: {finding}\n\n## Fix\n\n[Describe the fix]\n")
+                spec_lines.append(f"- [{priority}] {finding}")
+
+        epic_spec = EPICS_DIR / f"{epic_id}.md"
+        epic_spec.write_text("\n".join(spec_lines) + "\n")
+
+        print(json.dumps({
+            "success": True,
+            "epic": epic_id,
+            "tasks_created": task_num,
+            "findings": {k: len(v) for k, v in findings.items()},
+        }))
+    else:
+        # Just report
+        output = {"success": True, "total": total, "findings": {}}
+        for priority in ("P1", "P2", "P3", "P4"):
+            if findings[priority]:
+                output["findings"][priority] = findings[priority]
+        print(json.dumps(output))
+
+
+LOG_FILE = Path("improvement-results.tsv")
+LOG_HEADER = "timestamp\titeration\tmode\tarea\ttask_id\tdescription\tstatus\tfiles_changed\tdiff_lines\tduration_sec\tnotes\n"
+
+
+def cmd_log(args):
+    """Append entry to improvement-results.tsv or show recent entries."""
+    if args.show:
+        if not LOG_FILE.exists():
+            print(json.dumps({"success": False, "error": "No log file found"}))
+            sys.exit(1)
+        lines = LOG_FILE.read_text().strip().split("\n")
+        n = min(args.show, len(lines) - 1)  # Skip header
+        entries = []
+        for line in lines[-n:]:
+            parts = line.split("\t")
+            if len(parts) >= 6:
+                entries.append({
+                    "timestamp": parts[0], "iteration": parts[1], "mode": parts[2],
+                    "task_id": parts[4], "status": parts[6] if len(parts) > 6 else "",
+                })
+        print(json.dumps({"success": True, "entries": entries, "total": len(lines) - 1}))
+        return
+
+    # Append mode
+    if not LOG_FILE.exists():
+        LOG_FILE.write_text(LOG_HEADER)
+
+    row = "\t".join([
+        now_iso(),
+        str(args.iteration or ""),
+        args.mode or "",
+        args.area or "",
+        args.task_id or "",
+        args.description or "",
+        args.status or "",
+        str(args.files or ""),
+        str(args.diff_lines or ""),
+        str(args.duration or ""),
+        args.notes or "",
+    ])
+    with open(LOG_FILE, "a") as f:
+        f.write(row + "\n")
+    print(json.dumps({"success": True, "logged": args.status}))
+
+
+def cmd_summary(_args):
+    """Print session summary from improvement-results.tsv."""
+    if not LOG_FILE.exists():
+        print("No improvement-results.tsv found.")
+        return
+
+    lines = LOG_FILE.read_text().strip().split("\n")[1:]  # Skip header
+    kept = sum(1 for l in lines if "KEPT" in l)
+    discarded = sum(1 for l in lines if "DISCARDED" in l)
+    skipped = sum(1 for l in lines if "SKIPPED" in l)
+    total = len(lines)
+    pct = int(kept / total * 100) if total > 0 else 0
+
+    print(f"## Autoimmune Summary")
+    print(f"| Metric | Value |")
+    print(f"|--------|-------|")
+    print(f"| Iterations | {total} |")
+    print(f"| Kept | {kept} ({pct}%) |")
+    print(f"| Discarded | {discarded} |")
+    print(f"| Skipped | {skipped} |")
+
+
 def cmd_dep_add(args):
     """Add dependency to existing task."""
     path = TASKS_SUBDIR / f"{args.id}.json"
@@ -501,7 +675,7 @@ def cmd_dep_add(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="taskctl", description="cc-code task manager")
+    parser = argparse.ArgumentParser(prog="cc-flow", description="cc-code task manager")
     sub = parser.add_subparsers(dest="command")
 
     sub.add_parser("init")
@@ -548,6 +722,24 @@ def main():
     sub.add_parser("status")
     sub.add_parser("validate")
 
+    scan_p = sub.add_parser("scan")
+    scan_p.add_argument("--create-tasks", action="store_true", default=False)
+
+    log_p = sub.add_parser("log")
+    log_p.add_argument("--show", type=int, default=0, help="Show last N entries")
+    log_p.add_argument("--iteration", type=int, default=None)
+    log_p.add_argument("--mode", default="")
+    log_p.add_argument("--area", default="")
+    log_p.add_argument("--task-id", default="")
+    log_p.add_argument("--description", default="")
+    log_p.add_argument("--status", default="")
+    log_p.add_argument("--files", type=int, default=None)
+    log_p.add_argument("--diff-lines", type=int, default=None)
+    log_p.add_argument("--duration", type=int, default=None)
+    log_p.add_argument("--notes", default="")
+
+    sub.add_parser("summary")
+
     next_p = sub.add_parser("next")
     next_p.add_argument("--epic", default="")
 
@@ -579,6 +771,9 @@ def main():
         "status": cmd_status,
         "validate": cmd_validate,
         "next": cmd_next,
+        "scan": cmd_scan,
+        "log": cmd_log,
+        "summary": cmd_summary,
     }
 
     if args.command == "epic":
