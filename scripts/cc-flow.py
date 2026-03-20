@@ -101,6 +101,83 @@ def cmd_epic_create(args):
     print(json.dumps({"success": True, "id": epic_id, "spec": str(spec_path)}))
 
 
+def cmd_epic_import(args):
+    """Import tasks from a plan markdown file. Parses ### Task N: Title headers."""
+    import re
+
+    plan_path = Path(args.file)
+    if not plan_path.exists():
+        print(json.dumps({"success": False, "error": f"File not found: {args.file}"}))
+        sys.exit(1)
+
+    content = plan_path.read_text()
+
+    # Extract title from first H1
+    title_match = re.search(r"^#\s+(.+)", content, re.MULTILINE)
+    title = title_match.group(1).strip() if title_match else plan_path.stem
+
+    # Create epic
+    cmd_init(argparse.Namespace())
+    meta = load_meta()
+    epic_num = meta["next_epic"]
+    slug = slugify(title)
+    epic_id = f"epic-{epic_num}-{slug}"
+    meta["next_epic"] = epic_num + 1
+    save_meta(meta)
+
+    # Copy plan as epic spec
+    spec_path = EPICS_DIR / f"{epic_id}.md"
+    spec_path.write_text(content)
+
+    # Parse tasks: ### Task N: Title  or  ### N. Title  or  ### Title
+    task_pattern = re.compile(
+        r"^###\s+(?:Task\s+\d+[:.]\s*|(\d+)\.\s+)?(.+)",
+        re.MULTILINE,
+    )
+    matches = list(task_pattern.finditer(content))
+
+    task_num = 0
+    prev_task_id = None
+    created = []
+    for m in matches:
+        task_title = m.group(2).strip()
+        if not task_title or task_title.lower().startswith("phase"):
+            continue
+        task_num += 1
+        task_id = f"{epic_id}.{task_num}"
+
+        # Extract content between this ### and the next ###
+        start = m.end()
+        next_match = task_pattern.search(content, start)
+        end = next_match.start() if next_match else len(content)
+        task_body = content[start:end].strip()
+
+        deps = [prev_task_id] if prev_task_id and args.sequential else []
+
+        state = {
+            "id": task_id,
+            "epic": epic_id,
+            "title": task_title,
+            "status": "todo",
+            "depends_on": deps,
+            "created": now_iso(),
+        }
+        save_task(TASKS_SUBDIR / f"{task_id}.json", state)
+
+        task_spec = TASKS_SUBDIR / f"{task_id}.md"
+        task_spec.write_text(f"# Task: {task_title}\n\n{task_body}\n")
+
+        created.append(task_id)
+        prev_task_id = task_id
+
+    print(json.dumps({
+        "success": True,
+        "epic": epic_id,
+        "tasks_created": len(created),
+        "tasks": created,
+    }))
+
+
 def cmd_task_create(args):
     epic_id = args.epic
     # Find next task number for this epic
@@ -752,6 +829,10 @@ def main():
     epic_close = epic_sub.add_parser("close")
     epic_close.add_argument("id")
 
+    epic_import = epic_sub.add_parser("import")
+    epic_import.add_argument("--file", required=True)
+    epic_import.add_argument("--sequential", action="store_true", default=False)
+
     task_reset = task_sub.add_parser("reset")
     task_reset.add_argument("id")
 
@@ -782,6 +863,8 @@ def main():
             cmd_epic_create(args)
         elif ec == "close":
             cmd_epic_close(args)
+        elif ec == "import":
+            cmd_epic_import(args)
         else:
             parser.print_help()
             sys.exit(1)
