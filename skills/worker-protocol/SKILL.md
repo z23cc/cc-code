@@ -108,9 +108,44 @@ This prevents working against stale assumptions.
 | Task partially done, stuck | Log progress, try different approach |
 | Task impossible (missing dep) | Skip, log, continue with next |
 
+## Integration with Autoimmune
+
+Autoimmune Mode A can use worker-protocol for each task:
+
+```
+Autoimmune Orchestrator
+  ├─ SELECT task from .tasks/ or improvement-program.md
+  ├─ Worker Agent (fresh context):
+  │   ├─ Re-anchor: read task spec + current code
+  │   ├─ Implement: < 50 lines diff
+  │   ├─ Self-check: git diff --stat
+  │   └─ Verify: ruff + mypy + pytest
+  ├─ PASS → commit + mark done
+  └─ FAIL → revert + mark discarded
+```
+
+This is useful when autoimmune tasks are complex enough to benefit from isolated context per task.
+
+## Integration with Task Tracking
+
+```bash
+TASKCTL="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/taskctl.py"
+
+# Before dispatching worker:
+TASK_ID=$($TASKCTL ready --epic epic-1 | python3 -c "import sys,json; r=json.load(sys.stdin)['ready']; print(r[0]['id'] if r else '')")
+$TASKCTL start $TASK_ID
+
+# Worker receives task spec:
+$TASKCTL show $TASK_ID  # Read spec for worker prompt
+
+# After worker completes:
+$TASKCTL done $TASK_ID --summary "Implemented X"
+```
+
 ## Related Skills
 
 - **plan** — the plan that workers execute
+- **task-tracking** — workers consume tasks from .tasks/ via taskctl
 - **parallel-agents** — parallel worker dispatch patterns
 - **autoimmune** — similar loop but for improvement tasks, not plan execution
 - **code-review-loop** — review each worker's output with verdict gates
