@@ -6,17 +6,17 @@ Personal Claude Code plugin for Python-focused development.
 
 - `agents/` — 6 specialized agents (python-reviewer, code-reviewer, security-reviewer, refactor-cleaner, planner, build-fixer) — all `model: inherit` (uses your global model setting)
 - `skills/` — 19 workflow skills:
-  - **Flow**: brainstorming, plan, tdd, verification, refinement, debugging, research, parallel-agents, autoimmune
+  - **Flow**: brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, debugging, research, parallel-agents, autoimmune, readiness-audit
   - **Python**: python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review
   - **Infra**: git-workflow, scaffold, deploy, search-strategy
-- `commands/` — 10 slash commands (with trigger phrases): `/review`, `/pr-review`, `/plan`, `/simplify`, `/tdd`, `/fix`, `/commit`, `/scaffold`, `/perf`, `/autoimmune`
+- `commands/` — 11 slash commands (with trigger phrases): `/review`, `/pr-review`, `/plan`, `/simplify`, `/tdd`, `/fix`, `/commit`, `/scaffold`, `/perf`, `/autoimmune`, `/audit`
 - `rules/` — 4 always-on rules: python-style, testing, security, git
 - `hooks/` — SessionStart context injection
 
 ## Key Workflow
 
 ```
-brainstorming → plan → tdd → refinement → verification → commit
+brainstorming → plan → tdd → refinement → code-review-loop → verification → commit
                                     ↑
                     debugging ──────┘ (when stuck)
 

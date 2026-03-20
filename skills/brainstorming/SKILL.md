@@ -28,11 +28,18 @@ This skill covers **S** (Specification) and **A** (Architecture). The plan skill
 
 ## The Process
 
-**Understanding the idea:**
+**Understanding the idea (Interview Protocol):**
 - Check current project state first (files, docs, recent commits)
 - If the request describes multiple independent subsystems, flag this immediately — decompose first
 - Ask questions one at a time, prefer multiple choice when possible
-- Focus on: purpose, constraints, success criteria
+- Cover these dimensions systematically:
+  1. **Who** — target users, personas, access levels
+  2. **What** — core features, acceptance criteria, out-of-scope
+  3. **Why** — business goal, success metrics, what happens if we don't build this
+  4. **How** — technical constraints, existing integrations, performance requirements
+  5. **Edge cases** — error scenarios, concurrent access, empty states, limits
+  6. **Non-functional** — security, scalability, accessibility, i18n
+- Stop interviewing when answers start repeating or user says "enough"
 
 **Exploring approaches:**
 - Propose 2-3 different approaches with trade-offs
