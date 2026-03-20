@@ -114,3 +114,9 @@ git rebase -i HEAD~3                       # Clean up last 3 commits
 git cherry-pick <sha>                      # Pick specific commit
 git bisect start && git bisect bad         # Find regression
 ```
+
+## Related Skills
+
+- **verification** — run lint+test before every commit
+- **autoimmune** — commit format follows conventional commits
+- **task-tracking** — commit task state changes alongside code

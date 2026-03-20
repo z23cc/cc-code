@@ -74,3 +74,9 @@ This skill covers **S** (Specification) and **A** (Architecture). The plan skill
 - **YAGNI ruthlessly** — remove unnecessary features
 - **Explore alternatives** — always propose 2-3 approaches
 - **Incremental validation** — present design, get approval, move on
+
+## Related Skills
+
+- **plan** — invoke AFTER brainstorming to create implementation plan
+- **research** — use for deep code investigation before design decisions
+- **verification** — verify design assumptions with evidence

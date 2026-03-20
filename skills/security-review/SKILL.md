@@ -77,3 +77,10 @@ safety check               # Vulnerability check
 | Missing rate limit | DoS/brute force | Add rate limiting |
 | Debug mode in prod | Info disclosure | Disable debug |
 | Bare `except` | Silent failure | Catch specific exceptions |
+
+## Related Skills
+
+- **refinement** — security scan is one dimension of quality hardening
+- **readiness-audit** — Pillar 7 uses security-review findings
+- **deploy** — security checklist before deployment
+- **python-patterns** — secure coding idioms

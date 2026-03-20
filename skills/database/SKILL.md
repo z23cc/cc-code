@@ -154,3 +154,4 @@ async def get_user(session: AsyncSession, user_id: int) -> User | None:
 - **security-review** — SQL injection prevention, parameterized queries
 - **performance** — database query profiling and optimization
 - **deploy** — database connection pooling in production
+- **clean-architecture** — repository pattern, domain/adapter separation

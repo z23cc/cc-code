@@ -141,3 +141,9 @@ jobs:
 - [ ] `Dockerfile` with multi-stage build
 - [ ] `.github/workflows/ci.yml` for CI
 - [ ] `git init` and initial commit
+
+## Related Skills
+
+- **deploy** — Dockerfile and CI templates used by scaffold
+- **readiness-audit** — scaffold generates projects that pass all 8 pillars
+- **git-workflow** — initial commit follows conventional commits

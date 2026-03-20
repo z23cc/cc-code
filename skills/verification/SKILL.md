@@ -78,3 +78,10 @@ BAD: "Tests pass, phase complete"
 - Delegating to agents
 
 **No shortcuts for verification.** Run the command. Read the output. THEN claim the result.
+
+## Related Skills
+
+- **tdd** — TDD requires verification at each Red/Green step
+- **refinement** — quality loop uses verification at each metric check
+- **debugging** — verify fix before claiming success
+- **autoimmune** — every commit requires verification pass

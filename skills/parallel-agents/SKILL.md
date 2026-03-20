@@ -112,3 +112,9 @@ After agents return:
 2. Check for conflicts (same files edited)
 3. Run full test suite
 4. Spot check agent changes
+
+## Related Skills
+
+- **worker-protocol** — single-task worker agents with fresh context
+- **plan** — plan defines which tasks can run in parallel
+- **code-review-loop** — review each agent's output after completion
