@@ -12,3 +12,4 @@ Available commands:
 
 Workflow: brainstorming → plan → tdd → verification → commit
 Debugging: debugging skill (systematic + escalation)
+Autonomous: `/autoimmune` — auto-improve loop (code / test / full)
