@@ -1,0 +1,79 @@
+---
+name: security-review
+description: "Security checklist and patterns for Python applications. Use when adding auth, handling user input, working with secrets, or creating API endpoints."
+---
+
+# Security Review Checklist
+
+## When to Trigger
+
+- New API endpoints
+- Authentication/authorization code
+- User input handling
+- Database query changes
+- File uploads
+- External API integrations
+- Dependency updates
+
+## Python Security Checklist
+
+### Input Validation
+- [ ] All user input validated (type, length, format)
+- [ ] SQL queries use parameterized queries (never f-strings)
+- [ ] Shell commands use `subprocess.run([...])` (never `shell=True` with user data)
+- [ ] File paths validated (no `..` traversal)
+- [ ] XML parsing uses defusedxml
+- [ ] YAML uses `safe_load()` only
+
+### Authentication & Authorization
+- [ ] Passwords hashed with bcrypt/argon2 (never plaintext, never MD5/SHA1)
+- [ ] JWT tokens validated (signature, expiry, issuer)
+- [ ] Session tokens are cryptographically random
+- [ ] Auth checked on every protected route
+- [ ] Rate limiting on auth endpoints
+
+### Secrets Management
+- [ ] No hardcoded secrets in source code
+- [ ] Secrets loaded from environment variables
+- [ ] `.env` in `.gitignore`
+- [ ] Secrets not logged (passwords, tokens, PII)
+- [ ] API keys have minimum necessary permissions
+
+### API Security
+- [ ] CORS properly configured (not `*` in production)
+- [ ] Rate limiting on public endpoints
+- [ ] Input size limits set
+- [ ] Error messages don't leak internal details
+- [ ] HTTPS enforced in production
+
+### Data Protection
+- [ ] PII encrypted at rest
+- [ ] Sensitive data not in URL parameters
+- [ ] Database connections use TLS
+- [ ] Backups encrypted
+
+### Dependencies
+- [ ] `pip-audit` clean
+- [ ] `safety check` clean
+- [ ] No known vulnerable packages
+- [ ] Dependencies pinned to specific versions
+
+## Diagnostic Commands
+
+```bash
+bandit -r . -f json         # Python security scan
+pip-audit                   # Dependency audit
+safety check               # Vulnerability check
+```
+
+## Common Vulnerability Patterns
+
+| Pattern | Risk | Fix |
+|---------|------|-----|
+| f-string in SQL | Injection | Parameterized query |
+| `subprocess(shell=True)` + user input | Command injection | Use list args |
+| `yaml.load()` | Code execution | `yaml.safe_load()` |
+| Hardcoded secret | Credential leak | Environment variable |
+| Missing rate limit | DoS/brute force | Add rate limiting |
+| Debug mode in prod | Info disclosure | Disable debug |
+| Bare `except` | Silent failure | Catch specific exceptions |

@@ -1,0 +1,16 @@
+{
+  "name": "cc-code",
+  "owner": {
+    "name": "z23cc"
+  },
+  "plugins": [
+    {
+      "name": "cc-code",
+      "version": "1.0.0",
+      "source": "./",
+      "author": {
+        "name": "z23cc"
+      }
+    }
+  ]
+}
