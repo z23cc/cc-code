@@ -28,8 +28,6 @@ Usage:
 
 import argparse
 import json
-import glob
-import os
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -205,7 +203,7 @@ def cmd_task_create(args):
     print(json.dumps({"success": True, "id": task_id, "epic": epic_id}))
 
 
-def cmd_list(_args):
+def cmd_list(args):
     epics = {}
     for f in sorted(EPICS_DIR.glob("*.md")):
         epic_id = f.stem
@@ -216,6 +214,10 @@ def cmd_list(_args):
         epic = t.get("epic", "")
         if epic in epics:
             epics[epic]["tasks"].append(t)
+
+    if getattr(args, "json", False):
+        print(json.dumps({"success": True, "epics": list(epics.values()), "count": len(epics)}))
+        return
 
     for epic_id, epic in epics.items():
         done = sum(1 for t in epic["tasks"] if t["status"] == "done")
@@ -373,30 +375,37 @@ def cmd_progress(args):
         if epic in epics:
             epics[epic].append(t)
 
+    json_output = []
     for epic_id, epic_tasks in epics.items():
         if args.epic and epic_id != args.epic:
             continue
         total = len(epic_tasks)
-        if total == 0:
-            print(f"{epic_id}: no tasks")
-            continue
         done = sum(1 for t in epic_tasks if t["status"] == "done")
         in_prog = sum(1 for t in epic_tasks if t["status"] == "in_progress")
         blocked = sum(1 for t in epic_tasks if t["status"] == "blocked")
         todo = total - done - in_prog - blocked
-        pct = int(done / total * 100)
+        pct = int(done / total * 100) if total > 0 else 0
+        entry = {"epic": epic_id, "total": total, "done": done,
+                 "in_progress": in_prog, "blocked": blocked, "todo": todo, "pct": pct}
+        json_output.append(entry)
 
-        bar_len = 20
-        filled = int(bar_len * done / total)
-        bar = "█" * filled + "░" * (bar_len - filled)
+        if not getattr(args, "json", False):
+            if total == 0:
+                print(f"{epic_id}: no tasks")
+            else:
+                bar_len = 20
+                filled = int(bar_len * done / total)
+                bar = "█" * filled + "░" * (bar_len - filled)
+                print(f"{epic_id}: {bar} {pct}% ({done}/{total})")
+                if in_prog:
+                    print(f"  ◐ {in_prog} in progress")
+                if blocked:
+                    print(f"  ✗ {blocked} blocked")
+                if todo:
+                    print(f"  ○ {todo} todo")
 
-        print(f"{epic_id}: {bar} {pct}% ({done}/{total})")
-        if in_prog:
-            print(f"  ◐ {in_prog} in progress")
-        if blocked:
-            print(f"  ✗ {blocked} blocked")
-        if todo:
-            print(f"  ○ {todo} todo")
+    if getattr(args, "json", False):
+        print(json.dumps({"success": True, "epics": json_output}))
 
 
 def cmd_status(_args):
@@ -755,15 +764,15 @@ def cmd_summary(_args):
         return
 
     lines = LOG_FILE.read_text().strip().split("\n")[1:]  # Skip header
-    kept = sum(1 for l in lines if "KEPT" in l)
-    discarded = sum(1 for l in lines if "DISCARDED" in l)
-    skipped = sum(1 for l in lines if "SKIPPED" in l)
+    kept = sum(1 for row in lines if "KEPT" in row)
+    discarded = sum(1 for row in lines if "DISCARDED" in row)
+    skipped = sum(1 for row in lines if "SKIPPED" in row)
     total = len(lines)
     pct = int(kept / total * 100) if total > 0 else 0
 
-    print(f"## Autoimmune Summary")
-    print(f"| Metric | Value |")
-    print(f"|--------|-------|")
+    print("## Autoimmune Summary")
+    print("| Metric | Value |")
+    print("|--------|-------|")
     print(f"| Iterations | {total} |")
     print(f"| Kept | {kept} ({pct}%) |")
     print(f"| Discarded | {discarded} |")
@@ -845,9 +854,9 @@ def cmd_stats(_args):
     total_attempts = stats["totals"]["kept"] + stats["totals"]["discarded"]
     success_rate = int(stats["totals"]["kept"] / total_attempts * 100) if total_attempts > 0 else 0
 
-    print(f"## Productivity Stats")
-    print(f"| Metric | Value |")
-    print(f"|--------|-------|")
+    print("## Productivity Stats")
+    print("| Metric | Value |")
+    print("|--------|-------|")
     print(f"| Active epics | {len(epic_stats)} |")
     print(f"| Total tasks | {len(tasks)} |")
     print(f"| Done | {sum(e['done'] for e in epic_stats.values())} |")
@@ -880,54 +889,56 @@ def cmd_dep_add(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="cc-flow", description="cc-code task manager")
+    parser = argparse.ArgumentParser(prog="cc-flow", description="cc-code task & workflow manager")
     sub = parser.add_subparsers(dest="command")
 
-    sub.add_parser("init")
+    sub.add_parser("init", help="Initialize .tasks/ directory")
 
-    epic_p = sub.add_parser("epic")
+    epic_p = sub.add_parser("epic", help="Epic management (create/close/import/reset)")
     epic_sub = epic_p.add_subparsers(dest="epic_cmd")
     ec = epic_sub.add_parser("create")
     ec.add_argument("--title", required=True)
 
-    tc = sub.add_parser("task")
+    tc = sub.add_parser("task", help="Task management (create/reset/set-spec)")
     task_sub = tc.add_subparsers(dest="task_cmd")
     tc_create = task_sub.add_parser("create")
     tc_create.add_argument("--epic", required=True)
     tc_create.add_argument("--title", required=True)
     tc_create.add_argument("--deps", default="")
 
-    sub.add_parser("list")
-    sub.add_parser("epics")
+    list_p = sub.add_parser("list", help="Show all epics + tasks")
+    list_p.add_argument("--json", action="store_true", default=False)
+    sub.add_parser("epics", help="List epics (JSON)")
 
-    tasks_p = sub.add_parser("tasks")
+    tasks_p = sub.add_parser("tasks", help="Filter tasks by epic/status")
     tasks_p.add_argument("--epic", default="")
     tasks_p.add_argument("--status", default="")
 
-    show_p = sub.add_parser("show")
+    show_p = sub.add_parser("show", help="Show epic or task detail")
     show_p.add_argument("id")
 
-    ready_p = sub.add_parser("ready")
+    ready_p = sub.add_parser("ready", help="Tasks with all deps satisfied")
     ready_p.add_argument("--epic", default="")
 
-    start_p = sub.add_parser("start")
+    start_p = sub.add_parser("start", help="Start a task (checks deps)")
     start_p.add_argument("id")
 
-    done_p = sub.add_parser("done")
+    done_p = sub.add_parser("done", help="Complete a task")
     done_p.add_argument("id")
     done_p.add_argument("--summary", default="")
 
-    block_p = sub.add_parser("block")
+    block_p = sub.add_parser("block", help="Block a task with reason")
     block_p.add_argument("id")
     block_p.add_argument("--reason", required=True)
 
-    progress_p = sub.add_parser("progress")
+    progress_p = sub.add_parser("progress", help="Progress bars per epic")
     progress_p.add_argument("--epic", default="")
+    progress_p.add_argument("--json", action="store_true", default=False)
 
-    sub.add_parser("status")
-    sub.add_parser("validate")
+    sub.add_parser("status", help="Global overview (JSON)")
+    sub.add_parser("validate", help="Check structure, deps, cycles")
 
-    scan_p = sub.add_parser("scan")
+    scan_p = sub.add_parser("scan", help="Auto-detect issues via ruff/mypy/bandit")
     scan_p.add_argument("--create-tasks", action="store_true", default=False)
 
     log_p = sub.add_parser("log")
@@ -943,14 +954,14 @@ def main():
     log_p.add_argument("--duration", type=int, default=None)
     log_p.add_argument("--notes", default="")
 
-    sub.add_parser("summary")
-    sub.add_parser("archive")
-    sub.add_parser("stats")
+    sub.add_parser("summary", help="Autoimmune session summary")
+    sub.add_parser("archive", help="Show completed epics/tasks")
+    sub.add_parser("stats", help="Productivity metrics")
 
-    next_p = sub.add_parser("next")
+    next_p = sub.add_parser("next", help="Smart next task (priority-aware)")
     next_p.add_argument("--epic", default="")
 
-    dep_p = sub.add_parser("dep")
+    dep_p = sub.add_parser("dep", help="Dependency management")
     dep_sub = dep_p.add_subparsers(dest="dep_cmd")
     dep_add = dep_sub.add_parser("add")
     dep_add.add_argument("id")
