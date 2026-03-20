@@ -83,7 +83,35 @@ class User:
 
 - **Threading** — I/O-bound (concurrent.futures.ThreadPoolExecutor)
 - **Multiprocessing** — CPU-bound (concurrent.futures.ProcessPoolExecutor)
-- **Async/await** — concurrent I/O (asyncio + aiohttp)
+- **Async/await** — concurrent I/O (asyncio + aiohttp), see `async-patterns` skill
+
+### Thread Safety
+
+```python
+import threading
+
+# Shared mutable state needs a lock
+lock = threading.Lock()
+counter = 0
+
+def increment():
+    global counter
+    with lock:  # Always use context manager
+        counter += 1
+
+# Thread-safe collections
+from queue import Queue
+q = Queue()  # Thread-safe FIFO
+q.put(item)
+item = q.get()
+```
+
+**Rules:**
+- Protect shared mutable state with `threading.Lock()`
+- Use `queue.Queue` for thread-safe producer/consumer
+- Use `threading.local()` for thread-local storage
+- Prefer `concurrent.futures` over raw `threading` module
+- Never mix `asyncio` and blocking calls without `run_in_executor`
 
 ## Anti-Patterns to Avoid
 

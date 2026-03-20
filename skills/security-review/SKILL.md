@@ -26,11 +26,11 @@ description: "Security checklist and patterns for Python applications. Use when 
 - [ ] YAML uses `safe_load()` only
 
 ### Authentication & Authorization
-- [ ] Passwords hashed with bcrypt/argon2 (never plaintext, never MD5/SHA1)
-- [ ] JWT tokens validated (signature, expiry, issuer)
-- [ ] Session tokens are cryptographically random
-- [ ] Auth checked on every protected route
-- [ ] Rate limiting on auth endpoints
+- [ ] Passwords hashed with bcrypt/argon2 (use `passlib` or `bcrypt` library)
+- [ ] JWT tokens validated with `python-jose` or `PyJWT` (check signature, expiry, issuer)
+- [ ] Session tokens are `secrets.token_urlsafe(32)` (not `random`)
+- [ ] Auth checked on every protected route (FastAPI `Depends`, Django `@login_required`)
+- [ ] Rate limiting on auth endpoints (`slowapi` for FastAPI, `django-ratelimit`)
 
 ### Secrets Management
 - [ ] No hardcoded secrets in source code
