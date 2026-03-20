@@ -21,6 +21,9 @@ Usage:
     cc-flow status
     cc-flow validate
     cc-flow scan [--create-tasks]
+    cc-flow log --status KEPT --task-id <id> --description "..." [--iteration N]
+    cc-flow log --show 10
+    cc-flow summary
 """
 
 import argparse
@@ -583,6 +586,73 @@ def cmd_scan(args):
         print(json.dumps(output))
 
 
+LOG_FILE = Path("improvement-results.tsv")
+LOG_HEADER = "timestamp\titeration\tmode\tarea\ttask_id\tdescription\tstatus\tfiles_changed\tdiff_lines\tduration_sec\tnotes\n"
+
+
+def cmd_log(args):
+    """Append entry to improvement-results.tsv or show recent entries."""
+    if args.show:
+        if not LOG_FILE.exists():
+            print(json.dumps({"success": False, "error": "No log file found"}))
+            sys.exit(1)
+        lines = LOG_FILE.read_text().strip().split("\n")
+        n = min(args.show, len(lines) - 1)  # Skip header
+        entries = []
+        for line in lines[-n:]:
+            parts = line.split("\t")
+            if len(parts) >= 6:
+                entries.append({
+                    "timestamp": parts[0], "iteration": parts[1], "mode": parts[2],
+                    "task_id": parts[4], "status": parts[6] if len(parts) > 6 else "",
+                })
+        print(json.dumps({"success": True, "entries": entries, "total": len(lines) - 1}))
+        return
+
+    # Append mode
+    if not LOG_FILE.exists():
+        LOG_FILE.write_text(LOG_HEADER)
+
+    row = "\t".join([
+        now_iso(),
+        str(args.iteration or ""),
+        args.mode or "",
+        args.area or "",
+        args.task_id or "",
+        args.description or "",
+        args.status or "",
+        str(args.files or ""),
+        str(args.diff_lines or ""),
+        str(args.duration or ""),
+        args.notes or "",
+    ])
+    with open(LOG_FILE, "a") as f:
+        f.write(row + "\n")
+    print(json.dumps({"success": True, "logged": args.status}))
+
+
+def cmd_summary(_args):
+    """Print session summary from improvement-results.tsv."""
+    if not LOG_FILE.exists():
+        print("No improvement-results.tsv found.")
+        return
+
+    lines = LOG_FILE.read_text().strip().split("\n")[1:]  # Skip header
+    kept = sum(1 for l in lines if "KEPT" in l)
+    discarded = sum(1 for l in lines if "DISCARDED" in l)
+    skipped = sum(1 for l in lines if "SKIPPED" in l)
+    total = len(lines)
+    pct = int(kept / total * 100) if total > 0 else 0
+
+    print(f"## Autoimmune Summary")
+    print(f"| Metric | Value |")
+    print(f"|--------|-------|")
+    print(f"| Iterations | {total} |")
+    print(f"| Kept | {kept} ({pct}%) |")
+    print(f"| Discarded | {discarded} |")
+    print(f"| Skipped | {skipped} |")
+
+
 def cmd_dep_add(args):
     """Add dependency to existing task."""
     path = TASKS_SUBDIR / f"{args.id}.json"
@@ -655,6 +725,21 @@ def main():
     scan_p = sub.add_parser("scan")
     scan_p.add_argument("--create-tasks", action="store_true", default=False)
 
+    log_p = sub.add_parser("log")
+    log_p.add_argument("--show", type=int, default=0, help="Show last N entries")
+    log_p.add_argument("--iteration", type=int, default=None)
+    log_p.add_argument("--mode", default="")
+    log_p.add_argument("--area", default="")
+    log_p.add_argument("--task-id", default="")
+    log_p.add_argument("--description", default="")
+    log_p.add_argument("--status", default="")
+    log_p.add_argument("--files", type=int, default=None)
+    log_p.add_argument("--diff-lines", type=int, default=None)
+    log_p.add_argument("--duration", type=int, default=None)
+    log_p.add_argument("--notes", default="")
+
+    sub.add_parser("summary")
+
     next_p = sub.add_parser("next")
     next_p.add_argument("--epic", default="")
 
@@ -687,6 +772,8 @@ def main():
         "validate": cmd_validate,
         "next": cmd_next,
         "scan": cmd_scan,
+        "log": cmd_log,
+        "summary": cmd_summary,
     }
 
     if args.command == "epic":
