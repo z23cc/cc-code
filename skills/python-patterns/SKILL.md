@@ -151,3 +151,10 @@ mypy .                     # Type check
 pytest --cov=mypackage     # Test + coverage
 bandit -r .                # Security
 ```
+
+## Related Skills
+
+- **async-patterns** — async/await patterns for concurrent I/O
+- **clean-architecture** — system-level structure using these patterns
+- **python-testing** — testing patterns complement coding patterns
+- **error-handling** — exception design and retry strategies

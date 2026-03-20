@@ -150,3 +150,10 @@ def test_bulk_insert_performance():
 
 **DO:** Test behavior not implementation, use fixtures, mock external deps, test edge cases, follow the pyramid
 **DON'T:** Test third-party code, share state between tests, use complex conditionals in tests, catch exceptions (use `pytest.raises`)
+
+## Related Skills
+
+- **tdd** — TDD workflow that drives test writing
+- **python-patterns** — coding patterns being tested
+- **refinement** — coverage thresholds checked during refinement
+- **async-patterns** — pytest-asyncio patterns for async code
