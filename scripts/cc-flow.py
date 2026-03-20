@@ -20,6 +20,7 @@ Usage:
     cc-flow progress [--epic <epic-id>]
     cc-flow status
     cc-flow validate
+    cc-flow scan [--create-tasks]
 """
 
 import argparse
@@ -479,6 +480,109 @@ def cmd_task_reset(args):
     print(json.dumps({"success": True, "id": args.id, "status": "todo"}))
 
 
+def cmd_scan(args):
+    """Scan codebase for issues, generate improvement epic + tasks."""
+    import subprocess
+
+    findings = {"P1": [], "P2": [], "P3": [], "P4": []}
+
+    # Ruff scan
+    try:
+        result = subprocess.run(
+            ["ruff", "check", ".", "--output-format", "json"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.stdout.strip():
+            issues = json.loads(result.stdout)
+            by_rule = {}
+            for i in issues:
+                by_rule.setdefault(i.get("code", "?"), []).append(i)
+            for rule, items in sorted(by_rule.items(), key=lambda x: -len(x[1]))[:10]:
+                findings["P3"].append(f"Fix {len(items)}x ruff {rule}: {items[0].get('message', '')}")
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    # Mypy scan
+    try:
+        result = subprocess.run(
+            ["mypy", ".", "--no-error-summary"],
+            capture_output=True, text=True, timeout=60,
+        )
+        for line in result.stdout.strip().split("\n")[:10]:
+            if line.strip() and "error:" in line:
+                findings["P2"].append(f"Fix mypy: {line.strip()}")
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        pass
+
+    # Bandit scan
+    try:
+        result = subprocess.run(
+            ["bandit", "-r", ".", "-f", "json", "-q"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.stdout.strip():
+            data = json.loads(result.stdout)
+            for r in data.get("results", [])[:10]:
+                sev = r.get("issue_severity", "MEDIUM")
+                priority = "P1" if sev in ("HIGH", "CRITICAL") else "P3"
+                findings[priority].append(
+                    f"[{sev}] {r.get('issue_text', '')} ({r.get('filename', '')}:{r.get('line_number', '')})"
+                )
+    except (FileNotFoundError, subprocess.TimeoutExpired, json.JSONDecodeError):
+        pass
+
+    # Count totals
+    total = sum(len(v) for v in findings.values())
+
+    if args.create_tasks and total > 0:
+        # Auto-create epic + tasks
+        cmd_init(argparse.Namespace())
+
+        meta = load_meta()
+        epic_num = meta["next_epic"]
+        date_slug = datetime.now(timezone.utc).strftime("%Y%m%d")
+        epic_id = f"epic-{epic_num}-scan-{date_slug}"
+        meta["next_epic"] = epic_num + 1
+        save_meta(meta)
+
+        spec_lines = [f"# Epic: Code scan {date_slug}\n\n## Findings\n"]
+        task_num = 0
+        for priority in ("P1", "P2", "P3", "P4"):
+            for finding in findings[priority]:
+                task_num += 1
+                task_id = f"{epic_id}.{task_num}"
+                state = {
+                    "id": task_id,
+                    "epic": epic_id,
+                    "title": f"[{priority}] {finding}",
+                    "status": "todo",
+                    "depends_on": [],
+                    "priority": {"P1": 1, "P2": 2, "P3": 3, "P4": 4}[priority],
+                    "created": now_iso(),
+                }
+                save_task(TASKS_SUBDIR / f"{task_id}.json", state)
+                spec_path = TASKS_SUBDIR / f"{task_id}.md"
+                spec_path.write_text(f"# Task: {finding}\n\n## Fix\n\n[Describe the fix]\n")
+                spec_lines.append(f"- [{priority}] {finding}")
+
+        epic_spec = EPICS_DIR / f"{epic_id}.md"
+        epic_spec.write_text("\n".join(spec_lines) + "\n")
+
+        print(json.dumps({
+            "success": True,
+            "epic": epic_id,
+            "tasks_created": task_num,
+            "findings": {k: len(v) for k, v in findings.items()},
+        }))
+    else:
+        # Just report
+        output = {"success": True, "total": total, "findings": {}}
+        for priority in ("P1", "P2", "P3", "P4"):
+            if findings[priority]:
+                output["findings"][priority] = findings[priority]
+        print(json.dumps(output))
+
+
 def cmd_dep_add(args):
     """Add dependency to existing task."""
     path = TASKS_SUBDIR / f"{args.id}.json"
@@ -548,6 +652,9 @@ def main():
     sub.add_parser("status")
     sub.add_parser("validate")
 
+    scan_p = sub.add_parser("scan")
+    scan_p.add_argument("--create-tasks", action="store_true", default=False)
+
     next_p = sub.add_parser("next")
     next_p.add_argument("--epic", default="")
 
@@ -579,6 +686,7 @@ def main():
         "status": cmd_status,
         "validate": cmd_validate,
         "next": cmd_next,
+        "scan": cmd_scan,
     }
 
     if args.command == "epic":
