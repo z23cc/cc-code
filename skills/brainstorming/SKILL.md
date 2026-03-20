@@ -11,15 +11,20 @@ Turn ideas into fully formed designs through collaborative dialogue. Understand 
 Do NOT write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
 </HARD-GATE>
 
+## SPARC Phases (Specification → Pseudocode → Architecture → Refinement → Completion)
+
+This skill covers **S** (Specification) and **A** (Architecture). The plan skill covers **P** and **R**. TDD covers **C**.
+
 ## Checklist
 
-1. **Explore project context** — check files, docs, recent commits
-2. **Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
-3. **Propose 2-3 approaches** — with trade-offs and your recommendation
-4. **Present design** — in sections scaled to complexity, get approval after each section
-5. **Write design doc** — save to `docs/specs/YYYY-MM-DD-<topic>-design.md`
-6. **User reviews spec** — ask user to review before proceeding
-7. **Transition to implementation** — invoke plan skill
+1. **[S] Explore project context** — check files, docs, recent commits
+2. **[S] Ask clarifying questions** — one at a time, understand purpose/constraints/success criteria
+3. **[S] Define acceptance criteria** — measurable, testable outcomes (not vague "should work")
+4. **[A] Propose 2-3 approaches** — with trade-offs and your recommendation
+5. **[A] Present design** — in sections scaled to complexity, get approval after each section
+6. **Write design doc** — save to `docs/specs/YYYY-MM-DD-<topic>-design.md`
+7. **User reviews spec** — ask user to review before proceeding
+8. **Transition to implementation** — invoke plan skill
 
 ## The Process
 
