@@ -4,16 +4,22 @@
 Usage:
     taskctl init
     taskctl epic create --title "Epic title"
-    taskctl task create --epic epic-1 --title "Task title" [--deps epic-1.1,epic-1.2]
+    taskctl epic close <epic-id>
+    taskctl task create --epic <epic-id> --title "Task title" [--deps id1,id2]
+    taskctl task reset <task-id>
+    taskctl dep add <task-id> <dep-id>
     taskctl list
     taskctl epics
-    taskctl tasks [--epic epic-1] [--status todo]
+    taskctl tasks [--epic <epic-id>] [--status todo|in_progress|done|blocked]
     taskctl show <id>
-    taskctl ready [--epic epic-1]
+    taskctl ready [--epic <epic-id>]
+    taskctl next [--epic <epic-id>]
     taskctl start <task-id>
     taskctl done <task-id> [--summary "What was done"]
     taskctl block <task-id> --reason "Why blocked"
-    taskctl progress [--epic epic-1]
+    taskctl progress [--epic <epic-id>]
+    taskctl status
+    taskctl validate
 """
 
 import argparse
@@ -312,6 +318,188 @@ def cmd_progress(args):
             print(f"  ○ {todo} todo")
 
 
+def cmd_status(_args):
+    """Global overview — epic counts, task counts, health."""
+    tasks = all_tasks()
+    epic_files = sorted(EPICS_DIR.glob("*.md"))
+    total_tasks = len(tasks)
+    done = sum(1 for t in tasks.values() if t["status"] == "done")
+    in_prog = sum(1 for t in tasks.values() if t["status"] == "in_progress")
+    blocked = sum(1 for t in tasks.values() if t["status"] == "blocked")
+    todo = total_tasks - done - in_prog - blocked
+    print(json.dumps({
+        "success": True,
+        "epics": len(epic_files),
+        "tasks": total_tasks,
+        "done": done,
+        "in_progress": in_prog,
+        "blocked": blocked,
+        "todo": todo,
+    }))
+
+
+def cmd_next(args):
+    """Smart next: pick highest-priority ready task."""
+    tasks = all_tasks()
+    ready = []
+    for t in tasks.values():
+        if args.epic and t.get("epic") != args.epic:
+            continue
+        if t["status"] != "todo":
+            continue
+        deps_done = all(
+            tasks.get(d, {}).get("status") == "done"
+            for d in t.get("depends_on", [])
+        )
+        if deps_done:
+            ready.append(t)
+
+    if not ready:
+        # Check if there's in-progress work to resume
+        in_prog = [t for t in tasks.values() if t["status"] == "in_progress"]
+        if in_prog:
+            t = in_prog[0]
+            print(json.dumps({"success": True, "action": "resume", "id": t["id"], "title": t["title"]}))
+        else:
+            print(json.dumps({"success": True, "action": "none", "reason": "all done or blocked"}))
+        return
+
+    # Sort by priority field (lower = higher priority), then by id
+    ready.sort(key=lambda t: (t.get("priority", 999), t["id"]))
+    t = ready[0]
+    print(json.dumps({"success": True, "action": "start", "id": t["id"], "title": t["title"]}))
+
+
+def cmd_validate(args):
+    """Validate epic/task structure — specs exist, deps valid, no cycles."""
+    tasks = all_tasks()
+    errors = []
+    warnings = []
+
+    # Check all epics have spec files
+    for f in sorted(EPICS_DIR.glob("*.md")):
+        epic_id = f.stem
+        epic_tasks = [t for t in tasks.values() if t.get("epic") == epic_id]
+        if not epic_tasks:
+            warnings.append(f"Epic {epic_id} has no tasks")
+
+    # Check all tasks have valid structure
+    for tid, t in tasks.items():
+        # Check epic exists
+        epic_id = t.get("epic", "")
+        epic_path = EPICS_DIR / f"{epic_id}.md"
+        if not epic_path.exists():
+            errors.append(f"Task {tid}: epic {epic_id} spec missing")
+
+        # Check spec exists
+        spec_path = TASKS_SUBDIR / f"{tid}.md"
+        if not spec_path.exists():
+            warnings.append(f"Task {tid}: spec file missing")
+
+        # Check status valid
+        if t.get("status") not in ("todo", "in_progress", "done", "blocked"):
+            errors.append(f"Task {tid}: invalid status '{t.get('status')}'")
+
+        # Check deps exist
+        for dep in t.get("depends_on", []):
+            if dep not in tasks:
+                errors.append(f"Task {tid}: dependency {dep} not found")
+
+    # Check for dependency cycles (DFS)
+    def has_cycle(task_id, visited, rec_stack):
+        visited.add(task_id)
+        rec_stack.add(task_id)
+        for dep in tasks.get(task_id, {}).get("depends_on", []):
+            if dep not in visited:
+                if has_cycle(dep, visited, rec_stack):
+                    return True
+            elif dep in rec_stack:
+                errors.append(f"Dependency cycle detected involving {task_id} → {dep}")
+                return True
+        rec_stack.discard(task_id)
+        return False
+
+    visited, rec_stack = set(), set()
+    for tid in tasks:
+        if tid not in visited:
+            has_cycle(tid, visited, rec_stack)
+
+    valid = len(errors) == 0
+    print(json.dumps({
+        "success": valid,
+        "valid": valid,
+        "errors": errors,
+        "warnings": warnings,
+        "task_count": len(tasks),
+    }))
+    if not valid:
+        sys.exit(1)
+
+
+def cmd_epic_close(args):
+    """Close epic — requires all tasks done."""
+    epic_id = args.id
+    epic_path = EPICS_DIR / f"{epic_id}.md"
+    if not epic_path.exists():
+        print(json.dumps({"success": False, "error": f"Epic not found: {epic_id}"}))
+        sys.exit(1)
+
+    tasks = all_tasks()
+    epic_tasks = [t for t in tasks.values() if t.get("epic") == epic_id]
+    not_done = [t for t in epic_tasks if t["status"] != "done"]
+    if not_done:
+        ids = [t["id"] for t in not_done]
+        print(json.dumps({"success": False, "error": f"Cannot close: {len(not_done)} tasks not done", "pending": ids}))
+        sys.exit(1)
+
+    # Move epic and tasks to completed/
+    completed_epic = COMPLETED_DIR / epic_path.name
+    epic_path.rename(completed_epic)
+    for t in epic_tasks:
+        for ext in (".json", ".md"):
+            src = TASKS_SUBDIR / f"{t['id']}{ext}"
+            if src.exists():
+                src.rename(COMPLETED_DIR / src.name)
+
+    print(json.dumps({"success": True, "id": epic_id, "tasks_archived": len(epic_tasks)}))
+
+
+def cmd_task_reset(args):
+    """Reset task to todo, clearing started/completed/blocked fields."""
+    path = TASKS_SUBDIR / f"{args.id}.json"
+    if not path.exists():
+        print(json.dumps({"success": False, "error": f"Task not found: {args.id}"}))
+        sys.exit(1)
+
+    data = json.loads(path.read_text())
+    data["status"] = "todo"
+    for field in ("started", "completed", "summary", "blocked_reason", "blocked_at"):
+        data.pop(field, None)
+    save_task(path, data)
+    print(json.dumps({"success": True, "id": args.id, "status": "todo"}))
+
+
+def cmd_dep_add(args):
+    """Add dependency to existing task."""
+    path = TASKS_SUBDIR / f"{args.id}.json"
+    if not path.exists():
+        print(json.dumps({"success": False, "error": f"Task not found: {args.id}"}))
+        sys.exit(1)
+
+    dep_path = TASKS_SUBDIR / f"{args.dep}.json"
+    if not dep_path.exists():
+        print(json.dumps({"success": False, "error": f"Dependency not found: {args.dep}"}))
+        sys.exit(1)
+
+    data = json.loads(path.read_text())
+    deps = data.get("depends_on", [])
+    if args.dep not in deps:
+        deps.append(args.dep)
+        data["depends_on"] = deps
+        save_task(path, data)
+    print(json.dumps({"success": True, "id": args.id, "depends_on": deps}))
+
+
 def main():
     parser = argparse.ArgumentParser(prog="taskctl", description="cc-code task manager")
     sub = parser.add_subparsers(dest="command")
@@ -357,6 +545,24 @@ def main():
     progress_p = sub.add_parser("progress")
     progress_p.add_argument("--epic", default="")
 
+    sub.add_parser("status")
+    sub.add_parser("validate")
+
+    next_p = sub.add_parser("next")
+    next_p.add_argument("--epic", default="")
+
+    dep_p = sub.add_parser("dep")
+    dep_sub = dep_p.add_subparsers(dest="dep_cmd")
+    dep_add = dep_sub.add_parser("add")
+    dep_add.add_argument("id")
+    dep_add.add_argument("dep")
+
+    epic_close = epic_sub.add_parser("close")
+    epic_close.add_argument("id")
+
+    task_reset = task_sub.add_parser("reset")
+    task_reset.add_argument("id")
+
     args = parser.parse_args()
 
     cmds = {
@@ -370,12 +576,31 @@ def main():
         "done": cmd_done,
         "block": cmd_block,
         "progress": cmd_progress,
+        "status": cmd_status,
+        "validate": cmd_validate,
+        "next": cmd_next,
     }
 
-    if args.command == "epic" and getattr(args, "epic_cmd", None) == "create":
-        cmd_epic_create(args)
-    elif args.command == "task" and getattr(args, "task_cmd", None) == "create":
-        cmd_task_create(args)
+    if args.command == "epic":
+        ec = getattr(args, "epic_cmd", None)
+        if ec == "create":
+            cmd_epic_create(args)
+        elif ec == "close":
+            cmd_epic_close(args)
+        else:
+            parser.print_help()
+            sys.exit(1)
+    elif args.command == "task":
+        tc = getattr(args, "task_cmd", None)
+        if tc == "create":
+            cmd_task_create(args)
+        elif tc == "reset":
+            cmd_task_reset(args)
+        else:
+            parser.print_help()
+            sys.exit(1)
+    elif args.command == "dep" and getattr(args, "dep_cmd", None) == "add":
+        cmd_dep_add(args)
     elif args.command in cmds:
         cmds[args.command](args)
     else:
