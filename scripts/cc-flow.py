@@ -101,6 +101,83 @@ def cmd_epic_create(args):
     print(json.dumps({"success": True, "id": epic_id, "spec": str(spec_path)}))
 
 
+def cmd_epic_import(args):
+    """Import tasks from a plan markdown file. Parses ### Task N: Title headers."""
+    import re
+
+    plan_path = Path(args.file)
+    if not plan_path.exists():
+        print(json.dumps({"success": False, "error": f"File not found: {args.file}"}))
+        sys.exit(1)
+
+    content = plan_path.read_text()
+
+    # Extract title from first H1
+    title_match = re.search(r"^#\s+(.+)", content, re.MULTILINE)
+    title = title_match.group(1).strip() if title_match else plan_path.stem
+
+    # Create epic
+    cmd_init(argparse.Namespace())
+    meta = load_meta()
+    epic_num = meta["next_epic"]
+    slug = slugify(title)
+    epic_id = f"epic-{epic_num}-{slug}"
+    meta["next_epic"] = epic_num + 1
+    save_meta(meta)
+
+    # Copy plan as epic spec
+    spec_path = EPICS_DIR / f"{epic_id}.md"
+    spec_path.write_text(content)
+
+    # Parse tasks: ### Task N: Title  or  ### N. Title  or  ### Title
+    task_pattern = re.compile(
+        r"^###\s+(?:Task\s+\d+[:.]\s*|(\d+)\.\s+)?(.+)",
+        re.MULTILINE,
+    )
+    matches = list(task_pattern.finditer(content))
+
+    task_num = 0
+    prev_task_id = None
+    created = []
+    for m in matches:
+        task_title = m.group(2).strip()
+        if not task_title or task_title.lower().startswith("phase"):
+            continue
+        task_num += 1
+        task_id = f"{epic_id}.{task_num}"
+
+        # Extract content between this ### and the next ###
+        start = m.end()
+        next_match = task_pattern.search(content, start)
+        end = next_match.start() if next_match else len(content)
+        task_body = content[start:end].strip()
+
+        deps = [prev_task_id] if prev_task_id and args.sequential else []
+
+        state = {
+            "id": task_id,
+            "epic": epic_id,
+            "title": task_title,
+            "status": "todo",
+            "depends_on": deps,
+            "created": now_iso(),
+        }
+        save_task(TASKS_SUBDIR / f"{task_id}.json", state)
+
+        task_spec = TASKS_SUBDIR / f"{task_id}.md"
+        task_spec.write_text(f"# Task: {task_title}\n\n{task_body}\n")
+
+        created.append(task_id)
+        prev_task_id = task_id
+
+    print(json.dumps({
+        "success": True,
+        "epic": epic_id,
+        "tasks_created": len(created),
+        "tasks": created,
+    }))
+
+
 def cmd_task_create(args):
     epic_id = args.epic
     # Find next task number for this epic
@@ -483,6 +560,46 @@ def cmd_task_reset(args):
     print(json.dumps({"success": True, "id": args.id, "status": "todo"}))
 
 
+def cmd_task_set_spec(args):
+    """Update task spec from file."""
+    task_id = args.id
+    spec_path = TASKS_SUBDIR / f"{task_id}.md"
+    json_path = TASKS_SUBDIR / f"{task_id}.json"
+
+    if not json_path.exists():
+        print(json.dumps({"success": False, "error": f"Task not found: {task_id}"}))
+        sys.exit(1)
+
+    src = Path(args.file)
+    if not src.exists():
+        print(json.dumps({"success": False, "error": f"File not found: {args.file}"}))
+        sys.exit(1)
+
+    spec_path.write_text(src.read_text())
+    print(json.dumps({"success": True, "id": task_id, "spec": str(spec_path)}))
+
+
+def cmd_epic_reset(args):
+    """Reset all tasks in an epic to todo."""
+    epic_id = args.id
+    tasks = all_tasks()
+    epic_tasks = [t for t in tasks.values() if t.get("epic") == epic_id]
+    if not epic_tasks:
+        print(json.dumps({"success": False, "error": f"No tasks found for: {epic_id}"}))
+        sys.exit(1)
+
+    reset_count = 0
+    for t in epic_tasks:
+        if t["status"] != "todo":
+            t["status"] = "todo"
+            for field in ("started", "completed", "summary", "blocked_reason", "blocked_at"):
+                t.pop(field, None)
+            save_task(TASKS_SUBDIR / f"{t['id']}.json", t)
+            reset_count += 1
+
+    print(json.dumps({"success": True, "epic": epic_id, "reset": reset_count}))
+
+
 def cmd_scan(args):
     """Scan codebase for issues, generate improvement epic + tasks."""
     import subprocess
@@ -653,6 +770,94 @@ def cmd_summary(_args):
     print(f"| Skipped | {skipped} |")
 
 
+def cmd_archive(_args):
+    """Show completed/archived epics and tasks."""
+    if not COMPLETED_DIR.exists():
+        print(json.dumps({"success": True, "archived": [], "count": 0}))
+        return
+
+    archived_epics = []
+    for f in sorted(COMPLETED_DIR.glob("*.md")):
+        if "." not in f.stem.split("-", 2)[-1]:  # Epic md (no task dot notation)
+            # Check if it looks like an epic (no dot in the id part)
+            parts = f.stem.split(".")
+            if len(parts) == 1:  # Epic file, not task
+                epic_id = f.stem
+                task_files = list(COMPLETED_DIR.glob(f"{epic_id}.*.json"))
+                archived_epics.append({
+                    "id": epic_id,
+                    "tasks": len(task_files),
+                })
+
+    if not archived_epics:
+        # Try listing all json files
+        task_jsons = sorted(COMPLETED_DIR.glob("*.json"))
+        tasks = []
+        for f in task_jsons:
+            d = json.loads(f.read_text())
+            tasks.append({"id": d["id"], "title": d.get("title", ""), "completed": d.get("completed", "")})
+        print(json.dumps({"success": True, "tasks": tasks, "count": len(tasks)}))
+    else:
+        print(json.dumps({"success": True, "archived": archived_epics, "count": len(archived_epics)}))
+
+
+def cmd_stats(_args):
+    """Productivity stats from improvement-results.tsv and .tasks/ history."""
+    stats = {"epics": {}, "totals": {"kept": 0, "discarded": 0, "skipped": 0}}
+
+    # From TSV log
+    if LOG_FILE.exists():
+        lines = LOG_FILE.read_text().strip().split("\n")[1:]
+        for line in lines:
+            parts = line.split("\t")
+            if len(parts) < 7:
+                continue
+            status = parts[6]
+            if status == "KEPT":
+                stats["totals"]["kept"] += 1
+            elif status == "DISCARDED":
+                stats["totals"]["discarded"] += 1
+            elif status == "SKIPPED":
+                stats["totals"]["skipped"] += 1
+
+    # From .tasks/
+    tasks = all_tasks()
+    epic_stats = {}
+    for t in tasks.values():
+        epic = t.get("epic", "unknown")
+        if epic not in epic_stats:
+            epic_stats[epic] = {"total": 0, "done": 0, "todo": 0, "in_progress": 0, "blocked": 0}
+        epic_stats[epic]["total"] += 1
+        epic_stats[epic][t["status"]] = epic_stats[epic].get(t["status"], 0) + 1
+
+    # Calculate velocity
+    done_tasks = [t for t in tasks.values() if t.get("completed")]
+    if len(done_tasks) >= 2:
+        times = sorted(t["completed"] for t in done_tasks)
+        first = datetime.fromisoformat(times[0].replace("Z", "+00:00"))
+        last = datetime.fromisoformat(times[-1].replace("Z", "+00:00"))
+        hours = max((last - first).total_seconds() / 3600, 0.1)
+        velocity = len(done_tasks) / hours
+        stats["velocity"] = f"{velocity:.1f} tasks/hour"
+    else:
+        stats["velocity"] = "insufficient data"
+
+    total_attempts = stats["totals"]["kept"] + stats["totals"]["discarded"]
+    success_rate = int(stats["totals"]["kept"] / total_attempts * 100) if total_attempts > 0 else 0
+
+    print(f"## Productivity Stats")
+    print(f"| Metric | Value |")
+    print(f"|--------|-------|")
+    print(f"| Active epics | {len(epic_stats)} |")
+    print(f"| Total tasks | {len(tasks)} |")
+    print(f"| Done | {sum(e['done'] for e in epic_stats.values())} |")
+    print(f"| Velocity | {stats['velocity']} |")
+    if total_attempts > 0:
+        print(f"| Autoimmune kept | {stats['totals']['kept']} |")
+        print(f"| Autoimmune discarded | {stats['totals']['discarded']} |")
+        print(f"| Success rate | {success_rate}% |")
+
+
 def cmd_dep_add(args):
     """Add dependency to existing task."""
     path = TASKS_SUBDIR / f"{args.id}.json"
@@ -739,6 +944,8 @@ def main():
     log_p.add_argument("--notes", default="")
 
     sub.add_parser("summary")
+    sub.add_parser("archive")
+    sub.add_parser("stats")
 
     next_p = sub.add_parser("next")
     next_p.add_argument("--epic", default="")
@@ -752,8 +959,19 @@ def main():
     epic_close = epic_sub.add_parser("close")
     epic_close.add_argument("id")
 
+    epic_import = epic_sub.add_parser("import")
+    epic_import.add_argument("--file", required=True)
+    epic_import.add_argument("--sequential", action="store_true", default=False)
+
     task_reset = task_sub.add_parser("reset")
     task_reset.add_argument("id")
+
+    task_set_spec = task_sub.add_parser("set-spec")
+    task_set_spec.add_argument("id")
+    task_set_spec.add_argument("--file", required=True)
+
+    epic_reset = epic_sub.add_parser("reset")
+    epic_reset.add_argument("id")
 
     args = parser.parse_args()
 
@@ -774,6 +992,8 @@ def main():
         "scan": cmd_scan,
         "log": cmd_log,
         "summary": cmd_summary,
+        "archive": cmd_archive,
+        "stats": cmd_stats,
     }
 
     if args.command == "epic":
@@ -782,6 +1002,10 @@ def main():
             cmd_epic_create(args)
         elif ec == "close":
             cmd_epic_close(args)
+        elif ec == "import":
+            cmd_epic_import(args)
+        elif ec == "reset":
+            cmd_epic_reset(args)
         else:
             parser.print_help()
             sys.exit(1)
@@ -791,6 +1015,8 @@ def main():
             cmd_task_create(args)
         elif tc == "reset":
             cmd_task_reset(args)
+        elif tc == "set-spec":
+            cmd_task_set_spec(args)
         else:
             parser.print_help()
             sys.exit(1)
