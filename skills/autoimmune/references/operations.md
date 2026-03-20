@@ -10,8 +10,8 @@ timestamp	iteration	mode	area	task_id	description	status	files_changed	diff_line
 
 | Field | Values |
 |-------|--------|
-| mode | `code` (A) or `test` (B) |
-| status | `KEPT`, `DISCARDED`, `SKIPPED` |
+| mode | `code` (A), `lint` (B1), `type` (B2), `test` (B3), `scan` (D) |
+| status | `KEPT`, `DISCARDED`, `SKIPPED`, `AUTOFIX` |
 | notes | error details or skip reason |
 
 Create if missing:
@@ -19,7 +19,9 @@ Create if missing:
 printf 'timestamp\titeration\tmode\tarea\ttask_id\tdescription\tstatus\tfiles_changed\tdiff_lines\tduration_sec\tnotes\n' > improvement-results.tsv
 ```
 
-## improvement-program.md Template
+## Task Sources
+
+### Option 1: improvement-program.md (flat list)
 
 ```markdown
 # Improvement Program
@@ -54,6 +56,34 @@ printf 'timestamp\titeration\tmode\tarea\ttask_id\tdescription\tstatus\tfiles_ch
 - [ ] Add docstrings to exported functions
 ```
 
+### Option 2: .tasks/ (structured, with taskctl)
+
+```bash
+TASKCTL="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/taskctl.py"
+
+# Mode D auto-generates an epic:
+$TASKCTL epic create --title "Autoimmune scan 2026-03-21"
+
+# With tasks from scan results:
+$TASKCTL task create --epic epic-N-autoimmune-scan --title "[P1] Fix bandit HIGH: hardcoded secret in config.py:42"
+$TASKCTL task create --epic epic-N-autoimmune-scan --title "[P2] Fix mypy: missing return type on process_order"
+$TASKCTL task create --epic epic-N-autoimmune-scan --title "[P3] Fix ruff F401: unused import os in utils.py"
+
+# During Mode A, the loop uses:
+$TASKCTL ready --epic epic-N-autoimmune-scan  # Find next task
+$TASKCTL start <task-id>                       # Claim it
+$TASKCTL done <task-id> --summary "..."        # Mark done after commit
+```
+
+Use `.tasks/` when:
+- Running multiple autoimmune sessions across days
+- Tracking which tasks were addressed vs skipped
+- Dependencies between improvements exist
+
+Use `improvement-program.md` when:
+- Single session, flat task list
+- Quick one-off improvement run
+
 ## Failure Modes & Recovery
 
 | Symptom | Action |
@@ -63,11 +93,15 @@ printf 'timestamp\titeration\tmode\tarea\ttask_id\tdescription\tstatus\tfiles_ch
 | 5 consecutive DISCARDED | STOP — loop is churning |
 | Context getting large | STOP, start fresh session |
 | No unchecked tasks | STOP — all done |
+| ruff --fix breaks code | Revert, log DISCARDED, continue to mypy phase |
+| Mode D finds 100+ issues | Auto-prioritize P1/P2 only for first run |
 
 ## Resuming a Session
 
 1. Check `improvement-results.tsv` for last completed iteration
-2. Check `improvement-program.md` for last checked-off item
+2. Check task source:
+   - `.tasks/`: `$TASKCTL progress` → see what's left
+   - `improvement-program.md`: look for last `[x]`
 3. `git log --oneline -5` to see branch state
 4. Run verify command to confirm clean baseline
 5. Resume from next unchecked item
@@ -79,10 +113,12 @@ printf 'timestamp\titeration\tmode\tarea\ttask_id\tdescription\tstatus\tfiles_ch
 
 | Metric | Value |
 |--------|-------|
-| Mode | A / B / Full |
-| Iterations | X |
+| Mode | A / B / C / D |
+| Scan findings (D) | N issues across M categories |
+| Iterations (code) | X |
 | Kept | Y (Z%) |
 | Discarded | W |
+| Auto-fixed (lint) | L |
 | Skipped areas | [list or "none"] |
 | Branch | auto/improve-XXXXXXXX-XXXX |
 | Baseline | <SHA> |
@@ -90,10 +126,19 @@ printf 'timestamp\titeration\tmode\tarea\ttask_id\tdescription\tstatus\tfiles_ch
 ### Changes Made
 - improve(auth): add input validation on login endpoint
 - improve(api): handle empty response from payment API
-- fix(cache): resolve race condition in invalidation
+- fix(lint): auto-fix 12 ruff violations
+- fix(types): add return type annotations to 5 functions
+
+### Metrics Before/After
+| Metric | Before | After |
+|--------|--------|-------|
+| ruff errors | 23 | 3 |
+| mypy errors | 15 | 7 |
+| pytest failures | 2 | 0 |
+| bandit HIGH | 1 | 0 |
 
 ### Next Steps
 - Review: `git log --oneline <SHA>..HEAD`
-- Remaining unchecked items in improvement-program.md
+- Remaining tasks: `$TASKCTL progress` or check improvement-program.md
 - Skipped areas need manual investigation
 ```

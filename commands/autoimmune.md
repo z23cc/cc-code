@@ -1,20 +1,23 @@
 ---
-description: "Autonomous improvement loop. Picks tasks from improvement-program.md, implements, verifies, commits or reverts. Modes: code / test / full. Triggers: autoimmune, auto improve, 自动改进."
+description: "Autonomous improvement loop. TRIGGER: 'autoimmune', 'auto improve', 'auto scan', '自动改进', '自动扫描', '跑改进循环'. 4 modes: code/test/full/scan."
 ---
 
 Activate the autoimmune skill. Parse the user's input for mode:
 
-- No qualifier or "code" → **Mode A** (code improvement loop)
-- "test" → **Mode B** (test-driven fix loop)
-- "full" → **Mode A then Mode B**
+| Input | Mode | What Happens |
+|-------|------|-------------|
+| "autoimmune" / "自动改进" | A | Pick from improvement-program.md or .tasks/, implement, verify, commit/revert |
+| "autoimmune test" / "测试改进" | B | Auto-fix ruff → mypy → pytest failures |
+| "autoimmune scan" / "自动扫描" | D | Scan codebase (ruff/mypy/bandit/radon), generate task list, then run Mode A |
+| "autoimmune full" / "全量改进" | C | Mode D → A → B (scan + improve + fix) |
 
-Optional focus topic after the mode (e.g., "autoimmune 数据库层").
+Optional focus topic: "autoimmune 数据库层" → scope Mode A/D to matching area.
 
 Before starting:
-1. Check `improvement-program.md` exists (if not, create from template in references/operations.md)
-2. Check `improvement-results.tsv` exists (if not, create header)
-3. Run verify command to confirm clean baseline
-4. Create branch `auto/improve-YYYYMMDD-HHMM`
+1. Run verify command to confirm clean baseline
+2. Record `BASELINE_SHA=$(git rev-parse HEAD)`
+3. For Mode A: check improvement-program.md or .tasks/ exists
+4. For Mode D: no prerequisites (scan generates the list)
+5. Create branch `auto/improve-YYYYMMDD-HHMM`
 
-Then run the selected mode loop per the autoimmune skill until STOP conditions are met.
-Print session summary when done.
+Run the loop. Print session summary with before/after metrics when done.

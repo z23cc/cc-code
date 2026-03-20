@@ -1,14 +1,16 @@
 ---
 name: autoimmune
 description: >
-  Autonomous project improvement loop.
-  Mode A (code): pick task from improvement-program.md, implement, verify, commit or revert.
-  Mode B (test): run pytest suite, discover failures, auto-fix, re-verify.
+  Autonomous project improvement loop with 4 modes.
+  Mode A (code): pick task from improvement-program.md or .tasks/, implement, verify, commit or revert.
+  Mode B (test): run pytest/ruff/mypy, discover failures, auto-fix, re-verify.
   Mode C (full): Mode A then Mode B.
+  Mode D (scan): auto-detect issues, generate improvement-program.md, then run Mode A.
   Triggers: "autoimmune", "auto improve", "自动改进", "跑改进循环",
   "autoimmune test", "test loop", "测试改进",
-  "autoimmune full", "全量改进".
-  User may append a focus topic (e.g. "autoimmune 数据库层") to scope Mode A.
+  "autoimmune full", "全量改进",
+  "autoimmune scan", "auto scan", "自动扫描".
+  User may append a focus topic (e.g. "autoimmune 数据库层") to scope Mode A/D.
 ---
 
 # Autoimmune — Autonomous Project Improvement Loop
@@ -17,16 +19,83 @@ description: >
 
 | User says | Mode | Action |
 |-----------|------|--------|
-| "autoimmune" / "auto improve" / "自动改进" | A | Code quality loop |
-| "autoimmune test" / "test loop" / "测试改进" | B | Test-driven fix loop |
-| "autoimmune full" / "全量改进" | A→B | Code first, then test |
+| "autoimmune" / "auto improve" / "自动改进" | A | Code quality loop (from existing task list) |
+| "autoimmune test" / "test loop" / "测试改进" | B | Lint + type + test fix loop |
+| "autoimmune full" / "全量改进" | C | Mode D → A → B (scan, improve, fix) |
+| "autoimmune scan" / "auto scan" / "自动扫描" | D | Scan codebase, generate tasks, then Mode A |
 
 ## Prerequisites
 
-1. `improvement-program.md` exists in project root (if not, tell user to create one)
-2. `improvement-results.tsv` exists (if not, create — see [references/operations.md](references/operations.md))
-3. Verify command passes (clean baseline): `ruff check . && mypy . && pytest`
-4. Record baseline: `git rev-parse HEAD` → `BASELINE_SHA`
+1. Verify command passes (clean baseline): `ruff check . && mypy . && pytest`
+2. Record baseline: `git rev-parse HEAD` → `BASELINE_SHA`
+3. For Mode A: `improvement-program.md` or `.tasks/` must exist
+4. For Mode D: no prerequisites (it generates the task list)
+
+---
+
+## Mode D: Auto-Scan (NEW)
+
+Automatically discover improvement opportunities. Creates `improvement-program.md` or `.tasks/` entries.
+
+### D1: LINT SCAN
+```bash
+ruff check . --output-format json 2>/dev/null | python3 -c "
+import sys,json
+issues = json.load(sys.stdin)
+by_rule = {}
+for i in issues:
+    rule = i['code']
+    by_rule.setdefault(rule, []).append(i)
+for rule, items in sorted(by_rule.items(), key=lambda x: -len(x[1]))[:10]:
+    print(f'- [ ] Fix {len(items)}x {rule}: {items[0][\"message\"]}')
+"
+```
+
+### D2: TYPE SCAN
+```bash
+mypy . --no-error-summary 2>/dev/null | head -20 | while read line; do
+    echo "- [ ] $line"
+done
+```
+
+### D3: SECURITY SCAN
+```bash
+bandit -r src/ -f json 2>/dev/null | python3 -c "
+import sys,json
+data = json.load(sys.stdin)
+for r in data.get('results', [])[:10]:
+    print(f'- [ ] [{r[\"issue_severity\"]}] {r[\"issue_text\"]} ({r[\"filename\"]}:{r[\"line_number\"]})')
+"
+```
+
+### D4: QUALITY SCAN
+```bash
+# Dead code
+ruff check . --select F841,F811,F401 --output-format json 2>/dev/null
+
+# Complexity
+radon cc src/ -n C -j 2>/dev/null  # Only complex functions
+
+# Missing type hints
+mypy . --strict 2>/dev/null | grep "Function is missing" | head -10
+```
+
+### D5: GENERATE TASK LIST
+Assemble findings into `improvement-program.md` by priority:
+- **P1**: Security (bandit HIGH/CRITICAL)
+- **P2**: Type errors (mypy failures)
+- **P3**: Lint errors (ruff violations)
+- **P4**: Quality (dead code, complexity, missing type hints)
+
+If `.tasks/` exists, optionally create an epic + tasks via taskctl instead:
+```bash
+TASKCTL="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/taskctl.py"
+$TASKCTL epic create --title "Autoimmune scan $(date +%Y-%m-%d)"
+# For each finding:
+$TASKCTL task create --epic <epic-id> --title "Fix: <description>"
+```
+
+Then proceed to **Mode A**.
 
 ---
 
@@ -35,8 +104,10 @@ description: >
 Create branch `auto/improve-YYYYMMDD-HHMM`, then iterate:
 
 ### A1: SELECT
-1. Re-read `improvement-program.md` every iteration (never cache)
-2. Pick first unchecked `- [ ]` from highest-priority section not in `skipped_areas`
+1. Re-read task source every iteration (never cache):
+   - If `.tasks/` has an active autoimmune epic → use `$TASKCTL ready`
+   - Else → read `improvement-program.md`, pick first unchecked `- [ ]`
+2. Skip items in `skipped_areas`
 3. If user specified focus topic → only pick from matching section
 4. If all done → STOP
 
@@ -55,7 +126,7 @@ Target < 50 lines diff. Follow project's coding standards and rules.
 3. Acceptance criteria met?
 4. Fail → revert, log DISCARDED, continue
 
-### A5: VERIFY
+### A5: VERIFY + REVIEW
 
 Run the project's verification command:
 - Python default: `ruff check . && mypy . && pytest`
@@ -64,7 +135,9 @@ Run the project's verification command:
 **PASS:**
 1. `git add <specific files>` (NEVER `git add -A`)
 2. `git commit`: `"improve(<area>): <description>"`
-3. Mark `[x]` in `improvement-program.md`, commit that too
+3. Mark task done:
+   - `.tasks/`: `$TASKCTL done <task-id> --summary "..."`
+   - `improvement-program.md`: mark `[x]`
 4. Append KEPT to `improvement-results.tsv`
 5. Reset `consecutive_fail[area] = 0`
 
@@ -83,33 +156,42 @@ Continue immediately to next iteration.
 
 ---
 
-## Mode B: Test-Driven Fix Loop
+## Mode B: Lint + Type + Test Fix Loop
 
-Create branch `auto/testfix-YYYYMMDD-HHMM`, then iterate:
+Create branch `auto/testfix-YYYYMMDD-HHMM`, then iterate in 3 phases:
 
-### B1: DISCOVER
-1. Run `pytest --tb=short -q` — capture all failures
-2. Group failures by file/module
-3. If all pass → STOP (nothing to fix)
+### Phase B1: Ruff Auto-fix
+```bash
+ruff check . --fix --unsafe-fixes
+```
+If changes were made → verify → commit `"fix(lint): auto-fix ruff violations"`
 
-### B2: SELECT
-1. Pick the first failing test
-2. Read the test code and the code under test
-3. Determine: is this a test bug or a code bug?
+### Phase B2: Mypy Fix Loop
+1. Run `mypy . --no-error-summary` — capture errors
+2. Group by file
+3. For each file: fix type errors (add annotations, fix incompatible types)
+4. Verify after each file → commit or revert
 
-### B3: FIX
-1. If test bug → fix the test
-2. If code bug → fix the code (minimal change)
-3. Target < 30 lines diff
+### Phase B3: Pytest Fix Loop
+1. Run `pytest --tb=short -q` — capture failures
+2. Group by file/module
+3. For each failure:
+   - Read test code and code under test
+   - Determine: test bug or code bug?
+   - Fix minimally (< 30 lines diff)
+   - Verify → commit or revert
 
-### B4: VERIFY
-Run `pytest` on the specific test file first, then full suite.
+### Churn Detection
+Same as Mode A. 5 consecutive DISCARDED in any phase → STOP that phase, move to next.
 
-**PASS:** commit with `"fix(<module>): <what was wrong>"`
-**FAIL:** revert, log DISCARDED, move to next failure
+---
 
-### B5: CHURN DETECTION
-Same rules as Mode A. 5 consecutive DISCARDED → STOP.
+## Mode C: Full Loop
+
+1. Run **Mode D** (scan and generate tasks)
+2. Run **Mode A** (implement improvements)
+3. Run **Mode B** (fix remaining lint/type/test issues)
+4. Print combined session summary
 
 ---
 
@@ -121,17 +203,22 @@ Same rules as Mode A. 5 consecutive DISCARDED → STOP.
 - ALWAYS verify before commit — no exceptions
 - ALWAYS revert on failure — no partial commits
 - ALWAYS `git diff --stat` before commit to confirm scope
-- ALWAYS re-read `improvement-program.md` each iteration (never cache)
+- ALWAYS re-read task source each iteration (never cache)
+- MAX 50 lines diff per improvement (Mode A)
+- MAX 30 lines diff per fix (Mode B)
 
 ---
 
 ## When Done
 
-Print session summary and next steps — see [references/operations.md](references/operations.md).
+Print session summary — see [references/operations.md](references/operations.md).
 
 ## Related Skills
 
-- **verification** — the verify step uses this skill's evidence-before-claims principle
+- **task-tracking** — `.tasks/` integration for structured task management
+- **readiness-audit** — scan results can seed Mode D
+- **verification** — the verify step uses evidence-before-claims principle
 - **debugging** — when a fix attempt fails, switch to systematic debugging
-- **tdd** — Mode B follows the TDD principle: failing test → minimal fix → green
+- **tdd** — Mode B follows: failing test → minimal fix → green
+- **code-review-loop** — for reviewing accumulated changes after the loop
 - **git-workflow** — commit messages follow conventional commits
