@@ -102,9 +102,21 @@ This prevents reviewing old code that isn't part of the current task.
 | **RepoPrompt context_builder** | Deep architectural review (if MCP available) |
 | **Manual** | User explicitly wants to review themselves |
 
+## Post-Autoimmune Review
+
+After an autoimmune session completes, review all accumulated changes:
+
+```bash
+# Review everything since baseline
+git diff $BASELINE_SHA..HEAD
+```
+
+Dispatch review loop scoped to the full autoimmune diff. This catches cross-task issues that per-task reviews miss (e.g., inconsistent naming, duplicated code across tasks).
+
 ## Related Skills
 
 - **verification** — verify after each fix iteration
 - **refinement** — quality metrics complement review findings
 - **parallel-agents** — dispatch multiple reviewers for large changes
+- **autoimmune** — run review loop after autoimmune session completes
 - **pr-review command** — GitHub PR variant of this loop
