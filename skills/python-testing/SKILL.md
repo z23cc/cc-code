@@ -115,7 +115,38 @@ pytest -k "test_user"                       # Pattern
 pytest -m "not slow"                        # Skip slow
 ```
 
+## Test Pyramid — Layered Strategy
+
+| Layer | Quantity | Speed | What to Test |
+|-------|----------|-------|-------------|
+| **Unit** | Many (70%) | Fast | Pure functions, business logic, models |
+| **Integration** | Some (20%) | Medium | DB queries, API endpoints, service interactions |
+| **E2E** | Few (10%) | Slow | Critical user flows end-to-end |
+
+### Edge Case Matrix
+
+For each function, consider:
+
+| Category | Cases |
+|----------|-------|
+| **Boundaries** | Empty input, max length, zero, negative, off-by-one |
+| **Null/None** | None arguments, missing keys, empty collections |
+| **Concurrency** | Parallel calls, race conditions, deadlocks |
+| **Error paths** | Network timeout, DB down, invalid format, permission denied |
+| **Security** | SQL injection strings, XSS payloads, path traversal (`../`) |
+
+### Performance Tests
+
+```python
+@pytest.mark.slow
+def test_bulk_insert_performance():
+    start = time.perf_counter()
+    bulk_insert(generate_records(10_000))
+    elapsed = time.perf_counter() - start
+    assert elapsed < 5.0, f"Bulk insert too slow: {elapsed:.1f}s"
+```
+
 ## DO / DON'T
 
-**DO:** Test behavior not implementation, use fixtures, mock external deps, test edge cases
+**DO:** Test behavior not implementation, use fixtures, mock external deps, test edge cases, follow the pyramid
 **DON'T:** Test third-party code, share state between tests, use complex conditionals in tests, catch exceptions (use `pytest.raises`)

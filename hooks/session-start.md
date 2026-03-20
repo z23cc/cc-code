@@ -1,7 +1,8 @@
 ## cc-code — Python Development Toolkit
 
 **Workflows:**
-- New feature → brainstorming → `/plan` → `/tdd` → `/commit`
+- New feature → brainstorming → `/plan` → `/tdd` → refinement → `/commit`
+- Unfamiliar code → research skill → then plan/fix
 - Bug/error → debugging skill → `/fix` → `/commit`
 - Code review → `/review` (auto-dispatches security-reviewer for auth/API code)
 - Performance → `/perf`

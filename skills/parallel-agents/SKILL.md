@@ -77,6 +77,34 @@ Your task:
 - **No constraints:** Agent might refactor everything
 - **Vague output:** "Fix it" — you don't know what changed
 
+## Task→Agent Routing
+
+| Task Type | Agents to Dispatch | Topology |
+|-----------|-------------------|----------|
+| Bug fix | researcher + coder + tester | Sequential (research first) |
+| New feature | planner + coder + reviewer | Sequential (plan first) |
+| Performance | researcher + coder + tester | Sequential |
+| Refactoring | researcher + refactor-cleaner + reviewer | Sequential |
+| Multiple independent bugs | N × (coder + tester) | **Parallel** |
+| Code review (large PR) | N × reviewer (per file group) | **Parallel** |
+
+## Coordination via Filesystem
+
+When agents need to share findings without shared memory:
+
+```
+# Agent A writes findings to a file
+echo "Root cause: race condition in cache.py:42" > /tmp/agent-a-findings.md
+
+# Agent B reads before starting work
+cat /tmp/agent-a-findings.md
+```
+
+Use this pattern for:
+- Research agent → Implementation agent handoff
+- Reviewer findings → Fixer agent input
+- Any sequential agent chain
+
 ## Verification
 
 After agents return:
