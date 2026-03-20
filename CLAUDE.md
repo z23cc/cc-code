@@ -4,7 +4,7 @@ Personal Claude Code plugin for Python-focused development.
 
 ## Architecture
 
-- `agents/` — 6 specialized agents (python-reviewer, code-reviewer, security-reviewer, refactor-cleaner, planner[opus], build-fixer)
+- `agents/` — 6 specialized agents (python-reviewer, code-reviewer, security-reviewer, refactor-cleaner, planner, build-fixer) — all `model: inherit` (uses your global model setting)
 - `skills/` — 19 workflow skills:
   - **Flow**: brainstorming, plan, tdd, verification, debugging, parallel-agents, autoimmune
   - **Python**: python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review
@@ -36,7 +36,7 @@ brainstorming → plan → tdd → verification → commit
 ### Adding New Agents
 1. Create `agents/<name>.md` with YAML frontmatter (name, description, tools, model)
 2. Add the path to `plugin.json` agents array
-3. Planner uses `model: opus`; all other agents use `model: sonnet`
+3. All agents use `model: inherit` — they follow your global model setting
 
 ### Adding New Rules
 1. Create `rules/<name>.md` with YAML frontmatter (description, alwaysApply: true)
