@@ -108,9 +108,20 @@ ruff check . --select I    # Import sorting
 - Diminishing returns (spending 2h to go from 82% to 85% coverage) → ship it
 - Blocked by external dependency → log and ship
 
+## Automated Refinement via Autoimmune
+
+`/autoimmune test` (Mode B) automates parts of this refinement loop:
+- Phase B1: `ruff check --fix` → automatic lint fixes
+- Phase B2: mypy error loop → type annotation fixes
+- Phase B3: pytest fix loop → test failure fixes
+
+Use `/refine` for **manual, threshold-driven** quality hardening.
+Use `/autoimmune test` for **automated, fix-what-you-can** passes.
+
 ## Related Skills
 
 - **tdd** — refinement happens AFTER TDD green
 - **verification** — verify each refinement step
 - **performance** — deep profiling when perf budget fails
 - **security-review** — deep audit when bandit finds issues
+- **autoimmune** — Mode B automates lint/type/test fixing
