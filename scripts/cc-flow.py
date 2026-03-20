@@ -889,56 +889,56 @@ def cmd_dep_add(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="cc-flow", description="cc-code task manager")
+    parser = argparse.ArgumentParser(prog="cc-flow", description="cc-code task & workflow manager")
     sub = parser.add_subparsers(dest="command")
 
-    sub.add_parser("init")
+    sub.add_parser("init", help="Initialize .tasks/ directory")
 
-    epic_p = sub.add_parser("epic")
+    epic_p = sub.add_parser("epic", help="Epic management (create/close/import/reset)")
     epic_sub = epic_p.add_subparsers(dest="epic_cmd")
     ec = epic_sub.add_parser("create")
     ec.add_argument("--title", required=True)
 
-    tc = sub.add_parser("task")
+    tc = sub.add_parser("task", help="Task management (create/reset/set-spec)")
     task_sub = tc.add_subparsers(dest="task_cmd")
     tc_create = task_sub.add_parser("create")
     tc_create.add_argument("--epic", required=True)
     tc_create.add_argument("--title", required=True)
     tc_create.add_argument("--deps", default="")
 
-    list_p = sub.add_parser("list")
+    list_p = sub.add_parser("list", help="Show all epics + tasks")
     list_p.add_argument("--json", action="store_true", default=False)
-    sub.add_parser("epics")
+    sub.add_parser("epics", help="List epics (JSON)")
 
-    tasks_p = sub.add_parser("tasks")
+    tasks_p = sub.add_parser("tasks", help="Filter tasks by epic/status")
     tasks_p.add_argument("--epic", default="")
     tasks_p.add_argument("--status", default="")
 
-    show_p = sub.add_parser("show")
+    show_p = sub.add_parser("show", help="Show epic or task detail")
     show_p.add_argument("id")
 
-    ready_p = sub.add_parser("ready")
+    ready_p = sub.add_parser("ready", help="Tasks with all deps satisfied")
     ready_p.add_argument("--epic", default="")
 
-    start_p = sub.add_parser("start")
+    start_p = sub.add_parser("start", help="Start a task (checks deps)")
     start_p.add_argument("id")
 
-    done_p = sub.add_parser("done")
+    done_p = sub.add_parser("done", help="Complete a task")
     done_p.add_argument("id")
     done_p.add_argument("--summary", default="")
 
-    block_p = sub.add_parser("block")
+    block_p = sub.add_parser("block", help="Block a task with reason")
     block_p.add_argument("id")
     block_p.add_argument("--reason", required=True)
 
-    progress_p = sub.add_parser("progress")
+    progress_p = sub.add_parser("progress", help="Progress bars per epic")
     progress_p.add_argument("--epic", default="")
     progress_p.add_argument("--json", action="store_true", default=False)
 
-    sub.add_parser("status")
-    sub.add_parser("validate")
+    sub.add_parser("status", help="Global overview (JSON)")
+    sub.add_parser("validate", help="Check structure, deps, cycles")
 
-    scan_p = sub.add_parser("scan")
+    scan_p = sub.add_parser("scan", help="Auto-detect issues via ruff/mypy/bandit")
     scan_p.add_argument("--create-tasks", action="store_true", default=False)
 
     log_p = sub.add_parser("log")
@@ -954,14 +954,14 @@ def main():
     log_p.add_argument("--duration", type=int, default=None)
     log_p.add_argument("--notes", default="")
 
-    sub.add_parser("summary")
-    sub.add_parser("archive")
-    sub.add_parser("stats")
+    sub.add_parser("summary", help="Autoimmune session summary")
+    sub.add_parser("archive", help="Show completed epics/tasks")
+    sub.add_parser("stats", help="Productivity metrics")
 
-    next_p = sub.add_parser("next")
+    next_p = sub.add_parser("next", help="Smart next task (priority-aware)")
     next_p.add_argument("--epic", default="")
 
-    dep_p = sub.add_parser("dep")
+    dep_p = sub.add_parser("dep", help="Dependency management")
     dep_sub = dep_p.add_subparsers(dest="dep_cmd")
     dep_add = dep_sub.add_parser("add")
     dep_add.add_argument("id")
