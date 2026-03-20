@@ -2,18 +2,18 @@
 description: "Bootstrap new Python project. TRIGGER: 'new project', 'create project', 'start a project', 'init', '新建项目', '创建项目'. Generates structure, pyproject.toml, Docker, CI."
 ---
 
-Use the scaffold skill to create a new Python project.
+Activate the scaffold skill. Steps:
 
-Ask the user for:
-1. Project name
-2. Framework preference (FastAPI / Flask / Django / CLI / Library)
-3. Database (PostgreSQL / SQLite / None)
-
-Then create:
-- `src/` layout with package structure
-- `pyproject.toml` with ruff, mypy, pytest configs
-- `tests/conftest.py` with example fixtures
-- `Dockerfile` with multi-stage build
-- `.github/workflows/ci.yml`
-- `.gitignore`, `.env.example`
-- Initial git commit
+1. Ask the user for:
+   - Project name
+   - Framework (FastAPI / Flask / Django / CLI / Library)
+   - Database (PostgreSQL / SQLite / None)
+2. Create `src/<package>/` with `__init__.py`, `main.py`
+3. Create `pyproject.toml` with ruff, mypy, pytest configs
+4. Create `tests/conftest.py` with example fixture
+5. Create `.gitignore` with Python patterns
+6. Create `.env.example` with required env vars
+7. Create `Dockerfile` with multi-stage build (if framework chosen)
+8. Create `.github/workflows/ci.yml`
+9. Run `git init` and create initial commit
+10. Run `/audit` to verify all 8 pillars pass
