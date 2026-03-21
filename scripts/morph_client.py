@@ -322,7 +322,11 @@ class MorphClient:
         )
         resp = self._request("chat/completions", {
             "model": "morph-v3-fast",
-            "messages": [{"role": "user", "content": f"<instruction>{instruction}</instruction>\n<code>{text}</code>\n<update>{truncated}</update>"}],
+            "messages": [{"role": "user", "content": (
+                f"<instruction>{instruction}</instruction>\n"
+                f"<code>{text}</code>\n"
+                f"<update>{truncated}</update>"
+            )}],
             "max_tokens": max(target_len // 3, 100),
         })
         result = resp["choices"][0]["message"]["content"]

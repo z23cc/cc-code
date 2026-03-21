@@ -6,7 +6,10 @@ from datetime import datetime
 
 from cc_flow.core import COMPLETED_DIR, LOG_FILE, all_tasks, now_iso, safe_json_load
 
-LOG_HEADER = "timestamp\titeration\tmode\tarea\ttask_id\tdescription\tstatus\tfiles_changed\tdiff_lines\tduration_sec\tnotes\n"
+LOG_HEADER = (
+    "timestamp\titeration\tmode\tarea\ttask_id\tdescription"
+    "\tstatus\tfiles_changed\tdiff_lines\tduration_sec\tnotes\n"
+)
 
 
 def cmd_log(args):

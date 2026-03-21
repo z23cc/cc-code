@@ -204,7 +204,7 @@ def _auto_run(args):
                 f"Max diff: {team_rec['max_diff']} lines. Verify before marking done."
             ),
             "morph_available": get_morph_client() is not None,
-            "morph_hint": "Use morph edit_file (MCP) or MorphClient.apply_file() for fast code edits. Use morph codebase_search for exploration.",
+            "morph_hint": "Use cc-flow apply for fast edits, cc-flow search for exploration.",
         }))
 
         # Return control to Claude for implementation
