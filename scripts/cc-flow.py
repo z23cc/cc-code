@@ -54,98 +54,17 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "3.5.0"
-
-TASKS_DIR = Path(".tasks")
-EPICS_DIR = TASKS_DIR / "epics"
-TASKS_SUBDIR = TASKS_DIR / "tasks"
-COMPLETED_DIR = TASKS_DIR / "completed"
-META_FILE = TASKS_DIR / "meta.json"
-
-
-def now_iso():
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-
-
-def _error(msg, code=1):
-    """Print JSON error and exit."""
-    print(json.dumps({"success": False, "error": msg}))
-    sys.exit(code)
-
-
-_MISSING = object()  # Sentinel for "no default provided"
-
-
-def safe_json_load(path, default=_MISSING):
-    """Safely load JSON from a file. Returns default on any failure."""
-    p = Path(path)
-    if not p.exists():
-        if default is not _MISSING:
-            return default
-        _error(f"File not found: {path}")
-    try:
-        return json.loads(p.read_text())
-    except json.JSONDecodeError as exc:
-        if default is not _MISSING:
-            return default
-        _error(f"Corrupted JSON in {path}: {exc}")
-    except OSError as exc:
-        if default is not _MISSING:
-            return default
-        _error(f"Cannot read {path}: {exc}")
-
-
-def _locked_meta_update(fn):
-    """Read-modify-write meta.json with file locking to prevent race conditions."""
-    import fcntl
-    META_FILE.parent.mkdir(parents=True, exist_ok=True)
-    META_FILE.touch(exist_ok=True)
-    with open(META_FILE, "r+") as f:
-        fcntl.flock(f, fcntl.LOCK_EX)
-        try:
-            content = f.read().strip()
-            try:
-                meta = json.loads(content) if content else {"next_epic": 1}
-            except json.JSONDecodeError:
-                meta = {"next_epic": 1}
-            result = fn(meta)
-            f.seek(0)
-            f.truncate()
-            f.write(json.dumps(meta, indent=2) + "\n")
-        finally:
-            fcntl.flock(f, fcntl.LOCK_UN)
-    return result
-
-
-def load_meta():
-    return safe_json_load(META_FILE, default={"next_epic": 1})
-
-
-def save_meta(meta):
-    META_FILE.write_text(json.dumps(meta, indent=2) + "\n")
-
-
-def slugify(title):
-    return "-".join(title.lower().split()[:4]).replace("/", "-").replace(".", "")
-
-
-def load_task(path):
-    return safe_json_load(path)
-
-
-def save_task(path, data):
-    Path(path).write_text(json.dumps(data, indent=2) + "\n")
-
-
-def all_tasks():
-    tasks = {}
-    if not TASKS_SUBDIR.exists():
-        return tasks
-    for f in sorted(TASKS_SUBDIR.glob("*.json")):
-        d = safe_json_load(f, default=None)
-        if d and "id" in d:
-            tasks[d["id"]] = d
-    return tasks
+# Import shared utilities from cc_flow package
+sys.path.insert(0, str(Path(__file__).parent))
+from cc_flow import VERSION  # noqa: E402
+from cc_flow.core import (  # noqa: E402
+    COMPLETED_DIR, CONFIG_FILE, DEFAULT_CONFIG, EPICS_DIR, LEARNINGS_DIR,
+    LOG_FILE, META_FILE, ROUTE_STATS_FILE, SESSION_DIR, TASKS_DIR,
+    TASKS_SUBDIR, all_tasks, get_morph_client as _get_morph_client,
+    load_meta, locked_meta_update as _locked_meta_update,
+    now_iso, safe_json_load, save_meta, save_task, slugify,
+    error as _error,
+)
 
 
 def cmd_init(_args):
@@ -1028,7 +947,6 @@ def cmd_scan(args):
         print(json.dumps(output))
 
 
-LOG_FILE = Path("improvement-results.tsv")
 LOG_HEADER = "timestamp\titeration\tmode\tarea\ttask_id\tdescription\tstatus\tfiles_changed\tdiff_lines\tduration_sec\tnotes\n"
 
 
@@ -1187,8 +1105,6 @@ def cmd_stats(_args):
         print(f"| Success rate | {success_rate}% |")
 
 
-LEARNINGS_DIR = TASKS_DIR / "learnings"
-
 # ─── Router ───
 
 ROUTE_TABLE = [
@@ -1224,9 +1140,6 @@ ROUTE_TABLE = [
     (["upgrade", "dependency", "依赖", "升级"],
      None, None, "Dependency upgrade (use dependency-upgrade skill)"),
 ]
-
-
-ROUTE_STATS_FILE = TASKS_DIR / "route_stats.json"
 
 
 def _load_route_stats():
@@ -1826,17 +1739,6 @@ def _recommend_team(task):
     }
 
 
-CONFIG_FILE = TASKS_DIR / "config.json"
-DEFAULT_CONFIG = {
-    "auto_consolidate": True,
-    "max_iterations": 20,
-    "default_size": "M",
-    "scan_tools": ["ruff", "mypy", "bandit"],
-    "auto_learn_on_done": True,
-    "routing_confidence_threshold": 30,
-}
-
-
 def cmd_config(args):
     """Manage cc-flow configuration."""
     config = DEFAULT_CONFIG.copy()
@@ -1936,9 +1838,6 @@ def cmd_dep_add(args):
         data["depends_on"] = deps
         save_task(path, data)
     print(json.dumps({"success": True, "id": args.id, "depends_on": deps}))
-
-
-SESSION_DIR = TASKS_DIR / ".sessions"
 
 
 def cmd_session(args):
@@ -2051,17 +1950,6 @@ def cmd_session(args):
 
     else:
         _error("Usage: cc-flow session [save|restore|list]")
-
-
-def _get_morph_client():
-    """Try to create a MorphClient. Returns None if API key not set."""
-    try:
-        morph_dir = Path(__file__).parent
-        sys.path.insert(0, str(morph_dir))
-        from morph_client import MorphClient
-        return MorphClient()
-    except (ImportError, ValueError):
-        return None
 
 
 def cmd_search(args):

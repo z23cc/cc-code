@@ -13,6 +13,9 @@ META_FILE = TASKS_DIR / "meta.json"
 LEARNINGS_DIR = TASKS_DIR / "learnings"
 CONFIG_FILE = TASKS_DIR / "config.json"
 LOG_FILE = Path("improvement-results.tsv")
+LOG_HEADER = "timestamp\titeration\tmode\tarea\ttask_id\tdescription\tstatus\tfiles_changed\tdiff_lines\tduration_sec\tnotes\n"
+
+ROUTE_STATS_FILE = TASKS_DIR / "route_stats.json"
 SESSION_DIR = TASKS_DIR / ".sessions"
 
 DEFAULT_CONFIG = {
