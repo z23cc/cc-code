@@ -93,14 +93,17 @@ git diff $BASE_COMMIT..HEAD        # Review only THIS task's changes
 
 This prevents reviewing old code that isn't part of the current task.
 
-## Review Backends
+## Review Backends (Priority Order)
 
-| Backend | When to Use |
-|---------|-------------|
-| **python-reviewer agent** | Default for .py files |
-| **security-reviewer agent** | Auth, input handling, API endpoints |
-| **RepoPrompt context_builder** | Deep architectural review (if MCP available) |
-| **Manual** | User explicitly wants to review themselves |
+| Priority | Backend | When to Use |
+|----------|---------|-------------|
+| **1st** | `rp -e 'review "..."'` (rp-cli) | Best: AI-powered review with git diff context |
+| **2nd** | python-reviewer agent | Default for .py files (agent dispatch) |
+| **3rd** | security-reviewer agent | Auth, input handling, API endpoints |
+| **4th** | db-reviewer agent | Database queries, schema changes |
+| fallback | Manual | User explicitly wants to review themselves |
+
+**Rule:** Try rp-cli review first (faster, deeper context). Fall back to agent dispatch if rp-cli unavailable.
 
 ## Post-Autoimmune Review
 

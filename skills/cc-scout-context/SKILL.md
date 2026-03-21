@@ -27,23 +27,27 @@ Level 4: Grep for usages (~200 tokens per search)
 
 **Rule:** Never read a full file if you only need part of it.
 
-## Commands by Level
+## Commands by Level (prefer MCP when available)
 
 ### Level 1: File Tree
 
 ```bash
-# Quick overview (directories only)
-find . -type d -not -path '*/\.*' -not -path '*/node_modules/*' -not -path '*/__pycache__/*' | sort | head -30
+# BEST: rp-cli (80% fewer tokens)
+rp -e 'tree'
 
-# File tree with sizes
-find src/ -name "*.py" -exec wc -l {} + | sort -rn | head -15
+# Fallback: built-in
+find . -type d -not -path '*/\.*' -not -path '*/node_modules/*' | sort | head -30
 ```
 
-Token cost: ~200
+Token cost: ~200 (rp-cli) / ~500 (find)
 
 ### Level 2: Code Structure (signatures only)
 
 ```bash
+# BEST: rp-cli
+rp -e 'structure src/core/'
+
+# Fallback: Grep
 # Python: class and function signatures
 grep -rn "^class \|^def \|^async def " src/ --include="*.py" | head -30
 

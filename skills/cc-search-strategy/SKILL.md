@@ -1,187 +1,159 @@
 ---
 name: cc-search-strategy
 description: >
-  Multi-tool search strategy — choose the right search tool for each task.
-  Combines rg (exact), semantic search (meaning), symbol search (definitions),
-  and AST matching (structure) for maximum efficiency.
+  Multi-tool search strategy — prioritizes morph MCP and rp-cli when available,
+  falls back to built-in Grep/Glob. Choose the right tool for each task.
   TRIGGER: searching codebase, exploring code, finding where X is used,
   understanding architecture, refactoring, security audit, '搜索', '查找'.
 ---
 
-# Search Strategy — Right Tool for the Job
+# Search Strategy — Tool Priority Chain
+
+## Priority Rule
+
+**Always prefer MCP tools when available. Fall back to built-in tools only if MCP fails.**
+
+```
+Search Priority:
+1. morph codebase_search → semantic search (broad exploration)
+2. RepoPrompt file_search → combined content + path + regex
+3. Built-in Grep/Glob → exact patterns (always available)
+
+Edit Priority:
+1. morph edit_file → fast apply, accepts partial snippets
+2. Built-in Edit/Write → fallback
+
+Deep Analysis Priority:
+1. rp-cli context_builder → AI-powered cross-file analysis
+2. rp-cli structure → function/type signatures
+3. Built-in Read + Grep → manual tracing
+```
 
 ## Decision Framework
 
 ```
 Do you know the exact text/pattern?
-├─ YES → rg / Grep (fastest, ~20ms)
+├─ YES → Grep (fastest, ~20ms, always works)
 └─ NO → What are you looking for?
-         ├─ Meaning/concept → Semantic search (grepai / codebase_search)
-         ├─ Function/class definition → Symbol search (Serena / get_code_structure)
+         ├─ Meaning/concept → morph codebase_search
+         ├─ Function/class definition → rp-cli get_code_structure
+         ├─ Cross-file understanding → rp-cli context_builder
          ├─ Code structure/pattern → AST matching (ast-grep)
-         └─ Dependency chain → Trace tools (grepai trace / call graph)
+         └─ Dependency chain → Grep for imports + call sites
 ```
 
 ## Tool Matrix
 
-| Task | Best Tool | Speed | When to Use |
-|------|-----------|-------|-------------|
-| Find exact string | `rg` / Grep | ~20ms | You know the text: class name, error message, config key |
-| Find by meaning | Semantic search | ~500ms | "Where is auth handled?", "How does billing work?" |
-| Find definitions | Symbol search | ~100ms | "Where is UserService defined?", function signatures |
-| Find code patterns | AST grep | ~200ms | "All async functions that call X", structural refactoring |
-| Trace dependencies | Call graph | ~2s | "What calls this function?", impact analysis |
-| Find files by name | Glob | instant | "Find all test files", "Where is config.py?" |
+| Task | Best Tool | Fallback | Speed |
+|------|-----------|----------|-------|
+| Broad exploration | `codebase_search` (morph) | Grep + Read | ~500ms |
+| Exact string match | Grep (built-in) | — | ~20ms |
+| File name search | `file_search` (RepoPrompt) | Glob | ~100ms |
+| Code structure | `get_code_structure` (rp-cli) | Grep for def/class | ~200ms |
+| Deep Q&A | `context_builder` (rp-cli) | Agent dispatch | ~3s |
+| Architecture plan | `context_builder` + response_type="plan" | Manual research | ~5s |
+| Code review | `context_builder` + response_type="review" | Agent dispatch | ~5s |
+| Find files | Glob (built-in) | `file_search` | instant |
+| AST pattern | ast-grep (if installed) | Grep regex | ~200ms |
 
-## Available Tools (Priority Order)
+## morph MCP Usage
 
-### 1. rg / Built-in Grep — Always Available
-```
-Grep: exact regex patterns, keyword matches
-Glob: file name patterns
-```
-**Use for:** Error messages, import statements, config values, string literals, TODO markers.
-
-### 2. Morph codebase_search — Semantic (if MCP available)
-```
-codebase_search: natural language queries about code meaning
-```
-**Use for:** "How does the auth flow work?", "Where is payment processing?", broad exploration.
-**NOT for:** Exact keyword matching (use Grep instead — faster and precise).
-
-### 3. RepoPrompt — Structure & Deep Analysis (if MCP available)
-```
-file_search: combines content + path + regex in one call
-get_code_structure: function/type signatures for a file
-context_builder: deep cross-file AI analysis
-```
-**Use for:** Architecture understanding, code review, planning changes.
-
-### 4. ast-grep — Structural Patterns (if installed)
 ```bash
-ast-grep --pattern 'async def $FUNC($$$ARGS)' --lang python
-ast-grep --pattern 'except: pass' --lang python  # Find bare excepts
+# Semantic search — "how does X work?"
+codebase_search: "how does the auth middleware validate tokens"
+# NOT for: exact string matching (use Grep)
+
+# Fast edit — accepts partial code snippets
+edit_file: path + new content
+# 10x faster than built-in Edit
+
+# GitHub code search (no cloning needed)
+github_codebase_search: "FastAPI rate limiting" in owner/repo
 ```
-**Use for:** Large-scale refactoring, finding anti-patterns, structural code search.
+
+## rp-cli Usage
+
+```bash
+# Deep cross-file Q&A (AI reasoning across files)
+rp -e 'builder "how does the payment system work?" --response-type question'
+
+# Code structure overview (function/type signatures)
+rp -e 'structure src/'
+
+# Architecture planning
+rp -e 'plan "Design user permissions system"'
+
+# Code review with git diff context
+rp -e 'review "What changed and is it safe?"'
+
+# File tree (80% fewer tokens than ls/find)
+rp -e 'tree'
+
+# Search with file filter
+rp -e 'search "TODO" --extensions .py'
+
+# Read specific lines (targeted, saves tokens)
+rp -e 'read src/main.py 100 50'
+```
+
+## When to Use What
+
+| Scenario | Use morph | Use rp-cli | Use built-in |
+|----------|-----------|------------|-------------|
+| "How does X work?" | `codebase_search` | `context_builder` (deeper) | — |
+| "Find all usages of X" | — | `file_search` | Grep |
+| "What functions are in X?" | — | `get_code_structure` | Grep "def " |
+| "Is this change safe?" | — | `context_builder --review` | Agent dispatch |
+| "Plan how to build X" | — | `context_builder --plan` | /cc-plan |
+| Quick file edit | `edit_file` | — | Edit |
+| Multi-file batch edit | — | `rp apply_edits` | — |
+| "Find pattern in GitHub" | `github_codebase_search` | — | `gh search code` |
 
 ## Workflow Recipes
 
-### Recipe 1: Codebase Exploration (new to the project)
-
+### Recipe 1: Explore New Codebase
 ```
-Step 1: Semantic discovery — "How does X work?"
-  → codebase_search / context_builder
-
-Step 2: Structure overview — function signatures, class hierarchy
-  → get_code_structure / Grep for class definitions
-
-Step 3: Dependency mapping — what depends on what?
-  → Grep for imports, call sites
-
-Step 4: Exact details — specific implementation
-  → Grep / Read specific files
+Step 1: rp -e 'tree'                              # File structure
+Step 2: codebase_search "how does the main flow work"  # Broad understanding
+Step 3: rp -e 'structure src/core/'                # Key signatures
+Step 4: Grep for specific symbols as needed         # Details
 ```
 
 ### Recipe 2: Refactoring Safely
-
 ```
-Step 1: Find all usages — who calls this function?
-  → Grep for function name across codebase
-
-Step 2: Understand call patterns — how is it called?
-  → Read each call site, check argument patterns
-
-Step 3: Find structural matches — similar patterns to change
-  → ast-grep for code structure (if available)
-  → Grep with regex for simpler patterns
-
-Step 4: Verify impact — what tests cover this?
-  → Grep for function name in tests/
+Step 1: Grep "function_name" src/                  # All usages (exact)
+Step 2: rp -e 'builder "what depends on function_name?"'  # Impact analysis
+Step 3: Apply changes with morph edit_file         # Fast edit
+Step 4: Grep for function_name in tests/           # Verify test coverage
 ```
 
 ### Recipe 3: Security Audit
-
 ```
-Step 1: Semantic scan — "Where is user input handled?"
-  → codebase_search
-
-Step 2: Pattern scan — known vulnerability patterns
-  → Grep: "shell=True", "yaml.load(", ".format(" in SQL context
-  → ast-grep: subprocess with shell=True (if available)
-
-Step 3: Trace data flow — input → processing → output
-  → Grep for variable names through the chain
-
-Step 4: Check boundaries — validation at entry points
-  → Grep in API routes/views for validation decorators
+Step 1: codebase_search "where is user input handled"  # Semantic scan
+Step 2: Grep "shell=True\|yaml.load\|\.format.*sql"    # Known patterns
+Step 3: rp -e 'builder "trace user input flow"'         # Data flow analysis
 ```
 
-### Recipe 4: Performance Investigation
-
+### Recipe 4: Code Review
 ```
-Step 1: Find hotspot — which function is slow?
-  → Profile first (see performance skill), then search
-
-Step 2: Find N+1 patterns
-  → Grep for queries inside loops
-  → Grep: "for .* in .*:" near "query\|select\|fetch"
-
-Step 3: Find blocking calls in async
-  → Grep: "time.sleep\|requests\.\|open(" in async functions
-
-Step 4: Check caching opportunities
-  → Grep for repeated identical calls, missing @lru_cache
+Step 1: rp -e 'review "What changed and any concerns?"'  # AI review
+Step 2: Grep for patterns in the diff                      # Specific checks
 ```
 
 ## Common Pitfalls
 
-| Mistake | Why It's Wrong | Do Instead |
-|---------|---------------|------------|
-| Semantic search for exact string | Slow + imprecise for known text | Use Grep |
-| Regex for "how does X work" | Too literal, misses concepts | Use semantic search |
-| Refactoring without checking call sites | Breaking changes | Grep for all usages first |
-| Reading entire files to find one function | Wastes context window | Use Grep or symbol search |
-| Only using one tool | Misses results other tools would find | Layer tools: broad → narrow |
-
-## Speed vs. Token Cost
-
-| Tool | Speed (500k lines) | Tokens Used | Best For |
-|------|-------------------|-------------|----------|
-| rg / Grep | ~0.2s | ~500 | 90% of searches |
-| Symbol search | ~1.5s | ~1000 | Definition lookup |
-| Semantic search | ~2.5s | ~2000 | Exploration |
-| AST grep | ~3.0s | ~1500 | Structural patterns |
-
-**Rule of thumb:** Start with the fastest tool that could work. Escalate to slower tools only when the fast one doesn't find what you need.
-
-## Example Outputs
-
-**Grep** — exact matches with context:
-```
-src/auth/middleware.py:45:    if not token.is_valid():
-src/auth/middleware.py:46:        raise AuthError("Token expired")
-src/api/users.py:12:    token = request.headers.get("Authorization")
-```
-
-**Semantic search** — conceptual matches:
-```
-Found 3 relevant results for "how is authentication handled":
-1. src/auth/middleware.py — AuthMiddleware class, validates JWT tokens
-2. src/auth/oauth.py — OAuth2 flow implementation
-3. src/config/security.py — AUTH_SECRET and token expiry settings
-```
-
-**Symbol search** — definitions:
-```
-class AuthMiddleware     src/auth/middleware.py:10
-  def authenticate()     src/auth/middleware.py:25
-  def refresh_token()    src/auth/middleware.py:55
-class OAuthProvider      src/auth/oauth.py:8
-```
+| Mistake | Fix |
+|---------|-----|
+| Using Grep for "how does X work" | Use `codebase_search` (semantic) |
+| Using `codebase_search` for exact string | Use Grep (faster, precise) |
+| Reading entire files for one function | Use `get_code_structure` or targeted Read |
+| Manual multi-file analysis | Use `context_builder` (AI-powered) |
+| Not using morph edit_file | 10x faster than built-in Edit |
 
 ## Related Skills
 
 - **cc-debugging** — use search strategy during Phase 1 (root cause investigation)
 - **cc-performance** — Recipe 4 for performance investigation
 - **cc-security-review** — Recipe 3 for security audits
-- **cc-python-patterns** — what patterns to search for
+- **cc-scout-context** — token-efficient exploration techniques
+- **cc-research** — full 4-layer research methodology
