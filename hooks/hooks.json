@@ -23,6 +23,18 @@
         ],
         "description": "Quality gate: remind to verify before git commit"
       }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-task-hint.sh"
+          }
+        ],
+        "description": "After cc-flow done/scan, suggest next steps (learn/next/commit)"
+      }
     ]
   }
 }

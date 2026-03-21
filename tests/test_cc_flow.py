@@ -277,3 +277,482 @@ class TestAutoTeamRouting:
         out, _, code = run(["auto", "status"], cwd=workspace)
         assert code == 0
         assert "Auto Status" in out
+
+
+class TestConsolidate:
+    def test_consolidate_empty(self, workspace):
+        out, _, code = run(["consolidate"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["consolidated"] == 0
+
+    def test_consolidate_with_learnings(self, workspace):
+        # Add several similar learnings
+        for i in range(4):
+            run(["learn", "--task", "fix auth middleware", "--outcome", "success",
+                 "--approach", "check token", "--lesson", "always check expiry",
+                 "--score", "5"], cwd=workspace)
+        out, _, code = run(["consolidate"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["promoted"] >= 1
+
+
+class TestConfig:
+    def test_config_show(self, workspace):
+        out, _, code = run(["config"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert "config" in data
+        assert "max_iterations" in data["config"]
+
+    def test_config_set_get(self, workspace):
+        run(["config", "max_iterations", "50"], cwd=workspace)
+        out, _, _ = run(["config", "max_iterations"], cwd=workspace)
+        data = json.loads(out)
+        assert data["value"] == 50
+
+    def test_config_set_bool(self, workspace):
+        run(["config", "auto_consolidate", "false"], cwd=workspace)
+        out, _, _ = run(["config", "auto_consolidate"], cwd=workspace)
+        data = json.loads(out)
+        assert data["value"] is False
+
+
+class TestHistory:
+    def test_history_empty(self, workspace):
+        out, _, code = run(["history"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["count"] == 0
+
+    def test_history_with_completed(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["start", "epic-1-test.1"], cwd=workspace)
+        run(["done", "epic-1-test.1", "--summary", "did it"], cwd=workspace)
+        out, _, code = run(["history"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["count"] == 1
+
+
+class TestRouteConfidence:
+    def test_route_includes_confidence(self, workspace):
+        out, _, _ = run(["route", "fix", "broken", "login"], cwd=workspace)
+        data = json.loads(out)
+        assert "confidence" in data
+        assert data["confidence"] > 0
+
+    def test_route_with_pattern_learning(self, workspace):
+        # Add a learning, then route a similar query
+        run(["learn", "--task", "optimize slow API", "--outcome", "success",
+             "--approach", "add caching", "--lesson", "cache first", "--score", "5"], cwd=workspace)
+        out, _, _ = run(["route", "slow", "API", "response"], cwd=workspace)
+        data = json.loads(out)
+        assert data["suggestion"]["command"] == "/perf"
+
+
+class TestGraph:
+    def test_graph_mermaid(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T2", "--deps", "epic-1-test.1"], cwd=workspace)
+        out, _, code = run(["graph", "--epic", "epic-1-test"], cwd=workspace)
+        assert code == 0
+        assert "graph TD" in out
+        assert "epic-1-test_1" in out
+        assert "-->" in out
+
+    def test_graph_mermaid_json(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T2", "--deps", "epic-1-test.1"], cwd=workspace)
+        out, _, code = run(["graph", "--epic", "epic-1-test", "--json"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["nodes"] == 2
+        assert data["edges"] == 1
+        assert "mermaid" in data
+
+    def test_graph_ascii(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T2", "--deps", "epic-1-test.1"], cwd=workspace)
+        out, _, code = run(["graph", "--epic", "epic-1-test", "--format", "ascii"], cwd=workspace)
+        assert code == 0
+        assert "○" in out or "●" in out or "◐" in out
+        assert "epic-1-test.1" in out
+
+    def test_graph_dot(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        out, _, code = run(["graph", "--epic", "epic-1-test", "--format", "dot"], cwd=workspace)
+        assert code == 0
+        assert "digraph tasks" in out
+
+    def test_graph_no_tasks(self, workspace):
+        _, _, code = run(["graph", "--epic", "nonexistent"], cwd=workspace)
+        assert code == 1
+
+    def test_graph_status_colors(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T2"], cwd=workspace)
+        run(["start", "epic-1-test.1"], cwd=workspace)
+        run(["done", "epic-1-test.1", "--summary", "ok"], cwd=workspace)
+        out, _, _ = run(["graph", "--epic", "epic-1-test"], cwd=workspace)
+        assert ":::done" in out
+        assert ":::todo" in out
+
+
+class TestDoneDuration:
+    def test_done_reports_duration(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["start", "epic-1-test.1"], cwd=workspace)
+        out, _, _ = run(["done", "epic-1-test.1", "--summary", "done"], cwd=workspace)
+        data = json.loads(out)
+        assert "duration" in data
+
+
+class TestDashboard:
+    def test_dashboard_empty(self, workspace):
+        out, _, code = run(["dashboard"], cwd=workspace)
+        assert code == 0
+        assert "Dashboard" in out
+        assert "epic create" in out  # Suggests getting started
+
+    def test_dashboard_with_tasks(self, workspace):
+        run(["epic", "create", "--title", "Auth System"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-auth-system", "--title", "T1"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-auth-system", "--title", "T2"], cwd=workspace)
+        run(["start", "epic-1-auth-system.1"], cwd=workspace)
+        run(["done", "epic-1-auth-system.1", "--summary", "ok"], cwd=workspace)
+        out, _, code = run(["dashboard"], cwd=workspace)
+        assert code == 0
+        assert "Auth System" in out
+        assert "● 1 done" in out
+        assert "50%" in out
+
+
+class TestDoctor:
+    def test_doctor_text(self, workspace):
+        out, _, code = run(["doctor"], cwd=workspace)
+        assert code == 0
+        assert "cc-flow Doctor" in out
+        assert "✓" in out
+
+    def test_doctor_json(self, workspace):
+        out, _, code = run(["doctor", "--format", "json"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert "checks" in data
+        assert data["summary"]["pass"] > 0
+
+    def test_doctor_detects_tasks(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        out, _, _ = run(["doctor", "--format", "json"], cwd=workspace)
+        data = json.loads(out)
+        task_check = next((c for c in data["checks"] if c["name"] == "Task integrity"), None)
+        assert task_check is not None
+        assert task_check["status"] == "pass"
+
+
+class TestRouteStats:
+    def test_learn_with_command_updates_stats(self, workspace):
+        run(["learn", "--task", "fix login", "--outcome", "success",
+             "--approach", "check auth", "--lesson", "auth first",
+             "--score", "5", "--used-command", "/debug"], cwd=workspace)
+        # Check route_stats.json was created
+        stats_file = workspace / ".tasks" / "route_stats.json"
+        assert stats_file.exists()
+        data = json.loads(stats_file.read_text())
+        assert data["commands"]["/debug"]["success"] == 1
+
+    def test_route_uses_history(self, workspace):
+        # Record multiple successes for /debug
+        for _ in range(4):
+            run(["learn", "--task", "fix bug", "--outcome", "success",
+                 "--approach", "debug it", "--lesson", "works",
+                 "--score", "5", "--used-command", "/debug"], cwd=workspace)
+        out, _, _ = run(["route", "fix", "broken", "login"], cwd=workspace)
+        data = json.loads(out)
+        assert "route_history" in data
+        assert data["route_history"]["success_rate"] == 100
+
+
+class TestErrorHandling:
+    """Tests for robustness — corrupted files, missing data, edge cases."""
+
+    def test_show_nonexistent(self, workspace):
+        _, _, code = run(["show", "nonexistent"], cwd=workspace)
+        assert code == 1
+
+    def test_start_nonexistent(self, workspace):
+        _, _, code = run(["start", "nonexistent"], cwd=workspace)
+        assert code == 1
+
+    def test_done_nonexistent(self, workspace):
+        _, _, code = run(["done", "nonexistent"], cwd=workspace)
+        assert code == 1
+
+    def test_block_nonexistent(self, workspace):
+        _, _, code = run(["block", "nonexistent", "--reason", "test"], cwd=workspace)
+        assert code == 1
+
+    def test_corrupted_task_json(self, workspace):
+        """Corrupted JSON file should not crash all_tasks()."""
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        # Corrupt one task file
+        bad_file = workspace / ".tasks" / "tasks" / "epic-1-test.1.json"
+        bad_file.write_text("{corrupted json!!!")
+        # list should still work (skip corrupted)
+        out, _, code = run(["list", "--json"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["count"] >= 0  # Should not crash
+
+    def test_corrupted_meta_json(self, workspace):
+        """Corrupted meta.json should use defaults."""
+        meta = workspace / ".tasks" / "meta.json"
+        meta.write_text("not json")
+        # epic create should still work via locked update
+        out, _, code = run(["epic", "create", "--title", "Recovery"], cwd=workspace)
+        assert code == 0
+
+    def test_start_already_done(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["start", "epic-1-test.1"], cwd=workspace)
+        run(["done", "epic-1-test.1", "--summary", "ok"], cwd=workspace)
+        _, _, code = run(["start", "epic-1-test.1"], cwd=workspace)
+        assert code == 1  # Can't start a done task
+
+    def test_dep_add_nonexistent_task(self, workspace):
+        _, _, code = run(["dep", "add", "fake.1", "fake.2"], cwd=workspace)
+        assert code == 1
+
+    def test_epic_close_nonexistent(self, workspace):
+        _, _, code = run(["epic", "close", "nonexistent"], cwd=workspace)
+        assert code == 1
+
+    def test_task_reset_nonexistent(self, workspace):
+        out, _, code = run(["task", "reset", "nonexistent"], cwd=workspace)
+        assert code == 1
+
+    def test_empty_workspace_commands(self, workspace):
+        """Commands should work gracefully on empty workspace."""
+        out, _, code = run(["status"], cwd=workspace)
+        assert code == 0
+        out, _, code = run(["ready"], cwd=workspace)
+        assert code == 0
+        out, _, code = run(["next"], cwd=workspace)
+        assert code == 0
+
+
+class TestValidateCycles:
+    def test_detects_cycle(self, workspace):
+        """Validate should detect circular dependencies."""
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T2", "--deps", "epic-1-test.1"], cwd=workspace)
+        # Manually create cycle: T1 depends on T2
+        t1_path = workspace / ".tasks" / "tasks" / "epic-1-test.1.json"
+        t1 = json.loads(t1_path.read_text())
+        t1["depends_on"] = ["epic-1-test.2"]
+        t1_path.write_text(json.dumps(t1))
+        out, _, code = run(["validate"], cwd=workspace)
+        assert code == 1
+        data = json.loads(out)
+        assert data["valid"] is False
+        assert any("cycle" in e.lower() for e in data["errors"])
+
+
+class TestTags:
+    def test_create_with_tags(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        out, _, code = run(["task", "create", "--epic", "epic-1-test", "--title", "T1",
+                            "--tags", "auth,api,urgent"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["tags"] == ["auth", "api", "urgent"]
+        # Verify persisted
+        task = json.loads((workspace / ".tasks" / "tasks" / "epic-1-test.1.json").read_text())
+        assert "auth" in task["tags"]
+
+    def test_filter_by_tag(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1", "--tags", "auth"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T2", "--tags", "api"], cwd=workspace)
+        out, _, _ = run(["tasks", "--tag", "auth"], cwd=workspace)
+        data = json.loads(out)
+        assert data["count"] == 1
+        assert data["tasks"][0]["tags"] == ["auth"]
+
+
+class TestTemplates:
+    def test_feature_template(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "Add login",
+             "--template", "feature"], cwd=workspace)
+        spec = (workspace / ".tasks" / "tasks" / "epic-1-test.1.md").read_text()
+        assert "Research" in spec
+        assert "Implement" in spec
+        assert "Acceptance Criteria" in spec
+
+    def test_bugfix_template(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "Fix crash",
+             "--template", "bugfix"], cwd=workspace)
+        spec = (workspace / ".tasks" / "tasks" / "epic-1-test.1.md").read_text()
+        assert "Bug Description" in spec
+        assert "Investigate" in spec
+        assert "Regression test" in spec
+
+    def test_no_template_default(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        spec = (workspace / ".tasks" / "tasks" / "epic-1-test.1.md").read_text()
+        assert "Description" in spec
+
+
+class TestRollback:
+    def test_rollback_no_sha(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        # Manually set to in_progress without git sha
+        t = json.loads((workspace / ".tasks" / "tasks" / "epic-1-test.1.json").read_text())
+        t["status"] = "in_progress"
+        (workspace / ".tasks" / "tasks" / "epic-1-test.1.json").write_text(json.dumps(t))
+        _, _, code = run(["rollback", "epic-1-test.1"], cwd=workspace)
+        assert code == 1  # No SHA recorded
+
+    def test_rollback_preview(self, workspace):
+        subprocess.run(["git", "init", "-q"], cwd=workspace)
+        subprocess.run(["git", "add", "."], cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=workspace)
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["start", "epic-1-test.1"], cwd=workspace)
+        out, _, code = run(["rollback", "epic-1-test.1"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["action"] in ("preview", "no_changes")
+
+
+class TestDiffTracking:
+    def test_done_records_diff(self, workspace):
+        subprocess.run(["git", "init", "-q"], cwd=workspace)
+        subprocess.run(["git", "add", "."], cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=workspace)
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["start", "epic-1-test.1"], cwd=workspace)
+        # Make a change and commit
+        (workspace / "newfile.txt").write_text("hello\n")
+        subprocess.run(["git", "add", "newfile.txt"], cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "add file"], cwd=workspace)
+        out, _, _ = run(["done", "epic-1-test.1", "--summary", "added file"], cwd=workspace)
+        data = json.loads(out)
+        assert "diff" in data
+        assert data["diff"]["insertions"] >= 1
+
+
+class TestMissingCommands:
+    """Tests for commands that previously had no dedicated tests."""
+
+    def test_show_epic(self, workspace):
+        run(["epic", "create", "--title", "My Epic"], cwd=workspace)
+        out, _, code = run(["show", "epic-1-my-epic"], cwd=workspace)
+        assert code == 0
+        assert "My Epic" in out
+
+    def test_show_task(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "My Task"], cwd=workspace)
+        out, _, code = run(["show", "epic-1-test.1"], cwd=workspace)
+        assert code == 0
+        assert "My Task" in out
+
+    def test_tasks_filter_status(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T2"], cwd=workspace)
+        run(["start", "epic-1-test.1"], cwd=workspace)
+        out, _, _ = run(["tasks", "--status", "in_progress"], cwd=workspace)
+        data = json.loads(out)
+        assert data["count"] == 1
+        assert data["tasks"][0]["id"] == "epic-1-test.1"
+
+    def test_tasks_filter_epic(self, workspace):
+        run(["epic", "create", "--title", "A"], cwd=workspace)
+        run(["epic", "create", "--title", "B"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-a", "--title", "T1"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-2-b", "--title", "T2"], cwd=workspace)
+        out, _, _ = run(["tasks", "--epic", "epic-1-a"], cwd=workspace)
+        data = json.loads(out)
+        assert data["count"] == 1
+
+    def test_next_picks_highest_priority(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "Low priority"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "High priority"], cwd=workspace)
+        # Manually set priority
+        t2 = workspace / ".tasks" / "tasks" / "epic-1-test.2.json"
+        d = json.loads(t2.read_text())
+        d["priority"] = 1
+        t2.write_text(json.dumps(d))
+        out, _, _ = run(["next"], cwd=workspace)
+        data = json.loads(out)
+        assert data["id"] == "epic-1-test.2"
+
+    def test_next_resumes_in_progress(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["start", "epic-1-test.1"], cwd=workspace)
+        out, _, _ = run(["next"], cwd=workspace)
+        data = json.loads(out)
+        assert data["action"] == "resume"
+
+    def test_epics_command(self, workspace):
+        run(["epic", "create", "--title", "First"], cwd=workspace)
+        run(["epic", "create", "--title", "Second"], cwd=workspace)
+        out, _, code = run(["epics"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert len(data["epics"]) == 2
+
+    def test_task_set_spec(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        spec = workspace / "my-spec.md"
+        spec.write_text("# Custom Spec\nDo this thing.")
+        out, _, code = run(["task", "set-spec", "epic-1-test.1", "--file", str(spec)], cwd=workspace)
+        assert code == 0
+        actual = (workspace / ".tasks" / "tasks" / "epic-1-test.1.md").read_text()
+        assert "Custom Spec" in actual
+
+    def test_progress_visual(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        out, _, code = run(["progress"], cwd=workspace)
+        assert code == 0
+        assert "░" in out or "█" in out
+
+    def test_log_append_and_show(self, workspace):
+        run(["log", "--status", "KEPT", "--task-id", "t.1",
+             "--description", "fixed it", "--iteration", "1"], cwd=workspace)
+        out, _, code = run(["log", "--show", "5"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["total"] >= 1
+
+    def test_summary(self, workspace):
+        run(["log", "--status", "KEPT", "--task-id", "t.1",
+             "--description", "a", "--iteration", "1"], cwd=workspace)
+        out, _, code = run(["summary"], cwd=workspace)
+        assert code == 0
+        assert "Autoimmune Summary" in out

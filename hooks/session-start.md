@@ -13,7 +13,14 @@
 
 **Autonomous:** `/autoimmune` (scan / code / test / full)
 
-**Feedback loop:** `/route` → execute → `cc-flow learn` → better routing next time
+**Feedback loop:** `/route` → execute → `cc-flow learn` → `cc-flow consolidate` → smarter routing
+
+**Learning system:**
+- `cc-flow route <task>` — uses past learnings + promoted patterns with confidence %
+- `cc-flow learn` — record what worked (or didn't)
+- `cc-flow consolidate` — promote recurring successes to patterns
+- `cc-flow history` — task completion timeline + velocity trends
+- `cc-flow config` — customize behavior (auto_consolidate, max_iterations, etc.)
 
 **Gates:**
 - DO NOT implement without design (`/brainstorm` first)

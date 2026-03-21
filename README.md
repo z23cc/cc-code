@@ -17,9 +17,9 @@ claude plugin install cc-code@cc-code --scope user
 | Component | Count | Highlights |
 |-----------|-------|-----------|
 | **Skills** | 35 | brainstorming, TDD, debugging, autoimmune, feedback-loop |
-| **Commands** | 19 | `/brainstorm` `/plan` `/tdd` `/review` `/autoimmune` `/route` `/tasks` |
+| **Commands** | 20 | `/brainstorm` `/plan` `/tdd` `/review` `/autoimmune` `/route` `/tasks` |
 | **Agents** | 8 | researcher, architect, planner, code-reviewer, security-reviewer, ... |
-| **CLI** | cc-flow | 26 subcommands: epic/task management, scan, route, learn, checkpoint |
+| **CLI** | cc-flow | 36 subcommands: epic/task, scan, route, learn, graph, consolidate, config |
 | **Rules** | 4 | Always-on: python-style, testing, security, git |
 | **Hooks** | 2 | SessionStart context + pre-commit quality gate |
 
@@ -69,16 +69,17 @@ cc-flow learn → stored for future routing
 
 ### cc-flow CLI
 
-Task & workflow manager with 26 subcommands:
+Task & workflow manager with 36 subcommands:
 
 ```
 Project:    init, epic, task, dep
-View:       list, epics, tasks, show, ready, next, progress, status
+View:       list, epics, tasks, show, ready, next, progress, status, graph, history
 Work:       start, done, block
 Quality:    validate, scan
+Auto:       auto (scan/run/test/full/status)
 Session:    checkpoint, log, summary, archive, stats
-Routing:    route, learn, learnings
-Meta:       version
+Routing:    route, learn, learnings, consolidate
+Config:     config, version
 ```
 
 ## Development

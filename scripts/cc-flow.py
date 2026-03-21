@@ -1,16 +1,20 @@
 #!/usr/bin/env python3
 """cc-flow — task & workflow manager for cc-code plugin.
 
-Version: 2.2.3
+Version: 2.4.0
 
 Usage:
     cc-flow init
     cc-flow epic create --title "Epic title"
     cc-flow epic close <epic-id>
-    cc-flow task create --epic <epic-id> --title "Task title" [--deps id1,id2]
+    cc-flow epic import --file plan.md
+    cc-flow epic reset <epic-id>
+    cc-flow task create --epic <epic-id> --title "Task title" [--deps id1,id2] [--size S] [--tags a,b] [--template feature]
     cc-flow task reset <task-id>
+    cc-flow task set-spec <task-id> --file spec.md
+    cc-flow rollback <task-id> [--confirm]
     cc-flow dep add <task-id> <dep-id>
-    cc-flow list
+    cc-flow list [--json]
     cc-flow epics
     cc-flow tasks [--epic <epic-id>] [--status todo|in_progress|done|blocked]
     cc-flow show <id>
@@ -23,9 +27,22 @@ Usage:
     cc-flow status
     cc-flow validate
     cc-flow scan [--create-tasks]
+    cc-flow auto [scan|run|test|full|status]
+    cc-flow route <query...>
+    cc-flow learn --task "X" --outcome success --approach "Y" --lesson "Z" [--score 5]
+    cc-flow learnings [--search query] [--last N]
+    cc-flow consolidate
+    cc-flow history
+    cc-flow dashboard
+    cc-flow doctor [--format text|json]
+    cc-flow graph [--epic <id>] [--format mermaid|ascii|dot]
+    cc-flow config [key] [value]
+    cc-flow checkpoint [save|restore|list]
     cc-flow log --status KEPT --task-id <id> --description "..." [--iteration N]
     cc-flow log --show 10
     cc-flow summary
+    cc-flow stats
+    cc-flow archive
 """
 
 import argparse
@@ -34,7 +51,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "2.3.3"
+VERSION = "2.5.0"
 
 TASKS_DIR = Path(".tasks")
 EPICS_DIR = TASKS_DIR / "epics"
@@ -47,10 +64,58 @@ def now_iso():
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+def _error(msg, code=1):
+    """Print JSON error and exit."""
+    print(json.dumps({"success": False, "error": msg}))
+    sys.exit(code)
+
+
+_MISSING = object()  # Sentinel for "no default provided"
+
+
+def safe_json_load(path, default=_MISSING):
+    """Safely load JSON from a file. Returns default on any failure."""
+    p = Path(path)
+    if not p.exists():
+        if default is not _MISSING:
+            return default
+        _error(f"File not found: {path}")
+    try:
+        return json.loads(p.read_text())
+    except json.JSONDecodeError as exc:
+        if default is not _MISSING:
+            return default
+        _error(f"Corrupted JSON in {path}: {exc}")
+    except OSError as exc:
+        if default is not _MISSING:
+            return default
+        _error(f"Cannot read {path}: {exc}")
+
+
+def _locked_meta_update(fn):
+    """Read-modify-write meta.json with file locking to prevent race conditions."""
+    import fcntl
+    META_FILE.parent.mkdir(parents=True, exist_ok=True)
+    META_FILE.touch(exist_ok=True)
+    with open(META_FILE, "r+") as f:
+        fcntl.flock(f, fcntl.LOCK_EX)
+        try:
+            content = f.read().strip()
+            try:
+                meta = json.loads(content) if content else {"next_epic": 1}
+            except json.JSONDecodeError:
+                meta = {"next_epic": 1}
+            result = fn(meta)
+            f.seek(0)
+            f.truncate()
+            f.write(json.dumps(meta, indent=2) + "\n")
+        finally:
+            fcntl.flock(f, fcntl.LOCK_UN)
+    return result
+
+
 def load_meta():
-    if META_FILE.exists():
-        return json.loads(META_FILE.read_text())
-    return {"next_epic": 1}
+    return safe_json_load(META_FILE, default={"next_epic": 1})
 
 
 def save_meta(meta):
@@ -62,7 +127,7 @@ def slugify(title):
 
 
 def load_task(path):
-    return json.loads(Path(path).read_text())
+    return safe_json_load(path)
 
 
 def save_task(path, data):
@@ -71,9 +136,12 @@ def save_task(path, data):
 
 def all_tasks():
     tasks = {}
+    if not TASKS_SUBDIR.exists():
+        return tasks
     for f in sorted(TASKS_SUBDIR.glob("*.json")):
-        d = json.loads(f.read_text())
-        tasks[d["id"]] = d
+        d = safe_json_load(f, default=None)
+        if d and "id" in d:
+            tasks[d["id"]] = d
     return tasks
 
 
@@ -86,12 +154,15 @@ def cmd_init(_args):
 
 
 def cmd_epic_create(args):
-    meta = load_meta()
-    epic_num = meta["next_epic"]
     slug = slugify(args.title)
+
+    def allocate(meta):
+        epic_num = meta["next_epic"]
+        meta["next_epic"] = epic_num + 1
+        return epic_num
+
+    epic_num = _locked_meta_update(allocate)
     epic_id = f"epic-{epic_num}-{slug}"
-    meta["next_epic"] = epic_num + 1
-    save_meta(meta)
 
     spec_path = EPICS_DIR / f"{epic_id}.md"
     spec_path.write_text(
@@ -118,14 +189,17 @@ def cmd_epic_import(args):
     title_match = re.search(r"^#\s+(.+)", content, re.MULTILINE)
     title = title_match.group(1).strip() if title_match else plan_path.stem
 
-    # Create epic
+    # Create epic with locked meta
     cmd_init(argparse.Namespace())
-    meta = load_meta()
-    epic_num = meta["next_epic"]
     slug = slugify(title)
+
+    def allocate(meta):
+        n = meta["next_epic"]
+        meta["next_epic"] = n + 1
+        return n
+
+    epic_num = _locked_meta_update(allocate)
     epic_id = f"epic-{epic_num}-{slug}"
-    meta["next_epic"] = epic_num + 1
-    save_meta(meta)
 
     # Copy plan as epic spec
     spec_path = EPICS_DIR / f"{epic_id}.md"
@@ -180,6 +254,64 @@ def cmd_epic_import(args):
     }))
 
 
+TASK_TEMPLATES = {
+    "feature": {
+        "steps": ["Research", "Design", "Implement", "Test", "Review"],
+        "spec": "## Description\n\n[What feature to build]\n\n"
+                "## Steps\n\n"
+                "1. Research: understand requirements and existing code\n"
+                "2. Design: brainstorm approach, write pseudocode\n"
+                "3. Implement: write code (TDD — tests first)\n"
+                "4. Test: verify all acceptance criteria\n"
+                "5. Review: self-review, then request code review\n\n"
+                "## Acceptance Criteria\n\n- [ ] Feature works as described\n- [ ] Tests pass\n- [ ] No regressions\n",
+    },
+    "bugfix": {
+        "steps": ["Investigate", "Fix", "Test", "Review"],
+        "spec": "## Bug Description\n\n[What is broken]\n\n"
+                "## Steps to Reproduce\n\n1. \n\n"
+                "## Steps\n\n"
+                "1. Investigate: reproduce bug, find root cause\n"
+                "2. Fix: minimal change to fix the issue\n"
+                "3. Test: add regression test, verify fix\n"
+                "4. Review: confirm no side effects\n\n"
+                "## Acceptance Criteria\n\n- [ ] Bug is fixed\n- [ ] Regression test added\n",
+    },
+    "refactor": {
+        "steps": ["Analyze", "Refactor", "Test", "Review"],
+        "spec": "## Refactor Goal\n\n[What to improve and why]\n\n"
+                "## Steps\n\n"
+                "1. Analyze: map all usages and dependents\n"
+                "2. Refactor: apply changes (preserve behavior)\n"
+                "3. Test: verify all existing tests pass\n"
+                "4. Review: confirm behavior preserved\n\n"
+                "## Acceptance Criteria\n\n- [ ] All tests pass\n- [ ] No behavior change\n- [ ] Code is simpler\n",
+    },
+    "security": {
+        "steps": ["Scan", "Analyze", "Fix", "Verify"],
+        "spec": "## Vulnerability\n\n[What the issue is]\n\n"
+                "## Steps\n\n"
+                "1. Scan: identify all affected code paths\n"
+                "2. Analyze: assess severity and impact\n"
+                "3. Fix: apply minimal remediation\n"
+                "4. Verify: re-scan, confirm resolved\n\n"
+                "## Acceptance Criteria\n\n- [ ] Vulnerability resolved\n- [ ] No new issues introduced\n",
+    },
+}
+
+
+def _generate_spec(title, template_name=""):
+    """Generate task spec from template or default."""
+    if template_name and template_name in TASK_TEMPLATES:
+        tmpl = TASK_TEMPLATES[template_name]
+        return f"# Task: {title}\n\n{tmpl['spec']}"
+    return (
+        f"# Task: {title}\n\n"
+        f"## Description\n\n[Describe what to do]\n\n"
+        f"## Acceptance Criteria\n\n- [ ] [Criterion 1]\n"
+    )
+
+
 def cmd_task_create(args):
     epic_id = args.epic
     # Find next task number for this epic
@@ -189,6 +321,9 @@ def cmd_task_create(args):
     deps = args.deps.split(",") if args.deps else []
 
     size = getattr(args, "size", None) or "M"
+    tags = [t.strip() for t in args.tags.split(",") if t.strip()] if getattr(args, "tags", "") else []
+    template = getattr(args, "template", "") or ""
+
     state = {
         "id": task_id,
         "epic": epic_id,
@@ -196,17 +331,16 @@ def cmd_task_create(args):
         "status": "todo",
         "depends_on": deps,
         "size": size,
+        "tags": tags,
         "created": now_iso(),
     }
     save_task(TASKS_SUBDIR / f"{task_id}.json", state)
 
+    # Generate spec from template or default
+    spec_content = _generate_spec(args.title, template)
     spec_path = TASKS_SUBDIR / f"{task_id}.md"
-    spec_path.write_text(
-        f"# Task: {args.title}\n\n"
-        f"## Description\n\n[Describe what to do]\n\n"
-        f"## Acceptance Criteria\n\n- [ ] [Criterion 1]\n"
-    )
-    print(json.dumps({"success": True, "id": task_id, "epic": epic_id}))
+    spec_path.write_text(spec_content)
+    print(json.dumps({"success": True, "id": task_id, "epic": epic_id, "tags": tags}))
 
 
 def cmd_list(args):
@@ -260,11 +394,14 @@ def cmd_epics(_args):
 
 def cmd_tasks(args):
     tasks = all_tasks()
+    tag_filter = getattr(args, "tag", "") or ""
     result = []
     for t in tasks.values():
         if args.epic and t.get("epic") != args.epic:
             continue
         if args.status and t["status"] != args.status:
+            continue
+        if tag_filter and tag_filter not in t.get("tags", []):
             continue
         result.append(t)
     print(json.dumps({"success": True, "tasks": result, "count": len(result)}))
@@ -275,7 +412,7 @@ def cmd_show(args):
     # Try task first
     task_path = TASKS_SUBDIR / f"{task_id}.json"
     if task_path.exists():
-        data = json.loads(task_path.read_text())
+        data = safe_json_load(task_path)
         spec_path = TASKS_SUBDIR / f"{task_id}.md"
         spec = spec_path.read_text() if spec_path.exists() else ""
         print(json.dumps({"success": True, "type": "task", "data": data}))
@@ -331,7 +468,7 @@ def cmd_start(args):
         print(json.dumps({"success": False, "error": f"Task not found: {args.id}"}))
         sys.exit(1)
 
-    data = json.loads(path.read_text())
+    data = safe_json_load(path)
     if data["status"] not in ("todo", "blocked"):
         print(json.dumps({"success": False, "error": f"Cannot start task with status: {data['status']}"}))
         sys.exit(1)
@@ -346,6 +483,17 @@ def cmd_start(args):
 
     data["status"] = "in_progress"
     data["started"] = now_iso()
+
+    # Record git SHA at start for diff tracking and rollback
+    import subprocess as _sp
+    try:
+        sha = _sp.run(["git", "rev-parse", "HEAD"],
+                       capture_output=True, text=True, timeout=5).stdout.strip()
+        if sha:
+            data["git_sha_start"] = sha
+    except (OSError, _sp.TimeoutExpired):
+        pass
+
     save_task(path, data)
     print(json.dumps({"success": True, "id": args.id, "status": "in_progress"}))
 
@@ -356,13 +504,151 @@ def cmd_done(args):
         print(json.dumps({"success": False, "error": f"Task not found: {args.id}"}))
         sys.exit(1)
 
-    data = json.loads(path.read_text())
+    data = safe_json_load(path)
+
+    # Calculate duration if started
+    duration_sec = None
+    if data.get("started"):
+        try:
+            started = datetime.fromisoformat(data["started"].replace("Z", "+00:00"))
+            now = datetime.now(timezone.utc)
+            duration_sec = int((now - started).total_seconds())
+        except (ValueError, TypeError):
+            pass
+
+    # Track git diff since task start
+    diff_stats = _get_diff_stats(data.get("git_sha_start"))
+
     data["status"] = "done"
     data["completed"] = now_iso()
+    if duration_sec is not None:
+        data["duration_sec"] = duration_sec
     if args.summary:
         data["summary"] = args.summary
+    if diff_stats:
+        data["diff"] = diff_stats
     save_task(path, data)
-    print(json.dumps({"success": True, "id": args.id, "status": "done"}))
+
+    result = {"success": True, "id": args.id, "status": "done"}
+    if duration_sec is not None:
+        mins = duration_sec // 60
+        result["duration"] = f"{mins}m" if mins > 0 else f"{duration_sec}s"
+    if diff_stats:
+        result["diff"] = diff_stats
+
+    # Auto-consolidate learnings if config allows
+    config = DEFAULT_CONFIG.copy()
+    if CONFIG_FILE.exists():
+        try:
+            config.update(json.loads(CONFIG_FILE.read_text()))
+        except json.JSONDecodeError:
+            pass
+    if config.get("auto_consolidate") and LEARNINGS_DIR.exists():
+        learning_count = len(list(LEARNINGS_DIR.glob("*.json")))
+        if learning_count >= 10:
+            result["hint"] = "Run 'cc-flow consolidate' to promote patterns"
+
+    print(json.dumps(result))
+
+
+def _get_diff_stats(start_sha=None):
+    """Get git diff stats since a commit SHA."""
+    import subprocess as _sp
+    if not start_sha:
+        return None
+    try:
+        result = _sp.run(
+            ["git", "diff", "--stat", start_sha, "HEAD"],
+            capture_output=True, text=True, timeout=10,
+        )
+        if result.returncode != 0 or not result.stdout.strip():
+            return None
+
+        lines = result.stdout.strip().split("\n")
+        # Last line: "N files changed, X insertions(+), Y deletions(-)"
+        summary_line = lines[-1] if lines else ""
+        files_changed = 0
+        insertions = 0
+        deletions = 0
+
+        import re
+        m = re.search(r"(\d+) files? changed", summary_line)
+        if m:
+            files_changed = int(m.group(1))
+        m = re.search(r"(\d+) insertions?", summary_line)
+        if m:
+            insertions = int(m.group(1))
+        m = re.search(r"(\d+) deletions?", summary_line)
+        if m:
+            deletions = int(m.group(1))
+
+        return {
+            "files_changed": files_changed,
+            "insertions": insertions,
+            "deletions": deletions,
+            "total_lines": insertions + deletions,
+        }
+    except (OSError, _sp.TimeoutExpired):
+        return None
+
+
+def cmd_rollback(args):
+    """Rollback a failed task to the git state when it was started."""
+    import subprocess as _sp
+
+    path = TASKS_SUBDIR / f"{args.id}.json"
+    if not path.exists():
+        _error(f"Task not found: {args.id}")
+
+    data = safe_json_load(path)
+    start_sha = data.get("git_sha_start")
+
+    if not start_sha:
+        _error(f"No git SHA recorded for {args.id}. Task was not started in a git repo.")
+
+    if data["status"] not in ("in_progress", "blocked"):
+        _error(f"Cannot rollback task with status: {data['status']}")
+
+    # Show what will be rolled back
+    diff_stats = _get_diff_stats(start_sha)
+    if diff_stats and diff_stats["total_lines"] == 0:
+        print(json.dumps({"success": True, "id": args.id, "action": "no_changes",
+                          "message": "No changes to rollback"}))
+        return
+
+    if not getattr(args, "confirm", False):
+        result = {
+            "success": True,
+            "id": args.id,
+            "action": "preview",
+            "sha": start_sha[:8],
+            "diff": diff_stats,
+            "message": f"Will reset to {start_sha[:8]}. Run with --confirm to execute.",
+        }
+        print(json.dumps(result))
+        return
+
+    # Execute rollback
+    try:
+        _sp.run(["git", "reset", "--hard", start_sha],
+                capture_output=True, text=True, timeout=30, check=True)
+    except (_sp.CalledProcessError, _sp.TimeoutExpired, OSError) as exc:
+        _error(f"Rollback failed: {exc}")
+
+    # Reset task to todo
+    data["status"] = "todo"
+    for field in ("started", "completed", "summary", "blocked_reason",
+                  "blocked_at", "git_sha_start", "duration_sec", "diff"):
+        data.pop(field, None)
+    save_task(path, data)
+
+    print(json.dumps({
+        "success": True,
+        "id": args.id,
+        "action": "rolled_back",
+        "sha": start_sha[:8],
+        "diff": diff_stats,
+    }))
 
 
 def cmd_block(args):
@@ -371,7 +657,7 @@ def cmd_block(args):
         print(json.dumps({"success": False, "error": f"Task not found: {args.id}"}))
         sys.exit(1)
 
-    data = json.loads(path.read_text())
+    data = safe_json_load(path)
     data["status"] = "blocked"
     data["blocked_reason"] = args.reason
     data["blocked_at"] = now_iso()
@@ -588,7 +874,7 @@ def cmd_task_reset(args):
         print(json.dumps({"success": False, "error": f"Task not found: {args.id}"}))
         sys.exit(1)
 
-    data = json.loads(path.read_text())
+    data = safe_json_load(path)
     data["status"] = "todo"
     for field in ("started", "completed", "summary", "blocked_reason", "blocked_at"):
         data.pop(field, None)
@@ -655,7 +941,7 @@ def cmd_scan(args):
                 by_rule.setdefault(i.get("code", "?"), []).append(i)
             for rule, items in sorted(by_rule.items(), key=lambda x: -len(x[1]))[:10]:
                 findings["P3"].append(f"Fix {len(items)}x ruff {rule}: {items[0].get('message', '')}")
-    except (FileNotFoundError, subprocess.TimeoutExpired):
+    except (FileNotFoundError, subprocess.TimeoutExpired, json.JSONDecodeError):
         pass
 
     # Mypy scan
@@ -815,12 +1101,16 @@ def cmd_checkpoint_save(args):
     name = args.name or datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
 
     import subprocess
-    git_sha = subprocess.run(
-        ["git", "rev-parse", "HEAD"], capture_output=True, text=True
-    ).stdout.strip()
-    git_branch = subprocess.run(
-        ["git", "branch", "--show-current"], capture_output=True, text=True
-    ).stdout.strip()
+    try:
+        git_sha = subprocess.run(
+            ["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=10
+        ).stdout.strip()
+        git_branch = subprocess.run(
+            ["git", "branch", "--show-current"], capture_output=True, text=True, timeout=10
+        ).stdout.strip()
+    except (subprocess.TimeoutExpired, FileNotFoundError):
+        git_sha = ""
+        git_branch = ""
 
     tasks = all_tasks()
     in_prog = [t for t in tasks.values() if t["status"] == "in_progress"]
@@ -856,7 +1146,7 @@ def cmd_checkpoint_restore(args):
         print(json.dumps({"success": False, "error": f"Checkpoint not found: {name}"}))
         sys.exit(1)
 
-    data = json.loads(path.read_text())
+    data = safe_json_load(path)
     print(json.dumps({"success": True, "checkpoint": data}))
     print("\n## Resume Instructions")
     print(f"1. git checkout {data.get('git_branch', 'main')}")
@@ -875,8 +1165,10 @@ def cmd_checkpoint_list(_args):
         return
     checkpoints = []
     for f in sorted(CHECKPOINT_DIR.glob("*.json")):
-        d = json.loads(f.read_text())
-        checkpoints.append({"name": d["name"], "timestamp": d["timestamp"],
+        d = safe_json_load(f, default=None)
+        if not d:
+            continue
+        checkpoints.append({"name": d.get("name", f.stem), "timestamp": d.get("timestamp", ""),
                            "done": d.get("done", 0), "total": d.get("total_tasks", 0)})
     print(json.dumps({"success": True, "checkpoints": checkpoints}))
 
@@ -905,7 +1197,9 @@ def cmd_archive(_args):
         task_jsons = sorted(COMPLETED_DIR.glob("*.json"))
         tasks = []
         for f in task_jsons:
-            d = json.loads(f.read_text())
+            d = safe_json_load(f, default=None)
+            if not d or "id" not in d:
+                continue
             tasks.append({"id": d["id"], "title": d.get("title", ""), "completed": d.get("completed", "")})
         print(json.dumps({"success": True, "tasks": tasks, "count": len(tasks)}))
     else:
@@ -1008,16 +1302,52 @@ ROUTE_TABLE = [
 ]
 
 
+ROUTE_STATS_FILE = TASKS_DIR / "route_stats.json"
+
+
+def _load_route_stats():
+    """Load route success/failure stats for adaptive confidence."""
+    return safe_json_load(ROUTE_STATS_FILE, default={"commands": {}, "updated": ""})
+
+
+def _save_route_stats(stats):
+    stats["updated"] = now_iso()
+    ROUTE_STATS_FILE.write_text(json.dumps(stats, indent=2) + "\n")
+
+
 def cmd_route(args):
     """Analyze user intent and suggest the best command + team."""
     query = " ".join(args.query).lower() if args.query else ""
 
     if not query:
-        print(json.dumps({"success": False, "error": "Provide a task description"}))
-        sys.exit(1)
+        _error("Provide a task description")
 
     # Check learnings for past similar tasks
     past_match = _search_learnings(query)
+
+    # Load route stats for adaptive confidence
+    route_stats = _load_route_stats()
+
+    # Check promoted patterns for high-confidence matches
+    patterns_dir = TASKS_DIR / "patterns"
+    pattern_match = None
+    if patterns_dir.exists():
+        for f in patterns_dir.glob("*.json"):
+            try:
+                p = json.loads(f.read_text())
+                pattern_words = set(p.get("task_pattern", "").split())
+                query_words = set(query.split())
+                overlap = len(pattern_words & query_words)
+                if overlap >= 2 and p.get("success_rate", 0) >= 70:
+                    pattern_match = {
+                        "pattern": p.get("task_pattern"),
+                        "approach": p.get("approach"),
+                        "success_rate": p.get("success_rate"),
+                        "occurrences": p.get("occurrences"),
+                    }
+                    break
+            except (json.JSONDecodeError, KeyError):
+                continue
 
     matches = []
     for keywords, command, team, desc in ROUTE_TABLE:
@@ -1028,17 +1358,48 @@ def cmd_route(args):
     matches.sort(key=lambda x: -x["score"])
     best = matches[0] if matches else None
 
+    # Calculate routing confidence — combines keyword match, learnings, patterns, and history
+    confidence = 0
+    if best:
+        confidence = min(best["score"] * 25, 80)
+    if past_match and past_match.get("confidence", 0) > confidence:
+        confidence = past_match["confidence"]
+    if pattern_match and pattern_match.get("success_rate", 0) > confidence:
+        confidence = pattern_match["success_rate"]
+
+    # Boost/penalize based on historical route success rates
+    suggested_cmd = best["command"] if best else "/brainstorm"
+    cmd_stats = route_stats.get("commands", {}).get(suggested_cmd, {})
+    if cmd_stats:
+        total = cmd_stats.get("success", 0) + cmd_stats.get("failure", 0)
+        if total >= 3:
+            hist_rate = int(cmd_stats["success"] / total * 100)
+            # Blend: 70% current confidence + 30% historical success rate
+            confidence = int(confidence * 0.7 + hist_rate * 0.3)
+
     result = {
         "success": True,
         "query": query,
+        "confidence": min(confidence, 99),
         "suggestion": {
-            "command": best["command"] if best else "/brainstorm",
+            "command": suggested_cmd,
             "team": best.get("team") if best else None,
             "reason": best["description"] if best else "Default: start with brainstorming",
         },
     }
     if past_match:
         result["past_learning"] = past_match
+    if pattern_match:
+        result["promoted_pattern"] = pattern_match
+    if cmd_stats:
+        s = cmd_stats.get("success", 0)
+        f = cmd_stats.get("failure", 0)
+        result["route_history"] = {"uses": s + f, "success_rate": int(s / (s + f) * 100) if (s + f) > 0 else 0}
+    if matches and len(matches) > 1:
+        result["alternatives"] = [
+            {"command": m["command"], "reason": m["description"]}
+            for m in matches[1:3]
+        ]
 
     print(json.dumps(result))
 
@@ -1057,11 +1418,28 @@ def cmd_learn(args):
         "lesson": args.lesson,
         "score": args.score,
     }
+    if getattr(args, "used_command", None):
+        learning["command"] = args.used_command
 
-    # Filename from timestamp
-    fname = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S") + ".json"
+    # Filename from timestamp + microseconds for uniqueness
+    fname = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S-%f") + ".json"
     path = LEARNINGS_DIR / fname
     path.write_text(json.dumps(learning, indent=2) + "\n")
+
+    # Update route stats if command was recorded
+    if learning.get("command"):
+        stats = _load_route_stats()
+        cmd = learning["command"]
+        if cmd not in stats["commands"]:
+            stats["commands"][cmd] = {"success": 0, "failure": 0}
+        if args.outcome == "success":
+            stats["commands"][cmd]["success"] += 1
+        elif args.outcome == "failed":
+            stats["commands"][cmd]["failure"] += 1
+        else:  # partial
+            stats["commands"][cmd]["success"] += 0.5
+        _save_route_stats(stats)
+
     print(json.dumps({"success": True, "saved": str(path)}))
 
 
@@ -1073,8 +1451,9 @@ def cmd_learnings(args):
 
     learnings = []
     for f in sorted(LEARNINGS_DIR.glob("*.json")):
-        d = json.loads(f.read_text())
-        learnings.append(d)
+        d = safe_json_load(f, default=None)
+        if d:
+            learnings.append(d)
 
     if args.search:
         query = args.search.lower()
@@ -1091,34 +1470,124 @@ def cmd_learnings(args):
 
 
 def _search_learnings(query):
-    """Search learnings for relevant past experience."""
+    """Search learnings for relevant past experience with confidence scoring."""
     if not LEARNINGS_DIR.exists():
         return None
 
     query_lower = query.lower()
-    best = None
-    best_score = 0
+    candidates = []
 
     for f in LEARNINGS_DIR.glob("*.json"):
         try:
             d = json.loads(f.read_text())
             task = d.get("task", "").lower()
-            # Simple keyword overlap scoring
+            lesson = d.get("lesson", "").lower()
+            approach = d.get("approach", "").lower()
+            # Multi-field keyword overlap scoring
             words = set(query_lower.split())
-            task_words = set(task.split())
-            overlap = len(words & task_words)
-            if overlap > best_score and d.get("score", 0) >= 3:
-                best_score = overlap
-                best = {
-                    "task": d.get("task"),
-                    "approach": d.get("approach"),
-                    "lesson": d.get("lesson"),
-                    "score": d.get("score"),
-                }
+            task_overlap = len(words & set(task.split()))
+            lesson_overlap = len(words & set(lesson.split()))
+            approach_overlap = len(words & set(approach.split()))
+            # Weighted: task match is most important
+            total_score = task_overlap * 3 + lesson_overlap * 2 + approach_overlap
+            user_score = d.get("score", 3)
+            # Boost by user rating
+            weighted = total_score * (user_score / 5.0)
+            if weighted > 0 and user_score >= 2:
+                candidates.append((weighted, d))
         except (json.JSONDecodeError, KeyError):
             continue
 
-    return best if best_score >= 2 else None
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda x: -x[0])
+    best_weight, best_d = candidates[0]
+
+    if best_weight < 2:
+        return None
+
+    # Calculate confidence based on how many similar learnings exist
+    confidence = min(int(best_weight * 20), 99)
+
+    return {
+        "task": best_d.get("task"),
+        "approach": best_d.get("approach"),
+        "lesson": best_d.get("lesson"),
+        "score": best_d.get("score"),
+        "confidence": confidence,
+        "alternatives": len(candidates) - 1,
+    }
+
+
+def cmd_consolidate(_args):
+    """Consolidate learnings: merge similar entries, promote high-score patterns."""
+    if not LEARNINGS_DIR.exists():
+        print(json.dumps({"success": True, "consolidated": 0, "promoted": 0}))
+        return
+
+    learnings = []
+    for f in sorted(LEARNINGS_DIR.glob("*.json")):
+        d = safe_json_load(f, default=None)
+        if not d:
+            continue
+        d["_path"] = str(f)
+        learnings.append(d)
+
+    if len(learnings) < 2:
+        print(json.dumps({"success": True, "consolidated": 0, "promoted": 0}))
+        return
+
+    # Group by task similarity
+    groups = {}
+    for entry in learnings:
+        task_key = " ".join(sorted(entry.get("task", "").lower().split()[:3]))
+        groups.setdefault(task_key, []).append(entry)
+
+    consolidated = 0
+    promoted = 0
+    promoted_dir = TASKS_DIR / "patterns"
+    promoted_dir.mkdir(parents=True, exist_ok=True)
+
+    for key, group in groups.items():
+        if len(group) < 2:
+            continue
+
+        # Average score for this pattern
+        avg_score = sum(e.get("score", 3) for e in group) / len(group)
+        success_count = sum(1 for e in group if e.get("outcome") == "success")
+        success_rate = int(success_count / len(group) * 100)
+
+        # Promote patterns with high avg score and multiple successes
+        if avg_score >= 4 and success_count >= 2:
+            best = max(group, key=lambda e: e.get("score", 0))
+            pattern = {
+                "task_pattern": key,
+                "approach": best.get("approach"),
+                "lesson": best.get("lesson"),
+                "avg_score": round(avg_score, 1),
+                "success_rate": success_rate,
+                "occurrences": len(group),
+                "promoted_at": now_iso(),
+            }
+            fname = key.replace(" ", "-")[:30] + ".json"
+            (promoted_dir / fname).write_text(json.dumps(pattern, indent=2) + "\n")
+            promoted += 1
+
+        # Keep only the best entry per group, remove duplicates
+        if len(group) > 3:
+            group.sort(key=lambda e: -e.get("score", 0))
+            for entry in group[3:]:
+                Path(entry["_path"]).unlink(missing_ok=True)
+                consolidated += 1
+
+    print(json.dumps({
+        "success": True,
+        "consolidated": consolidated,
+        "promoted": promoted,
+        "total_learnings": len(learnings) - consolidated,
+        "patterns": len(list(promoted_dir.glob("*.json"))),
+    }))
 
 
 # ─── Auto (integrated autoimmune) ───
@@ -1408,6 +1877,97 @@ def _recommend_team(task):
     }
 
 
+CONFIG_FILE = TASKS_DIR / "config.json"
+DEFAULT_CONFIG = {
+    "auto_consolidate": True,
+    "max_iterations": 20,
+    "default_size": "M",
+    "scan_tools": ["ruff", "mypy", "bandit"],
+    "auto_learn_on_done": True,
+    "routing_confidence_threshold": 30,
+}
+
+
+def cmd_config(args):
+    """Manage cc-flow configuration."""
+    config = DEFAULT_CONFIG.copy()
+    if CONFIG_FILE.exists():
+        config.update(safe_json_load(CONFIG_FILE, default={}))
+
+    if args.key and args.value:
+        # Set a config value
+        # Auto-convert types
+        val = args.value
+        if val.lower() in ("true", "false"):
+            val = val.lower() == "true"
+        elif val.isdigit():
+            val = int(val)
+        config[args.key] = val
+        CONFIG_FILE.write_text(json.dumps(config, indent=2) + "\n")
+        print(json.dumps({"success": True, "key": args.key, "value": val}))
+    elif args.key:
+        # Get a config value
+        print(json.dumps({"success": True, "key": args.key, "value": config.get(args.key)}))
+    else:
+        # Show all config
+        print(json.dumps({"success": True, "config": config}))
+
+
+def cmd_history(_args):
+    """Show task completion timeline with velocity trends."""
+    tasks = all_tasks()
+
+    # Include archived tasks
+    archived = []
+    if COMPLETED_DIR.exists():
+        for f in COMPLETED_DIR.glob("*.json"):
+            try:
+                archived.append(json.loads(f.read_text()))
+            except json.JSONDecodeError:
+                continue
+
+    all_done = [t for t in list(tasks.values()) + archived if t.get("completed")]
+    all_done.sort(key=lambda t: t.get("completed", ""))
+
+    if not all_done:
+        print(json.dumps({"success": True, "entries": [], "count": 0}))
+        return
+
+    # Group by date
+    by_date = {}
+    for t in all_done:
+        date = t["completed"][:10]
+        by_date.setdefault(date, []).append(t)
+
+    # Calculate rolling velocity (tasks/day over last 7 entries)
+    entries = []
+    dates = sorted(by_date.keys())
+    for date in dates:
+        tasks_done = by_date[date]
+        entries.append({
+            "date": date,
+            "count": len(tasks_done),
+            "tasks": [{"id": t["id"], "title": t.get("title", "")} for t in tasks_done],
+        })
+
+    # Overall stats
+    if len(dates) >= 2:
+        first = datetime.fromisoformat(dates[0])
+        last = datetime.fromisoformat(dates[-1])
+        days = max((last - first).days, 1)
+        daily_velocity = len(all_done) / days
+    else:
+        daily_velocity = len(all_done)
+
+    print(json.dumps({
+        "success": True,
+        "entries": entries[-20:],  # Last 20 days
+        "count": len(all_done),
+        "daily_velocity": round(daily_velocity, 1),
+        "date_range": f"{dates[0]} → {dates[-1]}" if len(dates) >= 2 else dates[0],
+    }))
+
+
 def cmd_dep_add(args):
     """Add dependency to existing task."""
     path = TASKS_SUBDIR / f"{args.id}.json"
@@ -1420,13 +1980,407 @@ def cmd_dep_add(args):
         print(json.dumps({"success": False, "error": f"Dependency not found: {args.dep}"}))
         sys.exit(1)
 
-    data = json.loads(path.read_text())
+    data = safe_json_load(path)
     deps = data.get("depends_on", [])
     if args.dep not in deps:
         deps.append(args.dep)
         data["depends_on"] = deps
         save_task(path, data)
     print(json.dumps({"success": True, "id": args.id, "depends_on": deps}))
+
+
+def cmd_dashboard(_args):
+    """One-screen overview: epics, velocity, health, learnings."""
+    tasks = all_tasks()
+    total = len(tasks)
+    done = sum(1 for t in tasks.values() if t["status"] == "done")
+    in_prog = sum(1 for t in tasks.values() if t["status"] == "in_progress")
+    blocked = sum(1 for t in tasks.values() if t["status"] == "blocked")
+    todo = total - done - in_prog - blocked
+
+    # Header
+    print("╔══════════════════════════════════════════╗")
+    print(f"║  cc-flow Dashboard  (v{VERSION})          ║")
+    print("╠══════════════════════════════════════════╣")
+
+    # Global stats
+    pct = int(done / total * 100) if total > 0 else 0
+    bar_len = 20
+    filled = int(bar_len * done / total) if total > 0 else 0
+    bar = "█" * filled + "░" * (bar_len - filled)
+    print(f"║  Progress: {bar} {pct:>3}%  ║")
+    print(f"║  ● {done} done  ◐ {in_prog} active  ○ {todo} todo  ✗ {blocked} blocked ║")
+
+    # Velocity
+    done_tasks = [t for t in tasks.values() if t.get("completed")]
+    if len(done_tasks) >= 2:
+        times = sorted(t["completed"] for t in done_tasks)
+        first = datetime.fromisoformat(times[0].replace("Z", "+00:00"))
+        last = datetime.fromisoformat(times[-1].replace("Z", "+00:00"))
+        hours = max((last - first).total_seconds() / 3600, 0.1)
+        velocity = len(done_tasks) / hours
+        print(f"║  Velocity: {velocity:.1f} tasks/hour                  ║")
+    else:
+        print("║  Velocity: —                              ║")
+
+    print("╠══════════════════════════════════════════╣")
+
+    # Epic summary
+    epic_files = sorted(EPICS_DIR.glob("*.md")) if EPICS_DIR.exists() else []
+    if epic_files:
+        print("║  Epics:                                   ║")
+        for f in epic_files[:5]:
+            epic_id = f.stem
+            epic_tasks = [t for t in tasks.values() if t.get("epic") == epic_id]
+            e_done = sum(1 for t in epic_tasks if t["status"] == "done")
+            e_total = len(epic_tasks)
+            # Title
+            first_line = f.read_text().split("\n", 1)[0]
+            title = first_line.lstrip("# ").replace("Epic:", "").strip()[:25]
+            e_pct = int(e_done / e_total * 100) if e_total > 0 else 0
+            mini_bar = "█" * (e_pct // 10) + "░" * (10 - e_pct // 10)
+            print(f"║    {mini_bar} {e_pct:>3}% {title:<25} ║")
+        if len(epic_files) > 5:
+            print(f"║    ... +{len(epic_files) - 5} more                          ║")
+    else:
+        print("║  No epics yet. Run: cc-flow epic create   ║")
+
+    print("╠══════════════════════════════════════════╣")
+
+    # Learnings & patterns
+    learn_count = len(list(LEARNINGS_DIR.glob("*.json"))) if LEARNINGS_DIR.exists() else 0
+    patterns_dir = TASKS_DIR / "patterns"
+    pattern_count = len(list(patterns_dir.glob("*.json"))) if patterns_dir.exists() else 0
+    route_stats = _load_route_stats()
+    total_routes = sum(
+        v.get("success", 0) + v.get("failure", 0)
+        for v in route_stats.get("commands", {}).values()
+    )
+
+    print(f"║  Learning: {learn_count} entries, {pattern_count} patterns         ║")
+    if total_routes > 0:
+        total_success = sum(v.get("success", 0) for v in route_stats.get("commands", {}).values())
+        rate = int(total_success / total_routes * 100) if total_routes > 0 else 0
+        print(f"║  Routing:  {total_routes} routes, {rate}% success rate      ║")
+    else:
+        print("║  Routing:  no data yet                    ║")
+
+    # Autoimmune log
+    if LOG_FILE.exists():
+        lines = LOG_FILE.read_text().strip().split("\n")[1:]
+        kept = sum(1 for row in lines if "KEPT" in row)
+        disc = sum(1 for row in lines if "DISCARDED" in row)
+        ai_total = kept + disc
+        if ai_total > 0:
+            ai_rate = int(kept / ai_total * 100)
+            print(f"║  Autoimmune: {ai_total} runs, {ai_rate}% success         ║")
+
+    print("╚══════════════════════════════════════════╝")
+
+    # Next action suggestion
+    if blocked > 0:
+        print(f"\n  ⚠ {blocked} blocked task(s). Run: cc-flow tasks --status blocked")
+    elif in_prog > 0:
+        ip = next(t for t in tasks.values() if t["status"] == "in_progress")
+        print(f"\n  → Resume: {ip['id']} — {ip['title']}")
+    elif todo > 0:
+        # Find next ready
+        for t in tasks.values():
+            if t["status"] == "todo":
+                deps_done = all(tasks.get(d, {}).get("status") == "done" for d in t.get("depends_on", []))
+                if deps_done:
+                    print(f"\n  → Next: cc-flow start {t['id']} — {t['title']}")
+                    break
+    elif total > 0:
+        print("\n  ✅ All tasks done!")
+    else:
+        print("\n  → Get started: cc-flow epic create --title 'My Feature'")
+
+
+def cmd_doctor(args):
+    """Health check — validate environment, tools, config, and task integrity."""
+    import shutil
+    import subprocess as sp
+
+    checks = []
+    fmt = getattr(args, "format", "text") or "text"
+
+    def check(name, status, msg, fix=None):
+        checks.append({"name": name, "status": status, "message": msg, "fix": fix})
+
+    # 1. Python version
+    v = sys.version_info
+    if v >= (3, 9):
+        check("Python", "pass", f"{v.major}.{v.minor}.{v.micro}")
+    elif v >= (3, 7):
+        check("Python", "warn", f"{v.major}.{v.minor} (3.9+ recommended)", "brew install python@3.12")
+    else:
+        check("Python", "fail", f"{v.major}.{v.minor} (3.9+ required)", "brew install python@3.12")
+
+    # 2. Git
+    if shutil.which("git"):
+        try:
+            ver = sp.run(["git", "--version"], capture_output=True, text=True, timeout=5).stdout.strip()
+            check("Git", "pass", ver)
+        except (sp.TimeoutExpired, OSError):
+            check("Git", "warn", "git found but not responding")
+    else:
+        check("Git", "fail", "git not found", "brew install git")
+
+    # 3. Git repo
+    try:
+        result = sp.run(["git", "rev-parse", "--is-inside-work-tree"],
+                        capture_output=True, text=True, timeout=5)
+        if result.returncode == 0:
+            branch = sp.run(["git", "branch", "--show-current"],
+                            capture_output=True, text=True, timeout=5).stdout.strip()
+            check("Git repo", "pass", f"branch: {branch}" if branch else "detached HEAD")
+        else:
+            check("Git repo", "warn", "not a git repo", "git init")
+    except (sp.TimeoutExpired, OSError):
+        check("Git repo", "warn", "git not responding")
+
+    # 4. Lint tools
+    for tool, pkg in [("ruff", "pip install ruff"), ("mypy", "pip install mypy")]:
+        if shutil.which(tool):
+            check(tool, "pass", "available")
+        else:
+            check(tool, "warn", "not installed", pkg)
+
+    # 5. .tasks/ directory
+    if TASKS_DIR.exists() and META_FILE.exists():
+        meta = load_meta()
+        check(".tasks/", "pass", f"initialized (next_epic={meta.get('next_epic', '?')})")
+    elif TASKS_DIR.exists():
+        check(".tasks/", "warn", "directory exists but meta.json missing", "cc-flow init")
+    else:
+        check(".tasks/", "warn", "not initialized", "cc-flow init")
+
+    # 6. Task integrity
+    tasks = all_tasks()
+    if tasks:
+        orphaned = 0
+        broken_deps = 0
+        for tid, t in tasks.items():
+            epic_path = EPICS_DIR / f"{t.get('epic', '')}.md"
+            if not epic_path.exists():
+                orphaned += 1
+            for dep in t.get("depends_on", []):
+                if dep not in tasks:
+                    broken_deps += 1
+
+        if orphaned == 0 and broken_deps == 0:
+            check("Task integrity", "pass", f"{len(tasks)} tasks, all clean")
+        else:
+            issues = []
+            if orphaned:
+                issues.append(f"{orphaned} orphaned")
+            if broken_deps:
+                issues.append(f"{broken_deps} broken deps")
+            check("Task integrity", "warn", ", ".join(issues), "cc-flow validate")
+    else:
+        check("Task integrity", "pass", "no tasks yet")
+
+    # 7. Learnings
+    if LEARNINGS_DIR.exists():
+        count = len(list(LEARNINGS_DIR.glob("*.json")))
+        patterns_dir = TASKS_DIR / "patterns"
+        patterns = len(list(patterns_dir.glob("*.json"))) if patterns_dir.exists() else 0
+        check("Learnings", "pass", f"{count} learnings, {patterns} promoted patterns")
+        if count >= 20 and patterns == 0:
+            check("Consolidation", "warn", f"{count} learnings not consolidated",
+                  "cc-flow consolidate")
+        elif count > 0:
+            check("Consolidation", "pass", "up to date")
+    else:
+        check("Learnings", "pass", "none yet (use cc-flow learn)")
+
+    # 8. Config
+    if CONFIG_FILE.exists():
+        config = safe_json_load(CONFIG_FILE, default={})
+        check("Config", "pass", f"{len(config)} settings")
+    else:
+        check("Config", "pass", "using defaults")
+
+    # 9. Claude Code environment
+    import os
+    in_claude = bool(os.environ.get("CLAUDE_CODE") or os.environ.get("CLAUDE_PROJECT_DIR")
+                     or os.environ.get("CLAUDE_PLUGIN_ROOT"))
+    if in_claude:
+        check("Claude Code", "pass", "running inside Claude Code")
+    else:
+        check("Claude Code", "warn", "not detected (standalone mode)")
+
+    # Output
+    if fmt == "json":
+        passed = sum(1 for c in checks if c["status"] == "pass")
+        warned = sum(1 for c in checks if c["status"] == "warn")
+        failed = sum(1 for c in checks if c["status"] == "fail")
+        print(json.dumps({
+            "success": failed == 0,
+            "checks": checks,
+            "summary": {"pass": passed, "warn": warned, "fail": failed},
+        }))
+    else:
+        icons = {"pass": "✓", "warn": "⚠", "fail": "✗"}
+        print("## cc-flow Doctor\n")
+        for c in checks:
+            icon = icons.get(c["status"], "?")
+            print(f"  {icon} {c['name']}: {c['message']}")
+            if c.get("fix"):
+                print(f"    → fix: {c['fix']}")
+        passed = sum(1 for c in checks if c["status"] == "pass")
+        total = len(checks)
+        print(f"\n  {passed}/{total} checks passed")
+
+    if any(c["status"] == "fail" for c in checks):
+        sys.exit(1)
+
+
+def cmd_graph(args):
+    """Generate dependency graph in Mermaid or ASCII format."""
+    tasks = all_tasks()
+    epic_filter = getattr(args, "epic", "") or ""
+    fmt = getattr(args, "format", "mermaid") or "mermaid"
+
+    # Filter tasks
+    filtered = {}
+    for tid, t in tasks.items():
+        if epic_filter and t.get("epic") != epic_filter:
+            continue
+        filtered[tid] = t
+
+    if not filtered:
+        print(json.dumps({"success": False, "error": "No tasks found"}))
+        sys.exit(1)
+
+    # Collect edges and nodes
+    edges = []
+    for tid, t in filtered.items():
+        for dep in t.get("depends_on", []):
+            if dep in filtered:
+                edges.append((dep, tid))
+
+    # Status styling
+    status_style = {
+        "todo": {"mermaid": ":::todo", "icon": "○", "color": "white"},
+        "in_progress": {"mermaid": ":::inprog", "icon": "◐", "color": "yellow"},
+        "done": {"mermaid": ":::done", "icon": "●", "color": "green"},
+        "blocked": {"mermaid": ":::blocked", "icon": "✗", "color": "red"},
+    }
+
+    if fmt == "mermaid":
+        lines = ["graph TD"]
+        # Class definitions
+        lines.append("    classDef todo fill:#f9f9f9,stroke:#999,color:#333")
+        lines.append("    classDef inprog fill:#fff3cd,stroke:#ffc107,color:#333")
+        lines.append("    classDef done fill:#d4edda,stroke:#28a745,color:#333")
+        lines.append("    classDef blocked fill:#f8d7da,stroke:#dc3545,color:#333")
+
+        # Nodes
+        for tid, t in sorted(filtered.items()):
+            label = t.get("title", tid)[:40]
+            status = t.get("status", "todo")
+            size = t.get("size", "")
+            size_tag = f" [{size}]" if size else ""
+            style = status_style.get(status, {}).get("mermaid", "")
+            lines.append(f'    {tid.replace(".", "_")}["{tid}: {label}{size_tag}"]{style}')
+
+        # Edges
+        for src, dst in edges:
+            lines.append(f"    {src.replace('.', '_')} --> {dst.replace('.', '_')}")
+
+        # Legend
+        lines.append("")
+        lines.append("    %% Legend: todo=gray, in_progress=yellow, done=green, blocked=red")
+
+        mermaid_text = "\n".join(lines)
+
+        if getattr(args, "json", False):
+            print(json.dumps({
+                "success": True,
+                "format": "mermaid",
+                "nodes": len(filtered),
+                "edges": len(edges),
+                "mermaid": mermaid_text,
+            }))
+        else:
+            print("```mermaid")
+            print(mermaid_text)
+            print("```")
+
+    elif fmt == "ascii":
+        # ASCII dependency tree
+        # Find roots (no incoming edges)
+        has_incoming = {dst for _, dst in edges}
+        roots = [tid for tid in filtered if tid not in has_incoming]
+        if not roots:
+            roots = sorted(filtered.keys())[:1]
+
+        # Build adjacency list
+        children = {}
+        for src, dst in edges:
+            children.setdefault(src, []).append(dst)
+
+        printed = set()
+
+        def print_tree(tid, prefix="", is_last=True):
+            if tid in printed:
+                icon = status_style.get(filtered[tid]["status"], {}).get("icon", "?")
+                print(f"{prefix}{'└── ' if is_last else '├── '}{icon} {tid} (↻ ref)")
+                return
+            printed.add(tid)
+
+            t = filtered[tid]
+            icon = status_style.get(t["status"], {}).get("icon", "?")
+            title = t.get("title", "")[:35]
+            size = t.get("size", "")
+            size_tag = f" [{size}]" if size else ""
+            connector = "└── " if is_last else "├── "
+            print(f"{prefix}{connector}{icon} {tid}: {title}{size_tag}")
+
+            kids = children.get(tid, [])
+            for i, kid in enumerate(kids):
+                child_prefix = prefix + ("    " if is_last else "│   ")
+                print_tree(kid, child_prefix, i == len(kids) - 1)
+
+        # Print each root
+        for i, root in enumerate(sorted(roots)):
+            if i > 0:
+                print()
+            epic_id = filtered[root].get("epic", "")
+            if i == 0 and epic_id:
+                # Print epic header
+                epic_spec = EPICS_DIR / f"{epic_id}.md"
+                epic_title = ""
+                if epic_spec.exists():
+                    first_line = epic_spec.read_text().split("\n", 1)[0]
+                    epic_title = first_line.lstrip("# ").replace("Epic:", "").strip()
+                header = f"📋 {epic_title}" if epic_title else f"📋 {epic_id}"
+                print(header)
+            print_tree(root, "", i == len(roots) - 1)
+
+        # Summary
+        total = len(filtered)
+        done = sum(1 for t in filtered.values() if t["status"] == "done")
+        print(f"\n── {done}/{total} done, {len(edges)} dependencies ──")
+
+    elif fmt == "dot":
+        # Graphviz DOT format
+        lines = ["digraph tasks {", "    rankdir=LR;", '    node [shape=box, style=filled];']
+        fill = {"todo": "#f9f9f9", "in_progress": "#fff3cd", "done": "#d4edda", "blocked": "#f8d7da"}
+        for tid, t in sorted(filtered.items()):
+            label = f"{tid}\\n{t.get('title', '')[:30]}"
+            color = fill.get(t.get("status", "todo"), "#f9f9f9")
+            lines.append(f'    "{tid}" [label="{label}", fillcolor="{color}"];')
+        for src, dst in edges:
+            lines.append(f'    "{src}" -> "{dst}";')
+        lines.append("}")
+        print("\n".join(lines))
+
+    else:
+        print(json.dumps({"success": False, "error": f"Unknown format: {fmt}. Use: mermaid, ascii, dot"}))
+        sys.exit(1)
 
 
 def main():
@@ -1449,14 +2403,18 @@ def main():
     tc_create.add_argument("--deps", default="")
     tc_create.add_argument("--size", choices=["XS", "S", "M", "L", "XL"], default="M",
                            help="Task size: XS(<5 lines), S(<20), M(<50), L(<100), XL(100+)")
+    tc_create.add_argument("--tags", default="", help="Comma-separated tags (e.g. auth,api,urgent)")
+    tc_create.add_argument("--template", choices=["feature", "bugfix", "refactor", "security"], default="",
+                           help="Generate spec from template")
 
     list_p = sub.add_parser("list", help="Show all epics + tasks")
     list_p.add_argument("--json", action="store_true", default=False)
     sub.add_parser("epics", help="List epics (JSON)")
 
-    tasks_p = sub.add_parser("tasks", help="Filter tasks by epic/status")
+    tasks_p = sub.add_parser("tasks", help="Filter tasks by epic/status/tag")
     tasks_p.add_argument("--epic", default="")
     tasks_p.add_argument("--status", default="")
+    tasks_p.add_argument("--tag", default="", help="Filter by tag")
 
     show_p = sub.add_parser("show", help="Show epic or task detail")
     show_p.add_argument("id")
@@ -1474,6 +2432,11 @@ def main():
     block_p = sub.add_parser("block", help="Block a task with reason")
     block_p.add_argument("id")
     block_p.add_argument("--reason", required=True)
+
+    rollback_p = sub.add_parser("rollback", help="Rollback failed task to git state at start")
+    rollback_p.add_argument("id")
+    rollback_p.add_argument("--confirm", action="store_true", default=False,
+                            help="Actually execute the rollback (default: preview)")
 
     progress_p = sub.add_parser("progress", help="Progress bars per epic")
     progress_p.add_argument("--epic", default="")
@@ -1520,6 +2483,21 @@ def main():
     cp_restore.add_argument("name")
     cp_sub.add_parser("list")
     sub.add_parser("stats", help="Productivity metrics")
+    sub.add_parser("consolidate", help="Merge similar learnings, promote high-score patterns")
+    sub.add_parser("history", help="Task completion timeline with velocity trends")
+
+    sub.add_parser("dashboard", help="One-screen overview of everything")
+    doctor_p = sub.add_parser("doctor", help="Health check — environment, tools, tasks")
+    doctor_p.add_argument("--format", choices=["text", "json"], default="text")
+
+    graph_p = sub.add_parser("graph", help="Dependency graph (mermaid/ascii/dot)")
+    graph_p.add_argument("--epic", default="")
+    graph_p.add_argument("--format", choices=["mermaid", "ascii", "dot"], default="mermaid")
+    graph_p.add_argument("--json", action="store_true", default=False)
+
+    config_p = sub.add_parser("config", help="View/set cc-flow configuration")
+    config_p.add_argument("key", nargs="?", default="")
+    config_p.add_argument("value", nargs="?", default="")
 
     route_p = sub.add_parser("route", help="Smart router: analyze task → suggest command + team")
     route_p.add_argument("query", nargs="*")
@@ -1530,6 +2508,8 @@ def main():
     learn_p.add_argument("--approach", required=True)
     learn_p.add_argument("--lesson", required=True)
     learn_p.add_argument("--score", type=int, default=3, help="1-5 how useful was this approach")
+    learn_p.add_argument("--used-command", dest="used_command", default="",
+                           help="Which command was used (e.g. /debug, /tdd)")
 
     learnings_p = sub.add_parser("learnings", help="List/search past learnings")
     learnings_p.add_argument("--search", default="")
@@ -1586,6 +2566,13 @@ def main():
         "summary": cmd_summary,
         "archive": cmd_archive,
         "stats": cmd_stats,
+        "consolidate": cmd_consolidate,
+        "history": cmd_history,
+        "config": cmd_config,
+        "graph": cmd_graph,
+        "doctor": cmd_doctor,
+        "dashboard": cmd_dashboard,
+        "rollback": cmd_rollback,
     }
 
     if args.command == "epic":
