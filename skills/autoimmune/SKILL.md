@@ -8,11 +8,34 @@ description: >
 
 # Autoimmune — Autonomous Project Improvement Loop
 
+## cc-flow Integration
+
+Autoimmune is fully integrated with cc-flow task management. Use `cc-flow auto` for CLI-driven loops:
+
+```bash
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
+
+$CCFLOW auto scan     # Detect issues → create epic + tasks
+$CCFLOW auto run      # Pick next task → implement → verify → done/revert
+$CCFLOW auto test     # Auto-fix lint + type + test errors
+$CCFLOW auto full     # scan → run → test (all three)
+$CCFLOW auto status   # Session progress from task system
+```
+
+Each iteration automatically:
+- `cc-flow next` → pick highest-priority ready task
+- `cc-flow start <id>` → mark in_progress
+- Implement (< 50 lines diff)
+- Verify (auto-detect language tools)
+- `cc-flow done <id>` on success / `cc-flow block <id>` on failure
+- `cc-flow log` → record KEPT/DISCARDED
+- `cc-flow progress` → visual progress bar
+
 ## Mode Selection
 
-| User says | Mode | Action |
-|-----------|------|--------|
-| "autoimmune" / "auto improve" / "自动改进" | A | Code quality loop (from existing task list) |
+| User says | Mode | cc-flow command | Action |
+|-----------|------|----------------|--------|
+| "autoimmune" / "自动改进" | A | `cc-flow auto run` | Pick tasks, implement, verify |
 | "autoimmune test" / "test loop" / "测试改进" | B | Lint + type + test fix loop |
 | "autoimmune full" / "全量改进" | C | Mode D → A → B (scan, improve, fix) |
 | "autoimmune scan" / "auto scan" / "自动扫描" | D | Scan codebase, generate tasks, then Mode A |
