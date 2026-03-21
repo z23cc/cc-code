@@ -1,4 +1,5 @@
 ---
+agent: "researcher"
 description: "Profile and optimize Python code. TRIGGER: 'slow', 'optimize', 'bottleneck', 'performance', 'speed up', '太慢了', '优化性能'. Profiles first, then fixes."
 ---
 

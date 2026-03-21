@@ -1,4 +1,5 @@
 ---
+agent: "researcher"
 description: "Investigate unfamiliar code before making changes. TRIGGER: 'how does X work', 'investigate', 'research this', 'understand the code', '调研', '分析一下', '看看这个怎么工作的'."
 ---
 

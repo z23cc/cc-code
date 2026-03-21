@@ -1,4 +1,5 @@
 ---
+agent: "code-reviewer"
 description: "Review a GitHub PR with multi-agent dispatch. TRIGGER: 'review PR', 'review pull request', 'check this PR', '审查PR', 'PR #123'. Pass PR number or URL as argument."
 ---
 

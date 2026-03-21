@@ -1,4 +1,5 @@
 ---
+agent: "code-reviewer"
 description: "Run code review on recent changes. TRIGGER: 'review', 'code review', 'check my code', '看看代码', '代码审查'. Dispatches python-reviewer + security-reviewer."
 ---
 

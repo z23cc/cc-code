@@ -1,4 +1,5 @@
 ---
+agent: "build-fixer"
 description: "Fix build/type/test errors minimally. TRIGGER: 'build broken', 'type errors', 'tests failing', 'lint errors', '构建失败', '修复报错'. NOT for: new features (/tdd), refactoring (/simplify)."
 ---
 

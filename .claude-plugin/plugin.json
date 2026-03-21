@@ -1,6 +1,6 @@
 {
   "name": "cc-code",
-  "version": "2.8.1",
+  "version": "2.9.0",
   "description": "Development workflow toolkit — brainstorming, planning, TDD, code review, debugging, task management (cc-flow CLI), and autonomous improvement loops. Language-agnostic core with Python language pack included.",
   "author": {
     "name": "z23cc"
@@ -17,7 +17,10 @@
     "./agents/planner.md",
     "./agents/build-fixer.md",
     "./agents/researcher.md",
-    "./agents/architect.md"
+    "./agents/architect.md",
+    "./agents/db-reviewer.md",
+    "./agents/doc-updater.md",
+    "./agents/e2e-runner.md"
   ],
   "skills": ["./skills/"],
   "commands": ["./commands/"]

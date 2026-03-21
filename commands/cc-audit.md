@@ -1,4 +1,5 @@
 ---
+agent: "architect"
 description: "8-pillar project readiness audit. TRIGGER: 'audit', 'project health', 'is this ready', '体检', '项目审计'. Fixes agent-readiness issues, reports production issues."
 ---
 

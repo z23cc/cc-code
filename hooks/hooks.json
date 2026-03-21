@@ -35,6 +35,31 @@
         ],
         "description": "After cc-flow done/scan, suggest next steps (learn/next/commit)"
       }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-compact.sh"
+          }
+        ],
+        "description": "Auto-save session state before context compaction"
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-end.sh",
+            "timeout": 10
+          }
+        ],
+        "description": "Auto-save session and consolidate learnings at session end"
+      }
     ]
   }
 }

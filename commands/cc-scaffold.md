@@ -1,4 +1,5 @@
 ---
+agent: "architect"
 description: "Bootstrap new Python project. TRIGGER: 'new project', 'create project', 'start a project', 'init', '新建项目', '创建项目'. Generates structure, pyproject.toml, Docker, CI."
 ---
 

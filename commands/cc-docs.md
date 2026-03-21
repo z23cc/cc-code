@@ -1,4 +1,5 @@
 ---
+agent: "doc-updater"
 description: "Update project documentation. TRIGGER: 'update docs', 'write README', 'changelog', 'sync docs', '更新文档', '写文档'. Keeps docs in sync with code."
 ---
 

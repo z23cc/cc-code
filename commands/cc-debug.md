@@ -1,4 +1,5 @@
 ---
+agent: "researcher"
 description: "Systematic debugging with PUA escalation. TRIGGER: 'debug', 'why is this broken', 'fix this bug', 'investigate error', '调试', '为什么报错', '修这个bug'. NOT for build errors (/fix)."
 ---
 
