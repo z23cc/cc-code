@@ -142,6 +142,55 @@ $CCFLOW show $TASK_ID  # Read spec for worker prompt
 $CCFLOW done $TASK_ID --summary "Implemented X"
 ```
 
+## E2E Example
+
+```
+Plan: 3 tasks for "Add JWT Auth" epic
+
+Orchestrator:
+  $ BASE_COMMIT=$(git rev-parse HEAD)  # abc1234
+  $ cc-flow start epic-1-add-jwt.1
+
+  → Dispatch Worker 1:
+    Prompt: "Implement User model. Spec: .tasks/tasks/epic-1-add-jwt.1.md
+            BASE_COMMIT: abc1234. TDD. Max 50 lines."
+    Worker re-anchors:
+      $ cc-flow show epic-1-add-jwt.1   # read spec
+      $ git log --oneline -3            # recent state
+      $ Read src/domain/models.py       # current code
+    Worker implements:
+      RED:   test_user_has_email_and_id → FAIL ✓
+      GREEN: @dataclass class User: id, email, password_hash → PASS ✓
+      $ ruff check . && mypy . && pytest → all green
+      $ git commit -m "feat(domain): add User model"
+    Worker reports: "Done. +18 lines, 2 tests added."
+
+  $ cc-flow done epic-1-add-jwt.1 --summary "User model with tests"
+  → diff: {insertions: 18, files_changed: 2}
+  $ BASE_COMMIT=$(git rev-parse HEAD)  # def5678
+
+  → Dispatch Worker 2: (fresh context, only reads task 2 spec)
+    ... same cycle for token service ...
+
+  → Dispatch Worker 3: (fresh context)
+    ... same cycle for login endpoint ...
+
+Final:
+  $ cc-flow progress --epic epic-1-add-jwt
+  → Add JWT Auth: ████████████████████ 100% (3/3)
+  $ cc-flow graph --epic epic-1-add-jwt --format ascii
+  → ● Task 1 → ● Task 2 → ● Task 3 (all done)
+```
+
+## Worker Success Metrics
+
+| Metric | Target | Action if Missed |
+|--------|--------|-----------------|
+| First-attempt success | ≥ 70% | Improve spec clarity |
+| Diff size per worker | ≤ 50 lines | Split task further |
+| Worker runtime | < 5 min | Simplify scope |
+| Context bleed incidents | 0 | Always fresh agent |
+
 ## Related Skills
 
 - **plan** — the plan that workers execute

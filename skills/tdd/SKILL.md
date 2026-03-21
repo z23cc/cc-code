@@ -99,11 +99,55 @@ pytest -k "test_user"                               # Pattern match
 | "TDD will slow me down" | TDD is faster than debugging. |
 | "Just this once" | That's rationalization. |
 
+## E2E Example
+
+```
+Feature: "Add email validation to user registration"
+
+Cycle 1 — Happy path:
+  RED:   def test_valid_email_accepted():
+             assert validate_email("user@example.com").is_valid is True
+  RUN:   $ pytest tests/test_email.py::test_valid_email_accepted -v
+         → FAILED (NameError: validate_email not defined) ✓ expected
+  GREEN: def validate_email(email): return ValidationResult(is_valid=True)
+  RUN:   $ pytest → PASS ✓
+
+Cycle 2 — Empty input:
+  RED:   def test_empty_email_rejected():
+             result = validate_email("")
+             assert result.is_valid is False
+             assert result.error == "Email required"
+  RUN:   → FAILED (returns is_valid=True) ✓ expected
+  GREEN: if not email: return ValidationResult(is_valid=False, error="Email required")
+  RUN:   → 2/2 PASS ✓
+
+Cycle 3 — Invalid format:
+  RED:   def test_invalid_format_rejected():
+             assert validate_email("not-an-email").is_valid is False
+  RUN:   → FAILED ✓
+  GREEN: if "@" not in email: return ValidationResult(is_valid=False, error="Invalid format")
+  RUN:   → 3/3 PASS ✓
+
+REFACTOR: Extract regex pattern, add parametrize for edge cases
+  RUN:   → 3/3 PASS ✓
+  $ pytest --cov=src --cov-report=term-missing → 100% on validate_email
+```
+
+## Metrics
+
+| Metric | Target | How to Check |
+|--------|--------|-------------|
+| Coverage on new code | ≥ 80% | `pytest --cov --cov-fail-under=80` |
+| Tests per function | ≥ 2 (happy + error) | Manual count |
+| Red before green | 100% | Self-discipline — never skip |
+| Test run time | < 5s per test | `pytest --durations=5` |
+
 ## Related Skills
 
 - **verification** — use before claiming TDD cycle is complete
 - **python-testing** — pytest patterns, fixtures, parametrization
 - **debugging** — when tests fail unexpectedly, switch to systematic debugging
+- **plan** — each plan task follows Red-Green-Refactor
 
 ## Verification Checklist
 

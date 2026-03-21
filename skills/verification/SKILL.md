@@ -79,6 +79,40 @@ BAD: "Tests pass, phase complete"
 
 **No shortcuts for verification.** Run the command. Read the output. THEN claim the result.
 
+## E2E Example
+
+```
+Claim: "Tests pass after fixing the auth bug"
+
+1. IDENTIFY: pytest is the verification command
+2. RUN:
+   $ pytest tests/ -v
+   ========================= test session starts ==========================
+   tests/test_auth.py::test_login_valid ✓
+   tests/test_auth.py::test_login_invalid ✓
+   tests/test_auth.py::test_token_refresh ✓
+   tests/test_users.py::test_create_user ✓
+   ========================= 4 passed in 1.23s ============================
+
+3. READ: 4 passed, 0 failed, exit code 0
+4. VERIFY: Output confirms "4 passed" — matches claim ✓
+5. CLAIM: "All 4 tests pass (pytest output: 4 passed in 1.23s)"
+
+WRONG way: "I fixed the bug, tests should pass now" ✗
+RIGHT way: "pytest shows 4/4 pass (ran just now)" ✓
+```
+
+## Verification Commands by Language
+
+| Language | Lint | Types | Tests | Build |
+|----------|------|-------|-------|-------|
+| Python | `ruff check .` | `mypy .` | `pytest -v` | `python -m py_compile` |
+| JS/TS | `eslint .` | `tsc --noEmit` | `npm test` | `npm run build` |
+| Go | `golangci-lint run` | built-in | `go test ./...` | `go build ./...` |
+| Rust | `cargo clippy` | built-in | `cargo test` | `cargo build` |
+
+**Full verification = ALL four pass.** Partial verification (e.g., only lint) is not sufficient for completion claims.
+
 ## Related Skills
 
 - **tdd** — TDD requires verification at each Red/Green step

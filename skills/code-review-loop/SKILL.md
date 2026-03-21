@@ -113,6 +113,48 @@ git diff $BASELINE_SHA..HEAD
 
 Dispatch review loop scoped to the full autoimmune diff. This catches cross-task issues that per-task reviews miss (e.g., inconsistent naming, duplicated code across tasks).
 
+## E2E Example
+
+```
+Implementing: "Add user deletion endpoint"
+
+Loop 1 — Review:
+  $ git diff $BASE_COMMIT..HEAD | wc -l  → 48 lines
+  Dispatch python-reviewer agent...
+
+  ## Review Verdict: NEEDS_WORK
+  ### Issues (1 HIGH, 1 MEDIUM)
+  #### [HIGH] No authorization check — any user can delete any user
+  File: src/api/users.py:78
+  Fix: Add ownership check before deletion
+  #### [MEDIUM] Missing 404 when user not found
+  File: src/api/users.py:75
+  Fix: Return 404 instead of 500 on missing user
+
+Loop 1 — Auto-Fix:
+  → Read src/api/users.py:75-85
+  → Add: if user.id != current_user.id: raise ForbiddenError()
+  → Add: if not user: raise NotFoundError()
+  → Run: ruff + mypy + pytest → PASS ✓
+  → Commit: "fix(api): add auth check and 404 to user deletion"
+
+Loop 2 — Re-Review:
+  Dispatch python-reviewer agent...
+
+  ## Review Verdict: SHIP ✓
+  No CRITICAL/HIGH issues. Code is ready.
+
+→ Done in 2 loops. Total: 1 NEEDS_WORK → 1 SHIP.
+```
+
+## Loop Metrics
+
+| Metric | Target | Red Flag |
+|--------|--------|----------|
+| Loops to SHIP | ≤ 2 | 3 = surface to user |
+| Issues per review | Trending down | Same issue type recurring = systematic problem |
+| MAJOR_RETHINK rate | < 10% | High rate = plan quality issue |
+
 ## Related Skills
 
 - **verification** — verify after each fix iteration
@@ -120,3 +162,4 @@ Dispatch review loop scoped to the full autoimmune diff. This catches cross-task
 - **parallel-agents** — dispatch multiple reviewers for large changes
 - **autoimmune** — run review loop after autoimmune session completes
 - **pr-review command** — GitHub PR variant of this loop
+- **feedback-loop** — record review patterns for routing improvement
