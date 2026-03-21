@@ -4,14 +4,14 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 ## Architecture
 
-- `scripts/cc-flow.py` — Task & workflow CLI (21 commands: epic/task lifecycle, scan, progress, validate)
+- `scripts/cc-flow.py` — Task & workflow CLI (25 subcommands: epic/task lifecycle, scan, checkpoint, progress, validate)
 - `agents/` — 8 agents: researcher, architect, planner, code-reviewer, python-reviewer, security-reviewer, refactor-cleaner, build-fixer
-- `skills/` — 30 skills in 3 layers:
-  - **Core (18, language-agnostic):** brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, teams, autoimmune, readiness-audit, search-strategy, git-workflow, prompt-engineering, clean-architecture
+- `skills/` — 34 skills in 3 layers:
+  - **Core (22, language-agnostic):** brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, teams, autoimmune, readiness-audit, search-strategy, git-workflow, prompt-engineering, clean-architecture, context-tips, docs, incident, dependency-upgrade
   - **Python pack (12):** python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, scaffold, deploy, task-queues
-- `commands/` — 17 slash commands
+- `commands/` — 18 slash commands
 - `rules/` — 4 always-on rules
-- `hooks/` — SessionStart context injection
+- `hooks/` — SessionStart + PreToolUse quality gate
 
 ## Key Workflow
 
