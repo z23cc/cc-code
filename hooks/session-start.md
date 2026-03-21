@@ -1,4 +1,4 @@
-## cc-code — Python Development Toolkit
+## cc-code — Development Workflow Toolkit
 
 **Workflows:**
 - New feature → `/brainstorm` → `/plan` → `/tdd` → `/refine` → `/commit`
@@ -9,13 +9,15 @@
 - Cleanup → `/simplify` → `/commit`
 - New project → `/scaffold`
 - Project health → `/audit` → feeds into `/autoimmune`
-- Task management → `/tasks` (list / create / start / done / progress)
+- Task management → `/tasks` (cc-flow CLI: list / create / start / done / progress)
 
 **Autonomous improvement:**
 - `/autoimmune scan` — auto-detect issues, generate tasks, then fix
 - `/autoimmune` — pick from task list, implement, verify, commit/revert
 - `/autoimmune test` — auto-fix lint + type + test errors
 - `/autoimmune full` — scan → improve → fix (all three)
+
+**Language detection:** Core skills auto-detect project language from pyproject.toml / package.json / go.mod / Cargo.toml and adapt verify/lint/test commands.
 
 **Gates:**
 - DO NOT implement without design approval (`/brainstorm` first)
