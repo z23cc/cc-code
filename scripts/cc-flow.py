@@ -228,7 +228,14 @@ def cmd_list(args):
     for epic_id, epic in epics.items():
         done = sum(1 for t in epic["tasks"] if t["status"] == "done")
         total = len(epic["tasks"])
-        print(f"\n[{epic_id}] ({done}/{total} done)")
+        # Extract title from epic spec first line
+        epic_spec = EPICS_DIR / f"{epic_id}.md"
+        epic_title = ""
+        if epic_spec.exists():
+            first_line = epic_spec.read_text().split("\n", 1)[0]
+            epic_title = first_line.lstrip("# ").replace("Epic:", "").strip()
+        title_part = f": {epic_title}" if epic_title else ""
+        print(f"\n[{epic_id}]{title_part} ({done}/{total} done)")
         for t in epic["tasks"]:
             status = t["status"]
             marker = {"todo": "○", "in_progress": "◐", "done": "●", "blocked": "✗"}
@@ -398,13 +405,20 @@ def cmd_progress(args):
         json_output.append(entry)
 
         if not getattr(args, "json", False):
+            # Extract title from epic spec
+            epic_spec = EPICS_DIR / f"{epic_id}.md"
+            epic_title = ""
+            if epic_spec.exists():
+                first_line = epic_spec.read_text().split("\n", 1)[0]
+                epic_title = first_line.lstrip("# ").replace("Epic:", "").strip()
+            label = f"{epic_title}" if epic_title else epic_id
             if total == 0:
-                print(f"{epic_id}: no tasks")
+                print(f"{label}: no tasks")
             else:
                 bar_len = 20
                 filled = int(bar_len * done / total)
                 bar = "█" * filled + "░" * (bar_len - filled)
-                print(f"{epic_id}: {bar} {pct}% ({done}/{total})")
+                print(f"{label}: {bar} {pct}% ({done}/{total})")
                 if in_prog:
                     print(f"  ◐ {in_prog} in progress")
                 if blocked:

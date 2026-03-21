@@ -1,0 +1,11 @@
+{
+  "id": "epic-1-test-all-features.3",
+  "epic": "epic-1-test-all-features",
+  "title": "Test checkpoint",
+  "status": "todo",
+  "depends_on": [
+    "epic-1-test-all-features.2"
+  ],
+  "size": "S",
+  "created": "2026-03-21T02:14:50Z"
+}
