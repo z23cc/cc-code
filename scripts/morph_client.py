@@ -44,6 +44,8 @@ class MorphClient:
         req = Request(url, data=data, method="POST")
         req.add_header("Authorization", f"Bearer {self.api_key}")
         req.add_header("Content-Type", "application/json")
+        req.add_header("User-Agent", "cc-code-morph/1.0")
+        req.add_header("Accept", "application/json")
         try:
             with urlopen(req, timeout=60) as resp:
                 return json.loads(resp.read().decode("utf-8"))
@@ -262,20 +264,34 @@ class MorphClient:
     def compact(self, text, ratio=0.3):
         """Compress text by keeping only essential content.
 
-        Uses Apply model to intelligently summarize while preserving key information.
+        Uses Apply model to produce a shorter version of the text.
+        The <update> contains a truncated version that Apply will merge/clean up.
         """
-        target_len = int(len(text) * ratio)
+        target_len = max(int(len(text) * ratio), 50)
+        # Create a truncated version as the update hint
+        truncated = text[:target_len]
+        # Find last sentence boundary
+        for sep in [". ", ".\n", "\n\n", "\n", ". "]:
+            idx = truncated.rfind(sep)
+            if idx > target_len // 2:
+                truncated = truncated[:idx + len(sep)]
+                break
+
         instruction = (
-            f"Compress this text to approximately {target_len} characters. "
-            "Keep all technical details, code references, file paths, and decisions. "
-            "Remove filler words, redundant explanations, and verbose formatting. "
-            "Output ONLY the compressed text, nothing else."
+            f"Compress to ~{target_len} chars. Keep technical details, "
+            "file paths, code refs, decisions. Remove filler and redundancy. "
+            "Output ONLY compressed text."
         )
         resp = self._request("chat/completions", {
             "model": "morph-v3-fast",
-            "messages": [{"role": "user", "content": f"<instruction>{instruction}</instruction>\n<code>{text}</code>\n<update>compress</update>"}],
+            "messages": [{"role": "user", "content": f"<instruction>{instruction}</instruction>\n<code>{text}</code>\n<update>{truncated}</update>"}],
+            "max_tokens": max(target_len // 3, 100),
         })
-        return resp["choices"][0]["message"]["content"]
+        result = resp["choices"][0]["message"]["content"]
+        # If API returns something longer than original, just truncate
+        if len(result) > len(text):
+            return text[:target_len]
+        return result
 
 
 # ── CLI ──
