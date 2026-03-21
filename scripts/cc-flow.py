@@ -51,7 +51,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "2.7.0"
+VERSION = "2.8.0"
 
 TASKS_DIR = Path(".tasks")
 EPICS_DIR = TASKS_DIR / "epics"
@@ -1989,6 +1989,121 @@ def cmd_dep_add(args):
     print(json.dumps({"success": True, "id": args.id, "depends_on": deps}))
 
 
+SESSION_DIR = TASKS_DIR / ".sessions"
+
+
+def cmd_session(args):
+    """Save or restore full session state (richer than checkpoint)."""
+    import subprocess as _sp
+
+    mode = getattr(args, "session_cmd", None)
+    SESSION_DIR.mkdir(parents=True, exist_ok=True)
+
+    if mode == "save":
+        # Gather comprehensive session state
+        tasks = all_tasks()
+        in_prog = [t for t in tasks.values() if t["status"] == "in_progress"]
+        done_count = sum(1 for t in tasks.values() if t["status"] == "done")
+        learn_count = len(list(LEARNINGS_DIR.glob("*.json"))) if LEARNINGS_DIR.exists() else 0
+
+        # Git state
+        try:
+            git_sha = _sp.run(["git", "rev-parse", "HEAD"],
+                              capture_output=True, text=True, timeout=5).stdout.strip()
+            git_branch = _sp.run(["git", "branch", "--show-current"],
+                                 capture_output=True, text=True, timeout=5).stdout.strip()
+            git_dirty = _sp.run(["git", "status", "--porcelain"],
+                                capture_output=True, text=True, timeout=5).stdout.strip()
+        except (OSError, _sp.TimeoutExpired):
+            git_sha = git_branch = git_dirty = ""
+
+        # Recent learnings
+        recent_learnings = []
+        if LEARNINGS_DIR.exists():
+            for f in sorted(LEARNINGS_DIR.glob("*.json"))[-3:]:
+                d = safe_json_load(f, default=None)
+                if d:
+                    recent_learnings.append({
+                        "task": d.get("task", ""),
+                        "lesson": d.get("lesson", ""),
+                    })
+
+        name = getattr(args, "name", "") or datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+        session = {
+            "name": name,
+            "timestamp": now_iso(),
+            "git_sha": git_sha,
+            "git_branch": git_branch,
+            "git_dirty": bool(git_dirty),
+            "tasks_total": len(tasks),
+            "tasks_done": done_count,
+            "in_progress": [{"id": t["id"], "title": t.get("title", "")} for t in in_prog],
+            "learnings_count": learn_count,
+            "recent_learnings": recent_learnings,
+            "notes": getattr(args, "notes", "") or "",
+        }
+
+        path = SESSION_DIR / f"{name}.json"
+        path.write_text(json.dumps(session, indent=2) + "\n")
+        print(json.dumps({"success": True, "session": name, "path": str(path)}))
+
+    elif mode == "restore":
+        name = getattr(args, "name", "latest")
+        if name == "latest":
+            files = sorted(SESSION_DIR.glob("*.json"))
+            if not files:
+                _error("No sessions found")
+            path = files[-1]
+        else:
+            path = SESSION_DIR / f"{name}.json"
+
+        if not path.exists():
+            _error(f"Session not found: {name}")
+
+        data = safe_json_load(path)
+
+        print(f"## Session: {data.get('name', '?')}")
+        print(f"Saved: {data.get('timestamp', '?')}")
+        print(f"Branch: {data.get('git_branch', '?')} @ {data.get('git_sha', '?')[:8]}")
+        if data.get("git_dirty"):
+            print("WARNING: Had uncommitted changes when saved")
+        print(f"Progress: {data.get('tasks_done', 0)}/{data.get('tasks_total', 0)} tasks done")
+
+        if data.get("in_progress"):
+            print("\n### Resume These Tasks:")
+            for t in data["in_progress"]:
+                print(f"  - cc-flow start {t['id']} — {t['title']}")
+
+        if data.get("recent_learnings"):
+            print("\n### Recent Learnings:")
+            for entry in data["recent_learnings"]:
+                print(f"  - {entry['task']}: {entry['lesson']}")
+
+        if data.get("notes"):
+            print(f"\n### Notes:\n{data['notes']}")
+
+        print("\n### Next Steps:")
+        print("  1. `cc-flow dashboard` — see current state")
+        print("  2. `cc-flow next` — pick next task")
+
+    elif mode == "list":
+        sessions = []
+        for f in sorted(SESSION_DIR.glob("*.json")):
+            d = safe_json_load(f, default=None)
+            if d:
+                sessions.append({
+                    "name": d.get("name", f.stem),
+                    "timestamp": d.get("timestamp", ""),
+                    "done": d.get("tasks_done", 0),
+                    "total": d.get("tasks_total", 0),
+                    "branch": d.get("git_branch", ""),
+                })
+        print(json.dumps({"success": True, "sessions": sessions, "count": len(sessions)}))
+
+    else:
+        _error("Usage: cc-flow session [save|restore|list]")
+
+
 def cmd_dashboard(_args):
     """One-screen overview: epics, velocity, health, learnings."""
     tasks = all_tasks()
@@ -2486,6 +2601,15 @@ def main():
     sub.add_parser("consolidate", help="Merge similar learnings, promote high-score patterns")
     sub.add_parser("history", help="Task completion timeline with velocity trends")
 
+    sess_p = sub.add_parser("session", help="Save/restore full session state (richer than checkpoint)")
+    sess_sub = sess_p.add_subparsers(dest="session_cmd")
+    sess_save = sess_sub.add_parser("save")
+    sess_save.add_argument("--name", default="")
+    sess_save.add_argument("--notes", default="", help="Context notes for future self")
+    sess_restore = sess_sub.add_parser("restore")
+    sess_restore.add_argument("name", nargs="?", default="latest")
+    sess_sub.add_parser("list")
+
     sub.add_parser("dashboard", help="One-screen overview of everything")
     doctor_p = sub.add_parser("doctor", help="Health check — environment, tools, tasks")
     doctor_p.add_argument("--format", choices=["text", "json"], default="text")
@@ -2612,6 +2736,8 @@ def main():
         else:
             parser.print_help()
             sys.exit(1)
+    elif args.command == "session":
+        cmd_session(args)
     elif args.command == "dep" and getattr(args, "dep_cmd", None) == "add":
         cmd_dep_add(args)
     elif args.command in cmds:

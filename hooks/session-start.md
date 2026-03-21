@@ -11,6 +11,8 @@
 - Performance → `/cc-perf`  |  Cleanup → `/cc-simplify`  |  New project → `/cc-scaffold`
 - Task management → `/cc-tasks`  |  Documentation → `/cc-docs`  |  Health → `/cc-audit`
 
+**Scouts:** `/cc-scout [type]` | `/cc-prime` (full project assessment)
+**Blueprint:** `/cc-blueprint` (one-liner → phased plan) | `/cc-interview` (deep requirements)
 **Autonomous:** `/cc-autoimmune` (scan / code / test / full)
 
 **Feedback loop:** `/cc-route` → execute → `cc-flow learn` → `cc-flow consolidate` → smarter routing

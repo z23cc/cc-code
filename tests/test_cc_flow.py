@@ -416,6 +416,38 @@ class TestDoneDuration:
         assert "duration" in data
 
 
+class TestSession:
+    def test_session_save_and_list(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        out, _, code = run(["session", "save", "--name", "test-session",
+                            "--notes", "working on auth"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["session"] == "test-session"
+        # List
+        out, _, code = run(["session", "list"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["count"] == 1
+        assert data["sessions"][0]["name"] == "test-session"
+
+    def test_session_restore(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["start", "epic-1-test.1"], cwd=workspace)
+        run(["session", "save", "--name", "s1"], cwd=workspace)
+        out, _, code = run(["session", "restore", "s1"], cwd=workspace)
+        assert code == 0
+        assert "epic-1-test.1" in out
+        assert "Resume" in out
+
+    def test_session_restore_latest(self, workspace):
+        run(["session", "save", "--name", "s1"], cwd=workspace)
+        out, _, code = run(["session", "restore"], cwd=workspace)
+        assert code == 0
+
+
 class TestDashboard:
     def test_dashboard_empty(self, workspace):
         out, _, code = run(["dashboard"], cwd=workspace)
