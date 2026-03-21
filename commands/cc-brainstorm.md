@@ -19,12 +19,12 @@ CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
 **IMPORTANT: Launch all 3 scouts simultaneously using multiple Agent tool calls in a single message.**
 
-Dispatch in parallel:
-1. **researcher** agent → run cc-scout-repo (existing patterns)
-2. **researcher** agent → run cc-scout-practices (best practices)
-3. **researcher** agent → run cc-scout-gaps (edge cases)
+Dispatch 3 scout agents in parallel (each is a dedicated agent, not the researcher):
+1. **cc-scout-repo** agent → existing patterns, conventions, reusable code
+2. **cc-scout-practices** agent → best practices, anti-patterns, current guidance
+3. **cc-scout-gaps** agent → edge cases, missing requirements, priority questions
 
-Each writes findings to `/tmp/cc-team-scout-*.md`. Wait for all 3 to complete.
+Each scout agent runs independently and returns structured findings. Wait for all 3 to complete.
 
 ### Phase 2: Interview (sequential — needs scout results)
 Use scout findings to inform questions:

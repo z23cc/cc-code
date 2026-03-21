@@ -19,4 +19,4 @@ Package structure:
   morph_client.py    → pure Python Morph API client (5 APIs)
 """
 
-VERSION = "3.7.0"
+VERSION = "3.8.0"

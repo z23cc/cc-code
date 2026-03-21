@@ -14,16 +14,16 @@ CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
 **IMPORTANT: Launch all scouts simultaneously using multiple Agent tool calls in a single message. Do NOT run them sequentially.**
 
-Dispatch in one message:
-1. **cc-scout-build** — Build system, scripts, CI/CD
-2. **cc-scout-tooling** — Lint, format, type check, pre-commit
-3. **cc-scout-env** — Environment, Docker, runtime pinning
-4. **cc-scout-testing** — Test framework, coverage, CI
-5. **cc-scout-security** — Branch protection, secrets, dependency audit
-6. **cc-scout-observability** — Logging, tracing, metrics, health
-7. **cc-scout-repo** — Existing patterns, conventions
+Dispatch all scout **agents** in one message (each is a registered agent, use Agent tool):
+1. **cc-scout-build** agent — Build system, scripts, CI/CD
+2. **cc-scout-tooling** agent — Lint, format, type check, pre-commit
+3. **cc-scout-env** agent — Environment, Docker, runtime pinning
+4. **cc-scout-testing** agent — Test framework, coverage, CI
+5. **cc-scout-security** agent — Branch protection, secrets, dependency audit
+6. **cc-scout-observability** agent — Logging, tracing, metrics, health
+7. **cc-scout-repo** agent — Existing patterns, conventions
 
-Each scout is an independent Agent call — they don't depend on each other.
+Each scout is an independent agent — they run concurrently and don't depend on each other.
 
 Also run `$CCFLOW doctor --format json` for environment health.
 
