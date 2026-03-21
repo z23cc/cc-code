@@ -8,6 +8,7 @@
 - Performance → `/perf`
 - Cleanup → `/simplify` → `/commit`
 - New project → `/scaffold`
+- Agent team → `/team` (auto-selects: feature-dev / bug-fix / review / refactor / audit)
 - Project health → `/audit` → feeds into `/autoimmune`
 - Task management → `/tasks` (cc-flow CLI: list / create / start / done / progress)
 
