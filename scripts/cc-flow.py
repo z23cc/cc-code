@@ -33,6 +33,9 @@ Usage:
     cc-flow learnings [--search query] [--last N]
     cc-flow consolidate
     cc-flow history
+    cc-flow search <query> [--dir path]
+    cc-flow compact [--file path] [--ratio 0.3] [--output path]
+    cc-flow github-search <query> --repo owner/repo
     cc-flow session [save|restore|list]
     cc-flow dashboard
     cc-flow doctor [--format text|json]
@@ -52,7 +55,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "3.0.0"
+VERSION = "3.1.0"
 
 TASKS_DIR = Path(".tasks")
 EPICS_DIR = TASKS_DIR / "epics"
@@ -2105,6 +2108,154 @@ def cmd_session(args):
         _error("Usage: cc-flow session [save|restore|list]")
 
 
+def cmd_search(args):
+    """Semantic code search via morph CLI, with Grep fallback."""
+    import shutil
+    import subprocess as _sp
+
+    query = " ".join(args.query) if args.query else ""
+    if not query:
+        _error("Provide a search query")
+
+    search_dir = getattr(args, "dir", ".") or "."
+    fmt = getattr(args, "format", "text") or "text"
+
+    # Try morph search first
+    if shutil.which("morph"):
+        try:
+            cmd = ["morph", "search", "--query", query]
+            if search_dir != ".":
+                cmd.extend(["--dir", search_dir])
+            result = _sp.run(cmd, capture_output=True, text=True, timeout=30)
+            if result.returncode == 0 and result.stdout.strip():
+                if fmt == "json":
+                    print(json.dumps({
+                        "success": True,
+                        "engine": "morph",
+                        "query": query,
+                        "results": result.stdout.strip(),
+                    }))
+                else:
+                    print(f"## Search: {query} (morph semantic)\n")
+                    print(result.stdout.strip())
+                return
+        except (_sp.TimeoutExpired, OSError):
+            pass
+
+    # Fallback to grep
+    try:
+        result = _sp.run(
+            ["grep", "-rn", "--include=*.py", "--include=*.ts", "--include=*.js",
+             "--include=*.go", "--include=*.rs", "--include=*.md",
+             "-i", query, search_dir],
+            capture_output=True, text=True, timeout=15,
+        )
+        lines = result.stdout.strip().split("\n")[:20]  # Limit results
+        if fmt == "json":
+            print(json.dumps({
+                "success": True,
+                "engine": "grep-fallback",
+                "query": query,
+                "results": lines,
+                "count": len(lines),
+            }))
+        else:
+            print(f"## Search: {query} (grep fallback)\n")
+            for line in lines:
+                if line.strip():
+                    print(f"  {line}")
+            if len(lines) >= 20:
+                print(f"\n  ... (showing first 20 of {result.stdout.count(chr(10))} matches)")
+    except (_sp.TimeoutExpired, OSError):
+        _error("Search failed")
+
+
+def cmd_compact(args):
+    """Compress text via morph compact CLI."""
+    import shutil
+    import subprocess as _sp
+
+    if not shutil.which("morph"):
+        _error("morph CLI not found. Install: npm i -g @duange/morph-plugin")
+
+    ratio = getattr(args, "ratio", "0.3") or "0.3"
+    input_file = getattr(args, "file", "") or ""
+
+    if input_file:
+        if not Path(input_file).exists():
+            _error(f"File not found: {input_file}")
+        content = Path(input_file).read_text()
+    else:
+        # Read from stdin
+        import select
+        if select.select([sys.stdin], [], [], 0.1)[0]:
+            content = sys.stdin.read()
+        else:
+            _error("Provide input via --file or stdin: cat file.txt | cc-flow compact")
+
+    try:
+        result = _sp.run(
+            ["morph", "compact", "--ratio", str(ratio)],
+            input=content, capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode == 0:
+            output = result.stdout.strip()
+            original_len = len(content)
+            compact_len = len(output)
+            savings = int((1 - compact_len / original_len) * 100) if original_len > 0 else 0
+            print(json.dumps({
+                "success": True,
+                "original_chars": original_len,
+                "compact_chars": compact_len,
+                "savings": f"{savings}%",
+                "ratio": ratio,
+            }))
+            if getattr(args, "output", ""):
+                Path(args.output).write_text(output)
+                print(f"Written to {args.output}")
+            else:
+                print(output)
+        else:
+            _error(f"morph compact failed: {result.stderr[:200]}")
+    except (_sp.TimeoutExpired, OSError) as exc:
+        _error(f"morph compact error: {exc}")
+
+
+def cmd_github_search(args):
+    """Search GitHub repos via morph github CLI."""
+    import shutil
+    import subprocess as _sp
+
+    if not shutil.which("morph"):
+        _error("morph CLI not found. Install: npm i -g @duange/morph-plugin")
+
+    query = " ".join(args.query) if args.query else ""
+    if not query:
+        _error("Provide a search query")
+
+    repo = getattr(args, "repo", "") or ""
+    url = getattr(args, "url", "") or ""
+
+    if not repo and not url:
+        _error("Provide --repo owner/repo or --url github-url")
+
+    cmd = ["morph", "github", "--query", query]
+    if repo:
+        cmd.extend(["--repo", repo])
+    elif url:
+        cmd.extend(["--url", url])
+
+    try:
+        result = _sp.run(cmd, capture_output=True, text=True, timeout=30)
+        if result.returncode == 0:
+            print(f"## GitHub Search: {query}\n")
+            print(result.stdout.strip())
+        else:
+            _error(f"morph github failed: {result.stderr[:200]}")
+    except (_sp.TimeoutExpired, OSError) as exc:
+        _error(f"morph github error: {exc}")
+
+
 def cmd_dashboard(_args):
     """One-screen overview: epics, velocity, health, learnings."""
     tasks = all_tasks()
@@ -2555,6 +2706,21 @@ def main():
     sess_restore.add_argument("name", nargs="?", default="latest")
     sess_sub.add_parser("list")
 
+    search_p = sub.add_parser("search", help="Semantic code search (morph → grep fallback)")
+    search_p.add_argument("query", nargs="*")
+    search_p.add_argument("--dir", default=".")
+    search_p.add_argument("--format", choices=["text", "json"], default="text")
+
+    compact_p = sub.add_parser("compact", help="Compress text via morph compact")
+    compact_p.add_argument("--file", default="", help="Input file (or use stdin)")
+    compact_p.add_argument("--ratio", default="0.3", help="Compression ratio 0.05-1.0")
+    compact_p.add_argument("--output", default="", help="Output file (default: stdout)")
+
+    ghsearch_p = sub.add_parser("github-search", help="Search GitHub repos via morph")
+    ghsearch_p.add_argument("query", nargs="*")
+    ghsearch_p.add_argument("--repo", default="", help="owner/repo")
+    ghsearch_p.add_argument("--url", default="", help="GitHub URL")
+
     sub.add_parser("dashboard", help="One-screen overview of everything")
     doctor_p = sub.add_parser("doctor", help="Health check — environment, tools, tasks")
     doctor_p.add_argument("--format", choices=["text", "json"], default="text")
@@ -2642,6 +2808,9 @@ def main():
         "doctor": cmd_doctor,
         "dashboard": cmd_dashboard,
         "rollback": cmd_rollback,
+        "search": cmd_search,
+        "compact": cmd_compact,
+        "github-search": cmd_github_search,
     }
 
     if args.command == "epic":

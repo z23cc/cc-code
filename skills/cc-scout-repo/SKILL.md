@@ -13,18 +13,27 @@ description: >
 
 Research-only. Scan the current codebase to find patterns, conventions, and reusable code that the implementation should follow. Prevents duplicate code and convention violations.
 
+## Tool Priority
+
+**Use morph/rp-cli when available, Grep as fallback:**
+```
+morph search --query "naming conventions"    ← semantic (broad)
+rp -e 'structure src/'                       ← code structure (signatures)
+Grep "^class \|^def " src/                   ← exact patterns (fallback)
+```
+
 ## Search Checklist
 
 ### 1. Project Conventions
 
 ```bash
-# Naming patterns
-ls src/                           # Directory naming: snake_case? camelCase?
+# BEST: semantic search for patterns
+morph search --query "naming conventions and code patterns"
+rp -e 'structure src/'    # Function/class signatures
+
+# Fallback: grep
 grep -rn "^class " src/ | head -10  # Class naming convention
 grep -rn "^def " src/ | head -10    # Function naming convention
-
-# Import patterns
-head -20 src/**/*.py | grep "^from\|^import"  # How imports are organized
 
 # Config patterns
 ls *.toml *.yaml *.json .env*     # Configuration style

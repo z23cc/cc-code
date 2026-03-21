@@ -37,11 +37,12 @@ Prefer: official docs > reputable blogs > Stack Overflow
 ### 3. Find Real-World Examples on GitHub
 
 ```bash
-# Search for how established projects solve this
-gh search code "[pattern]" --language python --json repository,path -L 10
+# BEST: morph github search (no cloning needed, semantic)
+morph github --repo fastapi/fastapi --query "[feature] implementation"
+morph github --repo pallets/flask --query "[feature] pattern"
 
-# Search in high-quality repos
-gh search code "[pattern]" --owner fastapi --owner pallets --json repository,path -L 10
+# Alternative: gh CLI
+gh search code "[pattern]" --language python --json repository,path -L 10
 
 # Quick quality check
 gh api repos/{owner}/{repo} --jq '{stars: .stargazers_count, pushed: .pushed_at}'

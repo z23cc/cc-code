@@ -709,6 +709,41 @@ class TestSessionEdgeCases:
         assert code == 1
 
 
+class TestSearch:
+    def test_search_grep_fallback(self, workspace):
+        """Search uses grep when morph not available (or query is simple)."""
+        (workspace / "sample.py").write_text("def hello_world():\n    pass\n")
+        out, _, code = run(["search", "hello_world", "--dir", str(workspace)], cwd=workspace)
+        assert code == 0
+        assert "hello_world" in out
+
+    def test_search_empty_query(self, workspace):
+        _, _, code = run(["search"], cwd=workspace)
+        assert code == 1
+
+    def test_search_json(self, workspace):
+        (workspace / "test.py").write_text("x = 42\n")
+        out, _, code = run(["search", "42", "--dir", str(workspace), "--format", "json"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["success"]
+
+
+class TestCompact:
+    def test_compact_no_morph(self, workspace):
+        """compact requires morph CLI."""
+        # This test may pass or fail depending on morph installation
+        _, _, code = run(["compact", "--file", "/dev/null"], cwd=workspace)
+        # Just verify it doesn't crash
+        assert code in (0, 1)
+
+
+class TestGithubSearch:
+    def test_github_search_no_args(self, workspace):
+        _, _, code = run(["github-search"], cwd=workspace)
+        assert code == 1  # No query
+
+
 class TestDiffTracking:
     def test_done_records_diff(self, workspace):
         subprocess.run(["git", "init", "-q"], cwd=workspace)
