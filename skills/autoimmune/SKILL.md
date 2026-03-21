@@ -19,7 +19,12 @@ description: >
 
 ## Prerequisites
 
-1. Verify command passes (clean baseline): `ruff check . && mypy . && pytest`
+1. Verify command passes (clean baseline). Auto-detect:
+   - Python (`pyproject.toml`): `ruff check . && mypy . && pytest`
+   - JS/TS (`package.json`): `npm run lint && npm test`
+   - Go (`go.mod`): `go vet ./... && go test ./...`
+   - Rust (`Cargo.toml`): `cargo check && cargo test`
+   - Custom: `make verify` or `make test`
 2. Record baseline: `git rev-parse HEAD` → `BASELINE_SHA`
 3. For Mode A: `improvement-program.md` or `.tasks/` must exist
 4. For Mode D: no prerequisites (it generates the task list)
@@ -122,8 +127,7 @@ Target < 50 lines diff. Follow project's coding standards and rules.
 ### A5: VERIFY + REVIEW
 
 Run the project's verification command:
-- Python default: `ruff check . && mypy . && pytest`
-- Or project-specific: `make verify` / `make test` / custom
+Auto-detect project language and run appropriate verify command (see Prerequisites).
 
 **PASS:**
 1. `git add <specific files>` (NEVER `git add -A`)

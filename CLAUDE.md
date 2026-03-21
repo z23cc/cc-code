@@ -1,16 +1,16 @@
 # cc-code
 
-Personal Claude Code plugin for Python-focused development.
+Development workflow toolkit with task management CLI. Language-agnostic core with Python language pack.
 
 ## Architecture
 
-- `agents/` — 6 specialized agents (python-reviewer, code-reviewer, security-reviewer, refactor-cleaner, planner, build-fixer) — all `model: inherit` (uses your global model setting)
-- `skills/` — 29 workflow skills:
-  - **Flow**: brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, autoimmune, readiness-audit
-  - **Python**: python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, clean-architecture, prompt-engineering, task-queues
-  - **Infra**: git-workflow, scaffold, deploy, search-strategy
-- `commands/` — 16 slash commands: `/brainstorm`, `/research`, `/plan`, `/tdd`, `/refine`, `/debug`, `/fix`, `/review`, `/pr-review`, `/commit`, `/simplify`, `/scaffold`, `/perf`, `/autoimmune`, `/audit`, `/tasks`
-- `rules/` — 4 always-on rules: python-style, testing, security, git
+- `scripts/cc-flow.py` — Task & workflow CLI (21 commands: epic/task lifecycle, scan, progress, validate)
+- `agents/` — 6 agents: planner, code-reviewer, security-reviewer, refactor-cleaner, python-reviewer, build-fixer
+- `skills/` — 29 skills in 3 layers:
+  - **Core (17, language-agnostic):** brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, autoimmune, readiness-audit, search-strategy, git-workflow, prompt-engineering, clean-architecture
+  - **Python pack (12):** python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, scaffold, deploy, task-queues
+- `commands/` — 16 slash commands
+- `rules/` — 4 always-on rules
 - `hooks/` — SessionStart context injection
 
 ## Key Workflow
@@ -18,26 +18,34 @@ Personal Claude Code plugin for Python-focused development.
 ```
 /brainstorm → /plan → /tdd → /refine → /review → /commit
                                     ↑
-                    debugging ──────┘ (when stuck)
+                    /debug ─────────┘ (when stuck)
 
-/autoimmune — autonomous improvement loop:
-  Mode A: improvement-program.md → implement → verify → commit/revert
-  Mode B: pytest failures → fix → verify → commit/revert
-  Mode C: A then B
+/autoimmune — autonomous improvement loop (scan/code/test/full)
+/tasks — file-based task management via cc-flow CLI
+/audit — 8-pillar readiness assessment
 ```
+
+## Language Detection
+
+Core skills (brainstorming, plan, tdd, debugging, autoimmune, etc.) work with ANY language.
+When commands need to run verification/lint/test, detect the project language:
+
+| File Present | Language | Verify Command | Lint |
+|-------------|----------|---------------|------|
+| `pyproject.toml` / `setup.py` | Python | `ruff check . && mypy . && pytest` | ruff |
+| `package.json` | JS/TS | `npm run lint && npm test` | eslint |
+| `go.mod` | Go | `go vet ./... && go test ./...` | golangci-lint |
+| `Cargo.toml` | Rust | `cargo check && cargo test` | clippy |
+| `Makefile` | Any | `make verify` or `make test` | — |
 
 ## Development
 
-### Adding New Skills
-1. Create `skills/<name>/SKILL.md` with YAML frontmatter (name, description)
-2. Write content with Related Skills section
-3. Bump version in `.claude-plugin/plugin.json` and `marketplace.json`
+- Source: `/Users/z23cc/Desktop/cc-code` (symlinked to plugin cache)
+- Edit source → restart Claude Code → changes take effect
+- `git push origin main` → other devices: `claude plugin update cc-code@cc-code`
 
-### Adding New Agents
-1. Create `agents/<name>.md` with YAML frontmatter (name, description, tools, model)
-2. Add the path to `plugin.json` agents array
-3. All agents use `model: inherit` — they follow your global model setting
-
-### Adding New Rules
-1. Create `rules/<name>.md` with YAML frontmatter (description, alwaysApply: true)
-2. Keep rules concise — they're injected into every conversation
+### Adding Skills
+1. Core skills: `skills/<name>/SKILL.md` — language-agnostic
+2. Language-pack skills: `skills/<lang>-<name>/SKILL.md` — prefix with language
+3. Always add Related Skills section
+4. Bump version in plugin.json + marketplace.json

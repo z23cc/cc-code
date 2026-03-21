@@ -26,7 +26,11 @@ FOR each quality dimension:
 ### 1. Test Coverage
 
 ```bash
-pytest --cov=src --cov-report=term-missing --cov-fail-under=80
+# Auto-detect:
+# Python: pytest --cov=src --cov-fail-under=80
+# JS/TS:  npx jest --coverage --coverageThreshold='{"global":{"lines":80}}'
+# Go:     go test -cover ./... | grep -v "100.0%"
+# Rust:   cargo llvm-cov --fail-under-lines 80
 ```
 
 | Threshold | Action |
@@ -38,8 +42,10 @@ pytest --cov=src --cov-report=term-missing --cov-fail-under=80
 ### 2. Code Complexity
 
 ```bash
-radon cc src/ -a -nc    # Cyclomatic complexity
-radon mi src/ -nc       # Maintainability index
+# Python: radon cc src/ -a -nc
+# JS/TS:  npx eslint . --rule 'complexity: [warn, 10]'
+# Go:     gocyclo -over 10 .
+# Rust:   cargo clippy -- -W clippy::cognitive_complexity
 ```
 
 | Metric | Threshold | Action |
@@ -51,10 +57,11 @@ radon mi src/ -nc       # Maintainability index
 ### 3. Type Safety
 
 ```bash
-mypy src/ --strict --no-error-summary | wc -l
+# Python: mypy . --strict
+# JS/TS:  npx tsc --noEmit --strict
+# Go:     go vet ./... (built-in)
+# Rust:   cargo check (built-in, strict by default)
 ```
-
-Goal: 0 errors with `--strict`. Progressively enable strict flags.
 
 ### 4. Performance Budget
 

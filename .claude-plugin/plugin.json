@@ -1,7 +1,7 @@
 {
   "name": "cc-code",
-  "version": "2.2.0",
-  "description": "Personal Claude Code toolkit — Python-focused development with brainstorming, TDD, debugging, code review, security, git workflow, scaffolding, performance profiling, and deployment skills.",
+  "version": "2.2.1",
+  "description": "Development workflow toolkit — brainstorming, planning, TDD, code review, debugging, task management (cc-flow CLI), and autonomous improvement loops. Language-agnostic core with Python language pack included.",
   "author": {
     "name": "z23cc"
   },

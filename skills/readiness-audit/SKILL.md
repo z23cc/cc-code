@@ -18,38 +18,39 @@ description: >
 
 ### Pillar 1: Code Style & Validation ⚡ auto-fix
 
-```bash
-ruff check . && black --check . && isort --check .
-```
+Auto-detect language and run appropriate linter:
 
-| Check | Pass | Fail Action |
-|-------|------|-------------|
-| Linter clean | 0 errors | Run `ruff check --fix .` |
-| Formatter clean | 0 diffs | Run `black .` |
-| Import order | sorted | Run `isort .` |
+| Language | Lint | Format | Fix |
+|----------|------|--------|-----|
+| Python | `ruff check .` | `black --check .` | `ruff check --fix .` |
+| JS/TS | `npx eslint .` | `npx prettier --check .` | `npx eslint --fix .` |
+| Go | `golangci-lint run` | `gofmt -l .` | `golangci-lint run --fix` |
+| Rust | `cargo clippy` | `cargo fmt --check` | `cargo clippy --fix` |
 
 ### Pillar 2: Build & Type Check ⚡ auto-fix
 
-```bash
-python -m py_compile src/**/*.py && mypy src/
-```
-
-| Check | Pass | Fail Action |
-|-------|------|-------------|
-| Syntax valid | All compile | Fix syntax errors |
-| Types clean | 0 mypy errors | Add type annotations |
+| Language | Build | Types |
+|----------|-------|-------|
+| Python | `python -m py_compile` | `mypy .` |
+| JS/TS | `npx tsc --noEmit` | built-in |
+| Go | `go build ./...` | built-in |
+| Rust | `cargo check` | built-in |
 
 ### Pillar 3: Testing ⚡ auto-fix
 
-```bash
-pytest --tb=short -q && pytest --cov=src --cov-report=term-missing
-```
+Auto-detect test framework:
+
+| Language | Test | Coverage |
+|----------|------|----------|
+| Python | `pytest` | `pytest --cov` |
+| JS/TS | `npm test` | `npx c8` or `jest --coverage` |
+| Go | `go test ./...` | `go test -cover ./...` |
+| Rust | `cargo test` | `cargo llvm-cov` |
 
 | Check | Pass | Fail Action |
 |-------|------|-------------|
 | Tests pass | 0 failures | Fix failing tests |
 | Coverage ≥ 60% | met | Add tests for uncovered code |
-| conftest.py exists | yes | Create with common fixtures |
 
 ### Pillar 4: Documentation ⚡ auto-fix
 

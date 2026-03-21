@@ -1,9 +1,9 @@
 ---
-description: "Python coding standards — enforced across all Python work"
+description: "Python coding standards — only apply when working on Python files (.py)"
 alwaysApply: true
 ---
 
-# Python Style Rules
+# Python Style Rules (apply only to .py files)
 
 - Use type hints on all public functions
 - Use `list[X]` not `List[X]` (Python 3.9+)
