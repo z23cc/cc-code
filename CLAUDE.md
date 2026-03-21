@@ -5,11 +5,11 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 ## Architecture
 
 - `scripts/cc-flow.py` — Task & workflow CLI (21 commands: epic/task lifecycle, scan, progress, validate)
-- `agents/` — 6 agents: planner, code-reviewer, security-reviewer, refactor-cleaner, python-reviewer, build-fixer
-- `skills/` — 29 skills in 3 layers:
-  - **Core (17, language-agnostic):** brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, autoimmune, readiness-audit, search-strategy, git-workflow, prompt-engineering, clean-architecture
+- `agents/` — 8 agents: researcher, architect, planner, code-reviewer, python-reviewer, security-reviewer, refactor-cleaner, build-fixer
+- `skills/` — 30 skills in 3 layers:
+  - **Core (18, language-agnostic):** brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, teams, autoimmune, readiness-audit, search-strategy, git-workflow, prompt-engineering, clean-architecture
   - **Python pack (12):** python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, scaffold, deploy, task-queues
-- `commands/` — 16 slash commands
+- `commands/` — 17 slash commands
 - `rules/` — 4 always-on rules
 - `hooks/` — SessionStart context injection
 
@@ -21,6 +21,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
                     /debug ─────────┘ (when stuck)
 
 /autoimmune — autonomous improvement loop (scan/code/test/full)
+/team — assemble agent team (feature-dev/bug-fix/review/refactor/audit)
 /tasks — file-based task management via cc-flow CLI
 /audit — 8-pillar readiness assessment
 ```
