@@ -18,11 +18,12 @@ claude plugin install cc-code@cc-code --scope user
 |-----------|-------|-----------|
 | **Skills** | 47 | 23 core + 12 Python pack + 12 scouts |
 | **Commands** | 24 | `/cc-brainstorm` `/cc-plan` `/cc-tdd` `/cc-prime` `/cc-scout` `/cc-blueprint` |
-| **Agents** | 8 | researcher, architect, planner, code-reviewer, python-reviewer, security-reviewer, refactor-cleaner, build-fixer |
-| **CLI** | cc-flow | 36 subcommands: epic/task, graph, dashboard, doctor, session, route, learn |
-| **Rules** | 5 | python-style, testing, security, git, docs-sync |
-| **Hooks** | 3 | SessionStart + PreToolUse + PostToolUse |
-| **Tests** | 88 | pytest, full cc-flow coverage |
+| **Agents** | 11 | researcher, architect, planner, code-reviewer, python-reviewer, security-reviewer, refactor-cleaner, build-fixer, db-reviewer, doc-updater, e2e-runner |
+| **CLI** | cc-flow | 39 subcommands: epic/task, graph, dashboard, doctor, session, apply, search, embed |
+| **Rules** | 9 | python-style, testing, security, git, docs-sync, workflow, performance, agent-orchestration, tool-priority |
+| **Hooks** | 5 | SessionStart, PreToolUse, PostToolUse, PreCompact, Stop |
+| **Tests** | 114 | 99 cc-flow + 15 morph client |
+| **Morph** | 5 APIs | apply, search (WarpGrep), embed, rerank, compact — pure Python client |
 
 ## Quick Start
 
@@ -92,7 +93,7 @@ cc-flow consolidate → promoted patterns → smarter routing next time
 | Team | `/cc-team` (feature-dev / bug-fix / review / refactor / audit) |
 | Other | `/cc-research` `/cc-scaffold` `/cc-docs` `/cc-pr-review` `/cc-help` `/cc-tasks` |
 
-### cc-flow CLI (36 subcommands)
+### cc-flow CLI (39 subcommands)
 
 ```
 Project:     init, epic (create/close/import/reset), task (create/reset/set-spec), dep add
@@ -101,12 +102,13 @@ Work:        start, done, block, rollback
 Quality:     validate, scan, doctor
 Auto:        auto (scan/run/test/full/status)
 Routing:     route, learn, learnings, consolidate
-Session:     session (save/restore/list), checkpoint (save/restore/list)
+Session:     session (save/restore/list)
+Morph:       apply, search, embed, compact, github-search
 Stats:       log, summary, archive, stats
 Config:      config, version
 ```
 
-### 8 Agents
+### 11 Agents
 
 | Agent | Role |
 |-------|------|
@@ -118,6 +120,9 @@ Config:      config, version
 | security-reviewer | Security audit |
 | refactor-cleaner | Refactoring, dead code removal |
 | build-fixer | Fix lint/type/build errors |
+| db-reviewer | Database queries, schema, migrations |
+| doc-updater | Documentation sync after changes |
+| e2e-runner | Playwright E2E testing |
 
 ## Key Features
 

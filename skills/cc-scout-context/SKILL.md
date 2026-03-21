@@ -27,7 +27,7 @@ Level 4: Grep for usages (~200 tokens per search)
 
 **Rule:** Never read a full file if you only need part of it.
 
-## Commands by Level (prefer MCP when available)
+## Commands by Level (prefer cc-flow morph + rp-cli)
 
 ### Level 1: File Tree
 

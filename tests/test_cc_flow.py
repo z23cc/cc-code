@@ -722,12 +722,25 @@ class TestSearch:
         assert data["success"]
 
 
+class TestApply:
+    def test_apply_no_args(self, workspace):
+        _, _, code = run(["apply"], cwd=workspace)
+        assert code == 2  # argparse error (missing required args)
+
+    def test_apply_missing_file(self, workspace):
+        _, _, code = run(["apply", "--file", "nope.py", "--instruction", "test", "--update", "x"], cwd=workspace)
+        assert code == 1
+
+
+class TestEmbed:
+    def test_embed_no_args(self, workspace):
+        _, _, code = run(["embed"], cwd=workspace)
+        assert code in (0, 1)  # May succeed with MORPH_API_KEY or fail without
+
+
 class TestCompact:
-    def test_compact_no_morph(self, workspace):
-        """compact requires morph CLI."""
-        # This test may pass or fail depending on morph installation
-        _, _, code = run(["compact", "--file", "/dev/null"], cwd=workspace)
-        # Just verify it doesn't crash
+    def test_compact_no_input(self, workspace):
+        _, _, code = run(["compact"], cwd=workspace)
         assert code in (0, 1)
 
 
