@@ -6,13 +6,13 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 - `scripts/cc-flow.py` — Task & workflow CLI (38 subcommands)
 - `scripts/morph_client.py` — Pure Python Morph API client (Apply, WarpGrep, Embed, Rerank)
-- `agents/` — 11 agents (all `model: inherit`): researcher, architect, planner, code-reviewer, python-reviewer, security-reviewer, refactor-cleaner, build-fixer, db-reviewer, doc-updater, e2e-runner
+- `agents/` — 23 agents (11 core + 12 cc-scout-* scouts, all `model: inherit`)
 - `skills/` — 47 skills (all prefixed `cc-`):
   - **Core (23):** brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, teams, autoimmune, readiness-audit, search-strategy, git-workflow, prompt-engineering, clean-architecture, context-tips, docs, incident, dependency-upgrade, feedback-loop
   - **Python pack (12):** python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, scaffold, deploy, task-queues
   - **Scouts (12):** scout-practices, scout-repo, scout-docs, scout-docs-gap, scout-security, scout-testing, scout-tooling, scout-build, scout-env, scout-observability, scout-gaps, scout-context
 - `commands/` — 24 slash commands (all prefixed `/cc-`)
-- `tests/` — 111 tests (96 cc-flow + 15 morph)
+- `tests/` — 114 tests (99 cc-flow + 15 morph)
 - `rules/` — 9 always-on rules: python-style, testing, security, git, docs-sync, agent-orchestration, workflow, performance, tool-priority
 - `hooks/` — 5 hooks: SessionStart, PreToolUse, PostToolUse, PreCompact, Stop
 

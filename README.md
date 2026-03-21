@@ -18,7 +18,7 @@ claude plugin install cc-code@cc-code --scope user
 |-----------|-------|-----------|
 | **Skills** | 47 | 23 core + 12 Python pack + 12 scouts |
 | **Commands** | 24 | `/cc-brainstorm` `/cc-plan` `/cc-tdd` `/cc-prime` `/cc-scout` `/cc-blueprint` |
-| **Agents** | 11 | researcher, architect, planner, code-reviewer, python-reviewer, security-reviewer, refactor-cleaner, build-fixer, db-reviewer, doc-updater, e2e-runner |
+| **Agents** | 23 | 11 core + 12 scout agents (cc-scout-*) — all parallel-dispatchable |
 | **CLI** | cc-flow | 39 subcommands: epic/task, graph, dashboard, doctor, session, apply, search, embed |
 | **Rules** | 9 | python-style, testing, security, git, docs-sync, workflow, performance, agent-orchestration, tool-priority |
 | **Hooks** | 5 | SessionStart, PreToolUse, PostToolUse, PreCompact, Stop |
@@ -108,7 +108,7 @@ Stats:       log, summary, archive, stats
 Config:      config, version
 ```
 
-### 11 Agents
+### 23 Agents (11 core + 12 scouts)
 
 | Agent | Role |
 |-------|------|

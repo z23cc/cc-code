@@ -1,7 +1,6 @@
 """CLI argument parsing and command dispatch for cc-flow."""
 
 import argparse
-import sys
 
 from cc_flow import VERSION
 
@@ -179,36 +178,3 @@ def build_parser():
     config_p.add_argument("value", nargs="?", default="")
 
     return parser
-
-
-def dispatch(args, cmds, parser):
-    """Route parsed args to command functions."""
-    if args.command == "epic":
-        sub = getattr(args, "epic_cmd", None)
-        handler = {"create": "cmd_epic_create", "close": "cmd_epic_close",
-                    "import": "cmd_epic_import", "reset": "cmd_epic_reset"}.get(sub)
-        if handler and handler.replace("cmd_", "cmd_") in dir(sys.modules["__main__"]):
-            cmds[handler](args)
-        else:
-            parser.print_help()
-            sys.exit(1)
-    elif args.command == "task":
-        sub = getattr(args, "task_cmd", None)
-        handler = {"create": "cmd_task_create", "reset": "cmd_task_reset",
-                    "set-spec": "cmd_task_set_spec"}.get(sub)
-        if handler:
-            cmds[handler](args)
-        else:
-            parser.print_help()
-            sys.exit(1)
-    elif args.command == "auto":
-        cmds["cmd_auto"](args)
-    elif args.command == "session":
-        cmds["cmd_session"](args)
-    elif args.command == "dep" and getattr(args, "dep_cmd", None) == "add":
-        cmds["cmd_dep_add"](args)
-    elif args.command in cmds:
-        cmds[args.command](args)
-    else:
-        parser.print_help()
-        sys.exit(1)

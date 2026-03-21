@@ -92,11 +92,14 @@ class MorphClient:
         return resp["choices"][0]["message"]["content"]
 
     def apply_file(self, file_path, instruction, update_snippet, model="auto"):
-        """Apply changes to a file in-place."""
+        """Apply changes to a file in-place (writes backup before overwriting)."""
         path = Path(file_path)
         original = path.read_text()
         merged = self.apply(instruction, original, update_snippet, model)
-        path.write_text(merged)
+        # Safety: write to temp file then rename (atomic on same filesystem)
+        tmp_path = path.with_suffix(path.suffix + ".tmp")
+        tmp_path.write_text(merged)
+        tmp_path.rename(path)
         return merged
 
     # ── Search (WarpGrep) ──
@@ -364,7 +367,7 @@ def main():
         sys.exit(1)
 
     if args.command == "apply":
-        update = args.update or sys.stdin.read() if not sys.stdin.isatty() else args.update
+        update = args.update if args.update else (sys.stdin.read() if not sys.stdin.isatty() else "")
         result = client.apply_file(args.file, args.instruction, update, args.model)
         print(json.dumps({"success": True, "file": args.file, "chars": len(result)}))
 

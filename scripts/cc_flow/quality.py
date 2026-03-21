@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 
 from cc_flow.core import (
     EPICS_DIR, TASKS_SUBDIR,
-    all_tasks, load_meta, now_iso, save_meta, save_task,
+    all_tasks, locked_meta_update, now_iso, save_task,
 )
 from cc_flow.epic_task import cmd_init
 
@@ -110,12 +110,15 @@ def cmd_scan(args):
 
     if args.create_tasks and total > 0:
         cmd_init(argparse.Namespace())
-        meta = load_meta()
-        epic_num = meta["next_epic"]
         date_slug = datetime.now(timezone.utc).strftime("%Y%m%d")
+
+        def allocate(meta):
+            n = meta["next_epic"]
+            meta["next_epic"] = n + 1
+            return n
+
+        epic_num = locked_meta_update(allocate)
         epic_id = f"epic-{epic_num}-scan-{date_slug}"
-        meta["next_epic"] = epic_num + 1
-        save_meta(meta)
 
         spec_lines = [f"# Epic: Code scan {date_slug}\n\n## Findings\n"]
         task_num = 0

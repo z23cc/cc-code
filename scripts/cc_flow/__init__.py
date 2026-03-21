@@ -11,7 +11,9 @@ Package structure:
     work.py          → start, done, block, rollback, diff tracking
     route_learn.py   → route, learn, consolidate, rerank
     auto.py          → autoimmune scan/run/test/full, team patterns
-    misc.py          → validate, scan, log, stats, config
+    quality.py       → validate, scan
+    log_cmds.py      → log, summary, archive, stats
+    config.py        → version, history, config
     morph_cmds.py    → apply, search, embed, compact, github-search
     session.py       → session save/restore/list
     graph.py         → mermaid, ascii, dot dependency graphs
@@ -19,4 +21,4 @@ Package structure:
   morph_client.py    → pure Python Morph API client (5 APIs)
 """
 
-VERSION = "3.8.0"
+VERSION = "3.8.1"
