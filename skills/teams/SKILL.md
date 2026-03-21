@@ -195,9 +195,38 @@ This prevents context bleed and keeps agents focused.
 | Improvement | Autoimmune | researcher → fixer → verify |
 | Health check | Audit | researcher → architect → security-reviewer |
 
+## E2E Example: Bug Fix Team
+
+```
+Task: "Login returns 403 for valid users"
+
+1. Dispatch researcher:
+   → Reads error logs, traces request flow
+   → Finds: middleware checks role before token validation
+   → Handoff: /tmp/cc-team-research.md with root cause
+
+2. Dispatch build-fixer:
+   → Reads handoff file
+   → Reorders middleware: validate token → then check role
+   → Diff: +3 -3 lines in middleware.py
+   → Runs pytest → green
+
+3. Dispatch code-reviewer:
+   → Reads diff + handoff
+   → Verdict: SHIP ✓
+   → Notes: "Consider adding regression test for this ordering"
+
+4. Record:
+   $ cc-flow learn --task "403 on valid login" --outcome success \
+     --approach "bug-fix team: researcher found middleware ordering issue" \
+     --lesson "check middleware execution order for auth issues" \
+     --score 5 --used-command /team
+```
+
 ## Related Skills
 
 - **parallel-agents** — dispatch patterns and coordination
 - **worker-protocol** — per-task worker isolation
 - **code-review-loop** — review verdict gates (SHIP/NEEDS_WORK/MAJOR_RETHINK)
 - **autoimmune** — autonomous improvement with team support
+- **feedback-loop** — record team outcomes for routing improvement

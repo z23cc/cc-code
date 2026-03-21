@@ -107,17 +107,85 @@ Don't record:
 | **teams** | Record which team composition worked for which task type |
 | **worker-protocol** | Record per-worker outcomes for future task sizing |
 
+## Learning Quality Gates
+
+Record a learning **only if**:
+- Approach was non-obvious (not already in skills documentation)
+- Score ≥ 3/5 (actually useful)
+- Likely to recur in this project
+- Outcome: success or hard-won partial (learned something)
+
+**Don't record** if:
+- Routine/obvious fix ("added missing import")
+- One-off issue unlikely to recur
+- Outcome: failed with no insight gained yet
+- Already covered by existing skill (e.g., "use TDD")
+
+## Consolidation Lifecycle
+
+```
+Raw learnings (.tasks/learnings/*.json)
+    ↓ cc-flow consolidate (when count ≥ 10)
+Group by task similarity (first 3 words)
+    ↓
+avg_score ≥ 4 AND success_count ≥ 2?
+    ├─ YES → Promote to pattern (.tasks/patterns/*.json)
+    │         Pattern includes: approach, success_rate, occurrences
+    └─ NO  → Keep as raw learning
+    ↓
+Deduplicate: keep top 3 per group, delete oldest
+```
+
+## Route Stats & Confidence
+
+Each `cc-flow learn --used-command /debug` updates `.tasks/route_stats.json`:
+```json
+{"/debug": {"success": 12, "failure": 2}}
+```
+
+Routing confidence = 70% keyword match + 30% historical success rate.
+When `cc-flow route` runs, it shows:
+- `confidence: 85` — blended score
+- `route_history: {uses: 14, success_rate: 86}` — command track record
+- `alternatives: [...]` — runner-up commands
+
 ## The Flywheel
 
 ```
 More tasks completed
-    → More learnings recorded
-        → Better routing suggestions
-            → Faster task completion
-                → More tasks completed
+    → More learnings recorded (cc-flow learn)
+        → cc-flow consolidate → promotes patterns
+            → Better routing suggestions (higher confidence)
+                → Faster task completion
+                    → More tasks completed
 ```
 
-Over time, `cc-flow route` becomes increasingly accurate because it draws on your project's specific history.
+## E2E Example
+
+```bash
+# 1. Route a task
+$ cc-flow route "fix the broken auth endpoint"
+# → {"command": "/debug", "team": "bug-fix", "confidence": 75,
+#    "past_learning": {"approach": "check middleware first", "score": 5}}
+
+# 2. Execute
+$ /debug   # ... investigates, finds bug in middleware, fixes
+
+# 3. Record learning
+$ cc-flow learn \
+    --task "fix auth endpoint 401 error" \
+    --outcome success \
+    --approach "researcher traced to expired token validation in middleware" \
+    --lesson "auth 401s usually come from middleware token validation" \
+    --score 5 \
+    --used-command /debug
+
+# 4. Next time
+$ cc-flow route "auth returning 403"
+# → {"command": "/debug", "confidence": 92,
+#    "past_learning": {"lesson": "auth 401s usually come from middleware..."}}
+# Confidence jumped from 75 → 92 because of the recorded learning
+```
 
 ## Related Skills
 
@@ -125,3 +193,4 @@ Over time, `cc-flow route` becomes increasingly accurate because it draws on you
 - **autoimmune** — learning from improvement session outcomes
 - **debugging** — hard-won debugging lessons feed the loop
 - **context-tips** — learnings persist to files, surviving context compaction
+- **task-tracking** — learnings integrate with .tasks/ structure

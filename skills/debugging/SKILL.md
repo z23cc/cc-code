@@ -99,6 +99,39 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 - **tdd** — create failing test to prove the bug, then fix
 - **python-testing** — pytest patterns for regression tests
 
+## E2E Example
+
+```
+User: "API returns 500 on POST /users"
+
+Phase 1 — Root Cause:
+  $ grep -n "POST.*users" src/routes/*.py     → found handler at routes/users.py:42
+  $ Read routes/users.py:35-55                 → calls UserService.create()
+  $ Read services/user.py:20-40                → calls db.execute(INSERT...)
+  ✗ db.execute raises IntegrityError — email unique constraint
+
+Phase 2 — Pattern:
+  $ grep -rn "IntegrityError" src/             → found handling in routes/orders.py:88
+  ✓ orders.py catches IntegrityError and returns 409 Conflict
+  ✗ users.py has no error handling — bubbles up as 500
+
+Phase 3 — Hypothesis:
+  "users.py is missing IntegrityError handling for duplicate emails"
+  Test: POST /users with existing email → 500 (confirmed)
+
+Phase 4 — Implementation:
+  1. Write test: test_create_duplicate_email_returns_409()
+  2. Add try/except IntegrityError → return 409 in users.py (+6 lines)
+  3. Run pytest → green ✓
+  4. POST /users with dupe email → 409 ✓
+
+Record learning:
+  $ cc-flow learn --task "500 on POST /users" --outcome success \
+    --approach "traced to missing IntegrityError handler" \
+    --lesson "check error handling when new endpoints mirror existing ones" \
+    --score 4 --used-command /debug
+```
+
 ## Quick Reference
 
 | Phase | Key Activities | Success Criteria |

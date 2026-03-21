@@ -154,6 +154,31 @@ Step 4: Check caching opportunities
 
 **Rule of thumb:** Start with the fastest tool that could work. Escalate to slower tools only when the fast one doesn't find what you need.
 
+## Example Outputs
+
+**Grep** — exact matches with context:
+```
+src/auth/middleware.py:45:    if not token.is_valid():
+src/auth/middleware.py:46:        raise AuthError("Token expired")
+src/api/users.py:12:    token = request.headers.get("Authorization")
+```
+
+**Semantic search** — conceptual matches:
+```
+Found 3 relevant results for "how is authentication handled":
+1. src/auth/middleware.py — AuthMiddleware class, validates JWT tokens
+2. src/auth/oauth.py — OAuth2 flow implementation
+3. src/config/security.py — AUTH_SECRET and token expiry settings
+```
+
+**Symbol search** — definitions:
+```
+class AuthMiddleware     src/auth/middleware.py:10
+  def authenticate()     src/auth/middleware.py:25
+  def refresh_token()    src/auth/middleware.py:55
+class OAuthProvider      src/auth/oauth.py:8
+```
+
 ## Related Skills
 
 - **debugging** — use search strategy during Phase 1 (root cause investigation)

@@ -112,6 +112,41 @@ This skill covers **S** (Specification) and **A** (Architecture). The plan skill
 - **Explore alternatives** — always propose 2-3 approaches
 - **Incremental validation** — present design, get approval, move on
 
+## E2E Example
+
+```
+User: "add rate limiting to our API"
+
+Interview:
+Q1: "Which endpoints? All routes, or specific ones?"
+A: "Just the auth endpoints — /login and /register"
+
+Q2: "What limits? Options: (a) 5/min per IP, (b) 10/min per user, (c) both"
+A: "a — IP-based for now"
+
+Q3: "Storage? (a) In-memory (simple, lost on restart), (b) Redis (persistent)"
+A: "b — we already have Redis"
+
+Design Spec Output:
+─────────────────────
+# Rate Limiting Design
+
+**Goal:** Prevent brute-force on /login and /register
+
+**Acceptance Criteria:**
+- [ ] /login and /register limited to 5 req/min per IP
+- [ ] Returns 429 with Retry-After header when exceeded
+- [ ] Uses existing Redis instance
+- [ ] No impact on other endpoints
+
+**Architecture:** Redis sliding window counter
+**Data Model:** Key: `ratelimit:{ip}:{endpoint}`, TTL: 60s
+**Error Response:** {"error": "Too many requests", "retry_after": 45}
+**Out of Scope:** Per-user limits, global rate limiting, dashboard
+─────────────────────
+→ Next: /plan to create implementation tasks
+```
+
 ## Related Skills
 
 - **plan** — invoke AFTER brainstorming to create implementation plan

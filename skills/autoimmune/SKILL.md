@@ -229,9 +229,53 @@ Same as Mode A. 5 consecutive DISCARDED in any phase → STOP that phase, move t
 
 ---
 
-## When Done
+## Session Metrics
 
-Print session summary — see [references/operations.md](references/operations.md).
+Track per-session and print at end:
+
+| Metric | Formula | Threshold |
+|--------|---------|-----------|
+| Success rate | kept / (kept + discarded) | ≥ 50% to continue |
+| Avg diff size | total lines changed / kept | Target < 30 |
+| Churn ratio | discarded in last 5 / 5 | ≥ 0.8 → STOP |
+| Consecutive fails | per area | ≥ 2 → skip area |
+| Velocity | kept / elapsed hours | Track trend |
+
+**Trend indicators:** ↗ improving (rate going up), → stable, ↘ declining (consider stopping)
+
+## E2E Example
+
+```bash
+# 1. Scan
+$ cc-flow auto scan
+# → Created epic-3-scan-20260321 with 8 tasks (2×P1 security, 3×P2 type, 3×P3 lint)
+
+# 2. Run
+$ cc-flow auto run --epic epic-3-scan-20260321
+# --- Iteration 1: epic-3-scan-20260321.1 — [P1] bandit HIGH: hardcoded password ---
+# Team: security-fix (researcher → security-reviewer → build-fixer)
+# → Replaced with env var. Diff: +3 -1. Verified. KEPT.
+
+# --- Iteration 2: epic-3-scan-20260321.2 — [P1] bandit HIGH: SQL injection ---
+# → Parameterized query. Diff: +5 -3. Verified. KEPT.
+
+# --- Iteration 3: epic-3-scan-20260321.3 — [P2] mypy: missing return type ---
+# → Added type annotation. Diff: +1 -1. Verified. KEPT.
+
+# 3. Status
+$ cc-flow auto status
+# | Metric        | Value |
+# | Tasks total   | 8     |
+# | Done          | 3     |
+# | Success rate  | 100%  |
+
+# 4. Dashboard
+$ cc-flow dashboard
+# ╔══════════════════════════════════════════╗
+# ║  Progress: ██████░░░░░░░░░░░░░░  38%   ║
+# ║  ● 3 done  ◐ 0 active  ○ 5 todo       ║
+# ╚══════════════════════════════════════════╝
+```
 
 ## Related Skills
 
