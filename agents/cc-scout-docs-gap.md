@@ -61,6 +61,26 @@ find . -name "ARCHITECTURE*" 2>/dev/null
 - Check existing doc style and follow the pattern
 - Flag if docs directory doesn't exist (recommend creating)
 
+
+## Tool Integration (via Bash)
+
+Use these cc-flow commands via Bash for enhanced analysis:
+
+```bash
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
+
+# Semantic search (Morph WarpGrep — better than grep for "how does X work")
+$CCFLOW search "your query here"
+
+# Search with relevance ranking
+$CCFLOW search "your query" --rerank
+
+# Health check
+$CCFLOW doctor --format json
+```
+
+**Priority:** Try `cc-flow search` first for broad exploration, fall back to Grep for exact patterns.
+
 ## Related Skills
 
 - **cc-docs** — actually update the documentation

@@ -118,6 +118,28 @@ Total: ~1,100 tokens (vs ~15,000 for reading all 3 files fully)
 Result: Complete understanding of auth flow
 ```
 
+
+## Tool Integration (via Bash)
+
+Use these cc-flow and rp-cli commands via Bash for enhanced analysis:
+
+```bash
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
+
+# Semantic search (Morph WarpGrep)
+$CCFLOW search "your query here"
+$CCFLOW search "your query" --rerank
+
+# Code structure (rp-cli)
+rp -e 'tree'                        # File tree
+rp -e 'structure src/'              # Function/type signatures
+
+# Health check
+$CCFLOW doctor --format json
+```
+
+**Priority:** `cc-flow search` for meaning → `rp structure` for signatures → Grep for exact patterns.
+
 ## Related Skills
 
 - **cc-research** — deeper investigation (uses more context but finds more)

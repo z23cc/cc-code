@@ -92,6 +92,26 @@ gh api repos/{owner}/{repo} --jq '{stars: .stargazers_count, pushed: .pushed_at}
 - Focus on non-obvious gotchas
 - Keep code snippets < 10 lines (illustrate the point, not full implementation)
 
+
+## Tool Integration (via Bash)
+
+Use these cc-flow commands via Bash for enhanced analysis:
+
+```bash
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
+
+# Semantic search (Morph WarpGrep — better than grep for "how does X work")
+$CCFLOW search "your query here"
+
+# Search with relevance ranking
+$CCFLOW search "your query" --rerank
+
+# Health check
+$CCFLOW doctor --format json
+```
+
+**Priority:** Try `cc-flow search` first for broad exploration, fall back to Grep for exact patterns.
+
 ## Related Skills
 
 - **cc-scout-repo** — find existing patterns in THIS codebase

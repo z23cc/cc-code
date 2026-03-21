@@ -105,6 +105,28 @@ grep -rn "except\|raise\|try:" src/ | head -10
 - Flag reusable code prominently (prevent duplication)
 - Note anything non-obvious about the project structure
 
+
+## Tool Integration (via Bash)
+
+Use these cc-flow and rp-cli commands via Bash for enhanced analysis:
+
+```bash
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
+
+# Semantic search (Morph WarpGrep)
+$CCFLOW search "your query here"
+$CCFLOW search "your query" --rerank
+
+# Code structure (rp-cli)
+rp -e 'tree'                        # File tree
+rp -e 'structure src/'              # Function/type signatures
+
+# Health check
+$CCFLOW doctor --format json
+```
+
+**Priority:** `cc-flow search` for meaning → `rp structure` for signatures → Grep for exact patterns.
+
 ## Related Skills
 
 - **cc-scout-practices** — community best practices (external)

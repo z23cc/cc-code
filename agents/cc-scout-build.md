@@ -84,6 +84,28 @@ grep "dist\|build\|__pycache__" .gitignore 2>/dev/null
 1. [Priority fix]
 ```
 
+
+## Tool Integration (via Bash)
+
+Use these cc-flow and rp-cli commands via Bash for enhanced analysis:
+
+```bash
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
+
+# Semantic search (Morph WarpGrep)
+$CCFLOW search "your query here"
+$CCFLOW search "your query" --rerank
+
+# Code structure (rp-cli)
+rp -e 'tree'                        # File tree
+rp -e 'structure src/'              # Function/type signatures
+
+# Health check
+$CCFLOW doctor --format json
+```
+
+**Priority:** `cc-flow search` for meaning → `rp structure` for signatures → Grep for exact patterns.
+
 ## Related Skills
 
 - **cc-scout-tooling** — lint/format/type check tools
