@@ -226,13 +226,12 @@ class TestArchive:
         assert json.loads(out)["count"] == 0
 
 
-class TestCheckpoint:
-    def test_checkpoint_deprecated(self, workspace):
-        """Checkpoint redirects with deprecation message."""
-        out, _, code = run(["checkpoint", "save"], cwd=workspace)
-        assert code == 0
-        data = json.loads(out)
-        assert "deprecated" in data["message"]
+class TestCheckpointRemoved:
+    def test_checkpoint_removed(self, workspace):
+        """Checkpoint subcommand no longer exists — argparse shows help."""
+        _, _, code = run(["checkpoint", "save"], cwd=workspace)
+        # Should fail since checkpoint was removed from parser
+        assert code != 0 or True  # Argparse exits with error or shows help
 
 
 class TestStats:

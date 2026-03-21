@@ -54,7 +54,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "3.4.0"
+VERSION = "3.5.0"
 
 TASKS_DIR = Path(".tasks")
 EPICS_DIR = TASKS_DIR / "epics"
@@ -1095,12 +1095,6 @@ def cmd_summary(_args):
     print(f"| Skipped | {skipped} |")
 
 
-def _checkpoint_redirect(_args):
-    """Checkpoint is deprecated — use session instead."""
-    print(json.dumps({
-        "success": True,
-        "message": "checkpoint is deprecated. Use 'cc-flow session save/restore/list' instead.",
-    }))
 
 
 def cmd_archive(_args):
@@ -1948,7 +1942,7 @@ SESSION_DIR = TASKS_DIR / ".sessions"
 
 
 def cmd_session(args):
-    """Save or restore full session state (richer than checkpoint)."""
+    """Save or restore session state."""
     import subprocess as _sp
 
     mode = getattr(args, "session_cmd", None)
@@ -2206,8 +2200,11 @@ def cmd_github_search(args):
         _error(f"GitHub search error: {exc}")
 
 
-def cmd_dashboard(_args):
-    """One-screen overview: epics, velocity, health, learnings."""
+def cmd_dashboard(args):
+    """One-screen overview: epics, velocity, health, learnings. Use --json for machine-readable."""
+    if getattr(args, "json", False):
+        cmd_status(args)
+        return
     tasks = all_tasks()
     total = len(tasks)
     done = sum(1 for t in tasks.values() if t["status"] == "done")
@@ -2636,18 +2633,11 @@ def main():
     auto_sub.add_parser("full", help="scan → run → test")
     auto_sub.add_parser("status", help="Show autoimmune session status")
 
-    cp_p = sub.add_parser("checkpoint", help="Save/restore session state")
-    cp_sub = cp_p.add_subparsers(dest="cp_cmd")
-    cp_save = cp_sub.add_parser("save")
-    cp_save.add_argument("--name", default="")
-    cp_restore = cp_sub.add_parser("restore")
-    cp_restore.add_argument("name")
-    cp_sub.add_parser("list")
     sub.add_parser("stats", help="Productivity metrics")
     sub.add_parser("consolidate", help="Merge similar learnings, promote high-score patterns")
     sub.add_parser("history", help="Task completion timeline with velocity trends")
 
-    sess_p = sub.add_parser("session", help="Save/restore full session state (richer than checkpoint)")
+    sess_p = sub.add_parser("session", help="Save/restore session state")
     sess_sub = sess_p.add_subparsers(dest="session_cmd")
     sess_save = sess_sub.add_parser("save")
     sess_save.add_argument("--name", default="")
@@ -2673,7 +2663,8 @@ def main():
     ghsearch_p.add_argument("--repo", default="", help="owner/repo")
     ghsearch_p.add_argument("--url", default="", help="GitHub URL")
 
-    sub.add_parser("dashboard", help="One-screen overview of everything")
+    dash_p = sub.add_parser("dashboard", help="One-screen overview (or --json for machine-readable)")
+    dash_p.add_argument("--json", action="store_true", default=False)
     doctor_p = sub.add_parser("doctor", help="Health check — environment, tools, tasks")
     doctor_p.add_argument("--format", choices=["text", "json"], default="text")
 
@@ -2791,8 +2782,6 @@ def main():
             sys.exit(1)
     elif args.command == "auto":
         cmd_auto(args)
-    elif args.command == "checkpoint":
-        _checkpoint_redirect(args)
     elif args.command == "session":
         cmd_session(args)
     elif args.command == "dep" and getattr(args, "dep_cmd", None) == "add":
