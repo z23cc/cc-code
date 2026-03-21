@@ -188,12 +188,14 @@ def cmd_task_create(args):
     task_id = f"{epic_id}.{next_num}"
     deps = args.deps.split(",") if args.deps else []
 
+    size = getattr(args, "size", None) or "M"
     state = {
         "id": task_id,
         "epic": epic_id,
         "title": args.title,
         "status": "todo",
         "depends_on": deps,
+        "size": size,
         "created": now_iso(),
     }
     save_task(TASKS_SUBDIR / f"{task_id}.json", state)
@@ -230,7 +232,9 @@ def cmd_list(args):
         for t in epic["tasks"]:
             status = t["status"]
             marker = {"todo": "○", "in_progress": "◐", "done": "●", "blocked": "✗"}
-            print(f"  {marker.get(status, '?')} [{status:12}] {t['id']}: {t['title']}")
+            size = t.get("size", "")
+            size_tag = f" [{size}]" if size else ""
+            print(f"  {marker.get(status, '?')} [{status:12}] {t['id']}: {t['title']}{size_tag}")
 
     if not epics:
         print("No epics found. Run: cc-flow init && cc-flow epic create --title '...'")
@@ -914,6 +918,8 @@ def main():
     tc_create.add_argument("--epic", required=True)
     tc_create.add_argument("--title", required=True)
     tc_create.add_argument("--deps", default="")
+    tc_create.add_argument("--size", choices=["XS", "S", "M", "L", "XL"], default="M",
+                           help="Task size: XS(<5 lines), S(<20), M(<50), L(<100), XL(100+)")
 
     list_p = sub.add_parser("list", help="Show all epics + tasks")
     list_p.add_argument("--json", action="store_true", default=False)
