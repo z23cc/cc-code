@@ -55,7 +55,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "3.2.1"
+VERSION = "3.3.0"
 
 TASKS_DIR = Path(".tasks")
 EPICS_DIR = TASKS_DIR / "epics"
@@ -1474,33 +1474,58 @@ def cmd_learnings(args):
 
 
 def _search_learnings(query):
-    """Search learnings for relevant past experience with confidence scoring."""
+    """Search learnings — uses Morph Rerank if available, falls back to keyword overlap."""
     if not LEARNINGS_DIR.exists():
         return None
 
+    # Collect all learnings
+    learnings = []
+    for f in LEARNINGS_DIR.glob("*.json"):
+        d = safe_json_load(f, default=None)
+        if d and d.get("score", 0) >= 2:
+            learnings.append(d)
+
+    if not learnings:
+        return None
+
+    # Try Morph Rerank for semantic matching
+    morph_client = _get_morph_client()
+    if morph_client and len(learnings) >= 2:
+        try:
+            documents = [
+                f"{d.get('task', '')} | {d.get('lesson', '')} | {d.get('approach', '')}"
+                for d in learnings
+            ]
+            ranked = morph_client.rerank(query, documents, top_n=3)
+            if ranked and ranked[0].get("relevance_score", 0) > 0.1:
+                best = learnings[ranked[0]["index"]]
+                confidence = min(int(ranked[0]["relevance_score"] * 100), 99)
+                return {
+                    "task": best.get("task"),
+                    "approach": best.get("approach"),
+                    "lesson": best.get("lesson"),
+                    "score": best.get("score"),
+                    "confidence": confidence,
+                    "alternatives": len(ranked) - 1,
+                    "engine": "morph-rerank",
+                }
+        except Exception:
+            pass  # Fall through to keyword matching
+
+    # Fallback: keyword overlap scoring
     query_lower = query.lower()
     candidates = []
-
-    for f in LEARNINGS_DIR.glob("*.json"):
-        try:
-            d = json.loads(f.read_text())
-            task = d.get("task", "").lower()
-            lesson = d.get("lesson", "").lower()
-            approach = d.get("approach", "").lower()
-            # Multi-field keyword overlap scoring
-            words = set(query_lower.split())
-            task_overlap = len(words & set(task.split()))
-            lesson_overlap = len(words & set(lesson.split()))
-            approach_overlap = len(words & set(approach.split()))
-            # Weighted: task match is most important
-            total_score = task_overlap * 3 + lesson_overlap * 2 + approach_overlap
-            user_score = d.get("score", 3)
-            # Boost by user rating
-            weighted = total_score * (user_score / 5.0)
-            if weighted > 0 and user_score >= 2:
-                candidates.append((weighted, d))
-        except (json.JSONDecodeError, KeyError):
-            continue
+    for d in learnings:
+        task = d.get("task", "").lower()
+        lesson = d.get("lesson", "").lower()
+        approach = d.get("approach", "").lower()
+        words = set(query_lower.split())
+        total_score = (len(words & set(task.split())) * 3
+                       + len(words & set(lesson.split())) * 2
+                       + len(words & set(approach.split())))
+        weighted = total_score * (d.get("score", 3) / 5.0)
+        if weighted > 0:
+            candidates.append((weighted, d))
 
     if not candidates:
         return None
@@ -1511,16 +1536,14 @@ def _search_learnings(query):
     if best_weight < 2:
         return None
 
-    # Calculate confidence based on how many similar learnings exist
-    confidence = min(int(best_weight * 20), 99)
-
     return {
         "task": best_d.get("task"),
         "approach": best_d.get("approach"),
         "lesson": best_d.get("lesson"),
         "score": best_d.get("score"),
-        "confidence": confidence,
+        "confidence": min(int(best_weight * 20), 99),
         "alternatives": len(candidates) - 1,
+        "engine": "keyword",
     }
 
 
@@ -1708,6 +1731,8 @@ def _auto_run(args):
                 f"3. {team_rec['steps'][2]}\n"
                 f"Max diff: {team_rec['max_diff']} lines. Verify before marking done."
             ),
+            "morph_available": _get_morph_client() is not None,
+            "morph_hint": "Use morph edit_file (MCP) or MorphClient.apply_file() for fast code edits. Use morph codebase_search for exploration.",
         }))
 
         # Return control to Claude for implementation
@@ -2120,7 +2145,7 @@ def _get_morph_client():
 
 
 def cmd_search(args):
-    """Semantic code search via Morph API (Python), with grep fallback."""
+    """Semantic code search via Morph API, with grep fallback and optional rerank."""
     import subprocess as _sp
 
     query = " ".join(args.query) if args.query else ""
@@ -2129,6 +2154,7 @@ def cmd_search(args):
 
     search_dir = getattr(args, "dir", ".") or "."
     fmt = getattr(args, "format", "text") or "text"
+    do_rerank = getattr(args, "rerank", False)
 
     # Try Morph Python client first
     client = _get_morph_client()
@@ -2153,12 +2179,24 @@ def cmd_search(args):
              "-i", query, search_dir],
             capture_output=True, text=True, timeout=15,
         )
-        lines = result.stdout.strip().split("\n")[:20]
+        lines = [ln for ln in result.stdout.strip().split("\n") if ln.strip()][:30]
+
+        # Rerank grep results with Morph if requested and available
+        if do_rerank and lines and client:
+            try:
+                ranked = client.rerank(query, lines, top_n=min(10, len(lines)))
+                lines = [r["document"] for r in ranked]
+                engine = "grep+rerank"
+            except Exception:
+                engine = "grep-fallback"
+        else:
+            engine = "grep-fallback"
+
         if fmt == "json":
-            print(json.dumps({"success": True, "engine": "grep-fallback", "query": query,
+            print(json.dumps({"success": True, "engine": engine, "query": query,
                               "results": lines, "count": len(lines)}))
         else:
-            print(f"## Search: {query} (grep fallback)\n")
+            print(f"## Search: {query} ({engine})\n")
             for line in lines:
                 if line.strip():
                     print(f"  {line}")
@@ -2696,6 +2734,8 @@ def main():
     search_p.add_argument("query", nargs="*")
     search_p.add_argument("--dir", default=".")
     search_p.add_argument("--format", choices=["text", "json"], default="text")
+    search_p.add_argument("--rerank", action="store_true", default=False,
+                           help="Rerank grep results by relevance (needs MORPH_API_KEY)")
 
     compact_p = sub.add_parser("compact", help="Compress text via morph compact")
     compact_p.add_argument("--file", default="", help="Input file (or use stdin)")
