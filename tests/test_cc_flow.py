@@ -164,3 +164,94 @@ class TestVersion:
         assert code == 0
         data = json.loads(out)
         assert "version" in data
+
+
+class TestEpicImport:
+    def test_import_creates_tasks(self, workspace):
+        plan = workspace / "plan.md"
+        plan.write_text("# Plan\n\n### Task 1: Alpha\nDo A\n\n### Task 2: Beta\nDo B\n")
+        out, _, code = run(["epic", "import", "--file", str(plan)], cwd=workspace)
+        assert code == 0
+        lines = [ln for ln in out.split("\n") if ln.strip()]
+        data = json.loads(lines[-1])
+        assert data["tasks_created"] == 2
+
+
+class TestEpicClose:
+    def test_close_blocks_pending(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        _, _, code = run(["epic", "close", "epic-1-test"], cwd=workspace)
+        assert code == 1
+
+    def test_close_archives(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["start", "epic-1-test.1"], cwd=workspace)
+        run(["done", "epic-1-test.1", "--summary", "ok"], cwd=workspace)
+        _, _, code = run(["epic", "close", "epic-1-test"], cwd=workspace)
+        assert code == 0
+        assert (workspace / ".tasks" / "completed" / "epic-1-test.md").exists()
+
+
+class TestEpicReset:
+    def test_resets_tasks(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["start", "epic-1-test.1"], cwd=workspace)
+        run(["epic", "reset", "epic-1-test"], cwd=workspace)
+        t = json.loads((workspace / ".tasks" / "tasks" / "epic-1-test.1.json").read_text())
+        assert t["status"] == "todo"
+
+
+class TestDepAdd:
+    def test_add_dep(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T2"], cwd=workspace)
+        out, _, _ = run(["dep", "add", "epic-1-test.2", "epic-1-test.1"], cwd=workspace)
+        assert "epic-1-test.1" in json.loads(out)["depends_on"]
+
+
+class TestScan:
+    def test_scan_clean(self, workspace):
+        out, _, code = run(["scan"], cwd=workspace)
+        assert code == 0
+        assert json.loads(out)["total"] == 0
+
+
+class TestArchive:
+    def test_archive_empty(self, workspace):
+        out, _, _ = run(["archive"], cwd=workspace)
+        assert json.loads(out)["count"] == 0
+
+
+class TestCheckpoint:
+    def test_save_list_restore(self, workspace):
+        subprocess.run(["git", "init", "-q"], cwd=workspace)
+        subprocess.run(["git", "add", "."], cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=workspace)
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        out, _, _ = run(["checkpoint", "save", "--name", "s1"], cwd=workspace)
+        assert json.loads(out)["success"]
+        out, _, _ = run(["checkpoint", "list"], cwd=workspace)
+        assert len(json.loads(out)["checkpoints"]) == 1
+        out, _, _ = run(["checkpoint", "restore", "s1"], cwd=workspace)
+        assert "Resume" in out
+
+
+class TestStats:
+    def test_stats_runs(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        out, _, code = run(["stats"], cwd=workspace)
+        assert code == 0
+        assert "Productivity" in out
+
+
+class TestVersionFlag:
+    def test_version_flag(self):
+        out, _, code = run(["--version"])
+        assert code == 0
+        assert "cc-flow" in out
