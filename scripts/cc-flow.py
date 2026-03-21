@@ -955,6 +955,158 @@ def cmd_stats(_args):
         print(f"| Success rate | {success_rate}% |")
 
 
+LEARNINGS_DIR = TASKS_DIR / "learnings"
+
+# ─── Router ───
+
+ROUTE_TABLE = [
+    # (keywords, command, team, description)
+    (["new feature", "add feature", "implement", "build", "新功能", "加功能"],
+     "/brainstorm", "feature-dev", "New feature → brainstorm first"),
+    (["bug", "broken", "error", "fix", "crash", "报错", "故障", "修"],
+     "/debug", "bug-fix", "Bug → systematic debugging"),
+    (["review", "code review", "check code", "审查", "看看代码"],
+     "/review", "review", "Code review"),
+    (["refactor", "clean up", "simplify", "重构", "简化", "清理"],
+     "/simplify", "refactor", "Refactoring"),
+    (["test", "tdd", "write test", "写测试"],
+     "/tdd", None, "Test-driven development"),
+    (["deploy", "ship", "release", "上线", "部署", "发布"],
+     "/commit", None, "Ship → commit and push"),
+    (["plan", "design", "architecture", "规划", "设计", "架构"],
+     "/plan", "feature-dev", "Planning"),
+    (["slow", "performance", "optimize", "慢", "性能", "优化"],
+     "/perf", None, "Performance optimization"),
+    (["docs", "readme", "changelog", "文档"],
+     "/docs", None, "Documentation"),
+    (["scaffold", "new project", "init", "新项目", "创建项目"],
+     "/scaffold", None, "New project setup"),
+    (["improve", "autoimmune", "自动改进", "自动优化"],
+     "/autoimmune", "autoimmune", "Autonomous improvement"),
+    (["audit", "health", "ready", "体检", "审计"],
+     "/audit", "audit", "Project health check"),
+    (["task", "epic", "progress", "任务", "进度"],
+     "/tasks", None, "Task management"),
+    (["incident", "outage", "down", "事故", "宕机"],
+     "/debug", "bug-fix", "Incident response (use incident skill)"),
+    (["upgrade", "dependency", "依赖", "升级"],
+     None, None, "Dependency upgrade (use dependency-upgrade skill)"),
+]
+
+
+def cmd_route(args):
+    """Analyze user intent and suggest the best command + team."""
+    query = " ".join(args.query).lower() if args.query else ""
+
+    if not query:
+        print(json.dumps({"success": False, "error": "Provide a task description"}))
+        sys.exit(1)
+
+    # Check learnings for past similar tasks
+    past_match = _search_learnings(query)
+
+    matches = []
+    for keywords, command, team, desc in ROUTE_TABLE:
+        score = sum(1 for kw in keywords if kw in query)
+        if score > 0:
+            matches.append({"score": score, "command": command, "team": team, "description": desc})
+
+    matches.sort(key=lambda x: -x["score"])
+    best = matches[0] if matches else None
+
+    result = {
+        "success": True,
+        "query": query,
+        "suggestion": {
+            "command": best["command"] if best else "/brainstorm",
+            "team": best.get("team") if best else None,
+            "reason": best["description"] if best else "Default: start with brainstorming",
+        },
+    }
+    if past_match:
+        result["past_learning"] = past_match
+
+    print(json.dumps(result))
+
+
+# ─── Learning Loop ───
+
+def cmd_learn(args):
+    """Record a learning from the current session for future routing."""
+    LEARNINGS_DIR.mkdir(parents=True, exist_ok=True)
+
+    learning = {
+        "timestamp": now_iso(),
+        "task": args.task,
+        "outcome": args.outcome,
+        "approach": args.approach,
+        "lesson": args.lesson,
+        "score": args.score,
+    }
+
+    # Filename from timestamp
+    fname = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S") + ".json"
+    path = LEARNINGS_DIR / fname
+    path.write_text(json.dumps(learning, indent=2) + "\n")
+    print(json.dumps({"success": True, "saved": str(path)}))
+
+
+def cmd_learnings(args):
+    """List or search past learnings."""
+    if not LEARNINGS_DIR.exists():
+        print(json.dumps({"success": True, "learnings": [], "count": 0}))
+        return
+
+    learnings = []
+    for f in sorted(LEARNINGS_DIR.glob("*.json")):
+        d = json.loads(f.read_text())
+        learnings.append(d)
+
+    if args.search:
+        query = args.search.lower()
+        learnings = [entry for entry in learnings if
+                     query in entry.get("task", "").lower() or
+                     query in entry.get("lesson", "").lower() or
+                     query in entry.get("approach", "").lower()]
+
+    # Show recent N
+    n = args.last or 10
+    recent = learnings[-n:]
+
+    print(json.dumps({"success": True, "learnings": recent, "count": len(learnings)}))
+
+
+def _search_learnings(query):
+    """Search learnings for relevant past experience."""
+    if not LEARNINGS_DIR.exists():
+        return None
+
+    query_lower = query.lower()
+    best = None
+    best_score = 0
+
+    for f in LEARNINGS_DIR.glob("*.json"):
+        try:
+            d = json.loads(f.read_text())
+            task = d.get("task", "").lower()
+            # Simple keyword overlap scoring
+            words = set(query_lower.split())
+            task_words = set(task.split())
+            overlap = len(words & task_words)
+            if overlap > best_score and d.get("score", 0) >= 3:
+                best_score = overlap
+                best = {
+                    "task": d.get("task"),
+                    "approach": d.get("approach"),
+                    "lesson": d.get("lesson"),
+                    "score": d.get("score"),
+                }
+        except (json.JSONDecodeError, KeyError):
+            continue
+
+    return best if best_score >= 2 else None
+
+
 def cmd_dep_add(args):
     """Add dependency to existing task."""
     path = TASKS_SUBDIR / f"{args.id}.json"
@@ -1057,6 +1209,20 @@ def main():
     cp_sub.add_parser("list")
     sub.add_parser("stats", help="Productivity metrics")
 
+    route_p = sub.add_parser("route", help="Smart router: analyze task → suggest command + team")
+    route_p.add_argument("query", nargs="*")
+
+    learn_p = sub.add_parser("learn", help="Record a learning for future routing")
+    learn_p.add_argument("--task", required=True)
+    learn_p.add_argument("--outcome", required=True, choices=["success", "partial", "failed"])
+    learn_p.add_argument("--approach", required=True)
+    learn_p.add_argument("--lesson", required=True)
+    learn_p.add_argument("--score", type=int, default=3, help="1-5 how useful was this approach")
+
+    learnings_p = sub.add_parser("learnings", help="List/search past learnings")
+    learnings_p.add_argument("--search", default="")
+    learnings_p.add_argument("--last", type=int, default=10)
+
     next_p = sub.add_parser("next", help="Smart next task (priority-aware)")
     next_p.add_argument("--epic", default="")
 
@@ -1101,6 +1267,9 @@ def main():
         "validate": cmd_validate,
         "next": cmd_next,
         "scan": cmd_scan,
+        "route": cmd_route,
+        "learn": cmd_learn,
+        "learnings": cmd_learnings,
         "log": cmd_log,
         "summary": cmd_summary,
         "archive": cmd_archive,
