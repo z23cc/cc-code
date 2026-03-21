@@ -37,21 +37,35 @@ class MorphClient:
         if not self.api_key:
             raise ValueError("MORPH_API_KEY not set. Get one at https://morphllm.com/dashboard/api-keys")
 
-    def _request(self, endpoint, payload):
-        """Make authenticated POST request to Morph API."""
+    def _request(self, endpoint, payload, retries=2, timeout=60):
+        """Make authenticated POST request with retry on 5xx errors."""
+        import time
         url = f"{BASE_URL}/{endpoint.lstrip('/')}"
         data = json.dumps(payload).encode("utf-8")
-        req = Request(url, data=data, method="POST")
-        req.add_header("Authorization", f"Bearer {self.api_key}")
-        req.add_header("Content-Type", "application/json")
-        req.add_header("User-Agent", "cc-code-morph/1.0")
-        req.add_header("Accept", "application/json")
-        try:
-            with urlopen(req, timeout=60) as resp:
-                return json.loads(resp.read().decode("utf-8"))
-        except HTTPError as exc:
-            body = exc.read().decode("utf-8", errors="replace")[:500]
-            raise RuntimeError(f"Morph API {exc.code}: {body}") from exc
+
+        for attempt in range(retries + 1):
+            req = Request(url, data=data, method="POST")
+            req.add_header("Authorization", f"Bearer {self.api_key}")
+            req.add_header("Content-Type", "application/json")
+            req.add_header("User-Agent", "cc-code-morph/1.0")
+            req.add_header("Accept", "application/json")
+            try:
+                with urlopen(req, timeout=timeout) as resp:
+                    return json.loads(resp.read().decode("utf-8"))
+            except HTTPError as exc:
+                body = exc.read().decode("utf-8", errors="replace")[:500]
+                # Retry on 5xx (server error) or 429 (rate limit)
+                if exc.code in (429, 500, 502, 503, 504) and attempt < retries:
+                    wait = (attempt + 1) * 2  # 2s, 4s
+                    time.sleep(wait)
+                    continue
+                raise RuntimeError(f"Morph API {exc.code}: {body}") from exc
+            except (TimeoutError, OSError) as exc:
+                if attempt < retries:
+                    time.sleep(2)
+                    continue
+                raise RuntimeError(f"Morph API timeout: {exc}") from exc
+        raise RuntimeError("Morph API: max retries exceeded")
 
     # ── Apply ──
 
@@ -97,16 +111,26 @@ class MorphClient:
         Returns:
             List of search results
         """
-        # Build repo structure
+        # Build repo structure — skip hidden dirs and common noise
+        SKIP_DIRS = {".git", "__pycache__", "node_modules", ".venv", "venv",
+                     "dist", "build", ".next", ".ruff_cache", ".pytest_cache",
+                     ".mypy_cache", ".tox", "target", "coverage"}
+        CODE_EXTS = {".py", ".ts", ".js", ".tsx", ".jsx", ".go", ".rs", ".java",
+                     ".md", ".yaml", ".yml", ".toml", ".json", ".sh"}
+
         repo_files = []
         dir_path = Path(directory).resolve()
         for f in sorted(dir_path.rglob("*")):
-            if f.is_file() and not any(p.startswith(".") for p in f.relative_to(dir_path).parts):
-                rel = str(f.relative_to(dir_path))
-                if not any(skip in rel for skip in ["node_modules", "__pycache__", ".git", "dist", "build"]):
-                    repo_files.append(str(f))
-                    if len(repo_files) >= 500:
-                        break
+            if not f.is_file():
+                continue
+            parts = f.relative_to(dir_path).parts
+            if any(p in SKIP_DIRS or p.startswith(".") for p in parts):
+                continue
+            if f.suffix not in CODE_EXTS:
+                continue
+            repo_files.append(str(f))
+            if len(repo_files) >= 500:
+                break
 
         repo_structure = "\n".join(repo_files)
         content = f"<repo_structure>\n{repo_structure}\n</repo_structure>\n\n<search_string>\n{query}\n</search_string>"

@@ -30,10 +30,9 @@ from cc_flow.route_learn import (  # noqa: E402
 )
 from cc_flow.auto import cmd_auto  # noqa: E402
 from cc_flow.morph_cmds import cmd_apply, cmd_search, cmd_embed, cmd_compact, cmd_github_search  # noqa: E402
-from cc_flow.misc import (  # noqa: E402
-    cmd_version, cmd_validate, cmd_scan, cmd_log, cmd_summary,
-    cmd_archive, cmd_stats, cmd_history, cmd_config,
-)
+from cc_flow.quality import cmd_validate, cmd_scan  # noqa: E402
+from cc_flow.logging import cmd_log, cmd_summary, cmd_archive, cmd_stats  # noqa: E402
+from cc_flow.config import cmd_version, cmd_history, cmd_config  # noqa: E402
 from cc_flow.session import cmd_session  # noqa: E402
 from cc_flow.graph import cmd_graph  # noqa: E402
 from cc_flow.doctor import cmd_doctor  # noqa: E402

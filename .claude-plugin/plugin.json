@@ -1,6 +1,6 @@
 {
   "name": "cc-code",
-  "version": "3.6.0",
+  "version": "3.7.0",
   "description": "Development workflow toolkit — brainstorming, planning, TDD, code review, debugging, task management (cc-flow CLI), and autonomous improvement loops. Language-agnostic core with Python language pack included.",
   "author": {
     "name": "z23cc"
