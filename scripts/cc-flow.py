@@ -792,6 +792,81 @@ def cmd_summary(_args):
     print(f"| Skipped | {skipped} |")
 
 
+CHECKPOINT_DIR = TASKS_DIR / ".checkpoints"
+
+
+def cmd_checkpoint_save(args):
+    """Save current session state for later resume."""
+    CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
+    name = args.name or datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%S")
+
+    import subprocess
+    git_sha = subprocess.run(
+        ["git", "rev-parse", "HEAD"], capture_output=True, text=True
+    ).stdout.strip()
+    git_branch = subprocess.run(
+        ["git", "branch", "--show-current"], capture_output=True, text=True
+    ).stdout.strip()
+
+    tasks = all_tasks()
+    in_prog = [t for t in tasks.values() if t["status"] == "in_progress"]
+
+    checkpoint = {
+        "name": name,
+        "timestamp": now_iso(),
+        "git_sha": git_sha,
+        "git_branch": git_branch,
+        "in_progress_tasks": [t["id"] for t in in_prog],
+        "total_tasks": len(tasks),
+        "done": sum(1 for t in tasks.values() if t["status"] == "done"),
+    }
+
+    path = CHECKPOINT_DIR / f"{name}.json"
+    path.write_text(json.dumps(checkpoint, indent=2) + "\n")
+    print(json.dumps({"success": True, "checkpoint": name, "path": str(path)}))
+
+
+def cmd_checkpoint_restore(args):
+    """Show checkpoint info for session resume."""
+    name = args.name
+    if name == "latest":
+        files = sorted(CHECKPOINT_DIR.glob("*.json"))
+        if not files:
+            print(json.dumps({"success": False, "error": "No checkpoints found"}))
+            sys.exit(1)
+        path = files[-1]
+    else:
+        path = CHECKPOINT_DIR / f"{name}.json"
+
+    if not path.exists():
+        print(json.dumps({"success": False, "error": f"Checkpoint not found: {name}"}))
+        sys.exit(1)
+
+    data = json.loads(path.read_text())
+    print(json.dumps({"success": True, "checkpoint": data}))
+    print("\n## Resume Instructions")
+    print(f"1. git checkout {data.get('git_branch', 'main')}")
+    print(f"2. Verify: git log --oneline -1 (should be near {data.get('git_sha', '?')[:8]})")
+    if data.get("in_progress_tasks"):
+        print(f"3. Resume tasks: {', '.join(data['in_progress_tasks'])}")
+    else:
+        print("3. Run: cc-flow next")
+    print(f"4. Progress: {data.get('done', 0)}/{data.get('total_tasks', 0)} done")
+
+
+def cmd_checkpoint_list(_args):
+    """List all saved checkpoints."""
+    if not CHECKPOINT_DIR.exists():
+        print(json.dumps({"success": True, "checkpoints": []}))
+        return
+    checkpoints = []
+    for f in sorted(CHECKPOINT_DIR.glob("*.json")):
+        d = json.loads(f.read_text())
+        checkpoints.append({"name": d["name"], "timestamp": d["timestamp"],
+                           "done": d.get("done", 0), "total": d.get("total_tasks", 0)})
+    print(json.dumps({"success": True, "checkpoints": checkpoints}))
+
+
 def cmd_archive(_args):
     """Show completed/archived epics and tasks."""
     if not COMPLETED_DIR.exists():
@@ -972,6 +1047,14 @@ def main():
 
     sub.add_parser("summary", help="Autoimmune session summary")
     sub.add_parser("archive", help="Show completed epics/tasks")
+
+    cp_p = sub.add_parser("checkpoint", help="Save/restore session state")
+    cp_sub = cp_p.add_subparsers(dest="cp_cmd")
+    cp_save = cp_sub.add_parser("save")
+    cp_save.add_argument("--name", default="")
+    cp_restore = cp_sub.add_parser("restore")
+    cp_restore.add_argument("name")
+    cp_sub.add_parser("list")
     sub.add_parser("stats", help="Productivity metrics")
 
     next_p = sub.add_parser("next", help="Smart next task (priority-aware)")
@@ -1045,6 +1128,17 @@ def main():
             cmd_task_reset(args)
         elif tc == "set-spec":
             cmd_task_set_spec(args)
+        else:
+            parser.print_help()
+            sys.exit(1)
+    elif args.command == "checkpoint":
+        cc = getattr(args, "cp_cmd", None)
+        if cc == "save":
+            cmd_checkpoint_save(args)
+        elif cc == "restore":
+            cmd_checkpoint_restore(args)
+        elif cc == "list":
+            cmd_checkpoint_list(args)
         else:
             parser.print_help()
             sys.exit(1)
