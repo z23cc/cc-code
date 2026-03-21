@@ -29,7 +29,7 @@ from cc_flow.route_learn import (  # noqa: E402
     cmd_route, cmd_learn, cmd_learnings, cmd_consolidate,
 )
 from cc_flow.auto import cmd_auto  # noqa: E402
-from cc_flow.morph_cmds import cmd_search, cmd_compact, cmd_github_search  # noqa: E402
+from cc_flow.morph_cmds import cmd_apply, cmd_search, cmd_embed, cmd_compact, cmd_github_search  # noqa: E402
 from cc_flow.misc import (  # noqa: E402
     cmd_version, cmd_validate, cmd_scan, cmd_log, cmd_summary,
     cmd_archive, cmd_stats, cmd_history, cmd_config,
@@ -54,7 +54,8 @@ def main():
         "archive": cmd_archive, "stats": cmd_stats, "consolidate": cmd_consolidate,
         "history": cmd_history, "config": cmd_config, "graph": cmd_graph,
         "doctor": cmd_doctor, "dashboard": cmd_dashboard, "rollback": cmd_rollback,
-        "search": cmd_search, "compact": cmd_compact, "github-search": cmd_github_search,
+        "apply": cmd_apply, "search": cmd_search, "embed": cmd_embed,
+        "compact": cmd_compact, "github-search": cmd_github_search,
     }
 
     subcmd_map = {

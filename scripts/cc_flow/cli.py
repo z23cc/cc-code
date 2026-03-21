@@ -131,15 +131,27 @@ def build_parser():
     sess_sub.add_parser("list")
 
     # Morph
+    apply_p = sub.add_parser("apply", help="Fast Apply code changes via Morph (10,500+ tok/s)")
+    apply_p.add_argument("--file", required=True, help="File to modify")
+    apply_p.add_argument("--instruction", required=True, help="What to change")
+    apply_p.add_argument("--update", default="", help="Code snippet (or stdin)")
+    apply_p.add_argument("--model", default="auto", choices=["morph-v3-fast", "morph-v3-large", "auto"])
+
     search_p = sub.add_parser("search", help="Semantic code search (morph → grep fallback)")
     search_p.add_argument("query", nargs="*")
     search_p.add_argument("--dir", default=".")
     search_p.add_argument("--format", choices=["text", "json"], default="text")
     search_p.add_argument("--rerank", action="store_true", default=False)
+
+    embed_p = sub.add_parser("embed", help="Generate code embeddings (1536 dims)")
+    embed_p.add_argument("--input", default="", help="Text to embed")
+    embed_p.add_argument("--file", default="", help="File to embed")
+
     compact_p = sub.add_parser("compact", help="Compress text via morph")
     compact_p.add_argument("--file", default="")
     compact_p.add_argument("--ratio", default="0.3")
     compact_p.add_argument("--output", default="")
+
     ghsearch_p = sub.add_parser("github-search", help="Search GitHub repos")
     ghsearch_p.add_argument("query", nargs="*")
     ghsearch_p.add_argument("--repo", default="")
