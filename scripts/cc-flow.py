@@ -33,6 +33,7 @@ Usage:
     cc-flow learnings [--search query] [--last N]
     cc-flow consolidate
     cc-flow history
+    cc-flow session [save|restore|list]
     cc-flow dashboard
     cc-flow doctor [--format text|json]
     cc-flow graph [--epic <id>] [--format mermaid|ascii|dot]
@@ -51,7 +52,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "2.9.0"
+VERSION = "2.9.1"
 
 TASKS_DIR = Path(".tasks")
 EPICS_DIR = TASKS_DIR / "epics"
@@ -2212,121 +2213,102 @@ def cmd_dashboard(_args):
         print("\n  → Get started: cc-flow epic create --title 'My Feature'")
 
 
-def cmd_doctor(args):
-    """Health check — validate environment, tools, config, and task integrity."""
+def _doctor_checks():
+    """Run all health checks, return list of check results."""
+    import os
     import shutil
     import subprocess as sp
 
     checks = []
-    fmt = getattr(args, "format", "text") or "text"
 
-    def check(name, status, msg, fix=None):
+    def chk(name, status, msg, fix=None):
         checks.append({"name": name, "status": status, "message": msg, "fix": fix})
 
-    # 1. Python version
+    # Python version
     v = sys.version_info
     if v >= (3, 9):
-        check("Python", "pass", f"{v.major}.{v.minor}.{v.micro}")
+        chk("Python", "pass", f"{v.major}.{v.minor}.{v.micro}")
     elif v >= (3, 7):
-        check("Python", "warn", f"{v.major}.{v.minor} (3.9+ recommended)", "brew install python@3.12")
+        chk("Python", "warn", f"{v.major}.{v.minor} (3.9+ recommended)", "brew install python@3.12")
     else:
-        check("Python", "fail", f"{v.major}.{v.minor} (3.9+ required)", "brew install python@3.12")
+        chk("Python", "fail", f"{v.major}.{v.minor} (3.9+ required)", "brew install python@3.12")
 
-    # 2. Git
+    # Git + Git repo
     if shutil.which("git"):
         try:
             ver = sp.run(["git", "--version"], capture_output=True, text=True, timeout=5).stdout.strip()
-            check("Git", "pass", ver)
+            chk("Git", "pass", ver)
+            result = sp.run(["git", "rev-parse", "--is-inside-work-tree"],
+                            capture_output=True, text=True, timeout=5)
+            if result.returncode == 0:
+                branch = sp.run(["git", "branch", "--show-current"],
+                                capture_output=True, text=True, timeout=5).stdout.strip()
+                chk("Git repo", "pass", f"branch: {branch}" if branch else "detached HEAD")
+            else:
+                chk("Git repo", "warn", "not a git repo", "git init")
         except (sp.TimeoutExpired, OSError):
-            check("Git", "warn", "git found but not responding")
+            chk("Git", "warn", "git found but not responding")
     else:
-        check("Git", "fail", "git not found", "brew install git")
+        chk("Git", "fail", "git not found", "brew install git")
 
-    # 3. Git repo
-    try:
-        result = sp.run(["git", "rev-parse", "--is-inside-work-tree"],
-                        capture_output=True, text=True, timeout=5)
-        if result.returncode == 0:
-            branch = sp.run(["git", "branch", "--show-current"],
-                            capture_output=True, text=True, timeout=5).stdout.strip()
-            check("Git repo", "pass", f"branch: {branch}" if branch else "detached HEAD")
-        else:
-            check("Git repo", "warn", "not a git repo", "git init")
-    except (sp.TimeoutExpired, OSError):
-        check("Git repo", "warn", "git not responding")
-
-    # 4. Lint tools
+    # Lint tools
     for tool, pkg in [("ruff", "pip install ruff"), ("mypy", "pip install mypy")]:
-        if shutil.which(tool):
-            check(tool, "pass", "available")
-        else:
-            check(tool, "warn", "not installed", pkg)
+        chk(tool, "pass" if shutil.which(tool) else "warn",
+            "available" if shutil.which(tool) else "not installed",
+            None if shutil.which(tool) else pkg)
 
-    # 5. .tasks/ directory
+    # .tasks/ directory
     if TASKS_DIR.exists() and META_FILE.exists():
         meta = load_meta()
-        check(".tasks/", "pass", f"initialized (next_epic={meta.get('next_epic', '?')})")
+        chk(".tasks/", "pass", f"initialized (next_epic={meta.get('next_epic', '?')})")
     elif TASKS_DIR.exists():
-        check(".tasks/", "warn", "directory exists but meta.json missing", "cc-flow init")
+        chk(".tasks/", "warn", "directory exists but meta.json missing", "cc-flow init")
     else:
-        check(".tasks/", "warn", "not initialized", "cc-flow init")
+        chk(".tasks/", "warn", "not initialized", "cc-flow init")
 
-    # 6. Task integrity
+    # Task integrity
     tasks = all_tasks()
     if tasks:
-        orphaned = 0
-        broken_deps = 0
-        for tid, t in tasks.items():
-            epic_path = EPICS_DIR / f"{t.get('epic', '')}.md"
-            if not epic_path.exists():
-                orphaned += 1
-            for dep in t.get("depends_on", []):
-                if dep not in tasks:
-                    broken_deps += 1
-
+        orphaned = sum(1 for t in tasks.values() if not (EPICS_DIR / f"{t.get('epic', '')}.md").exists())
+        broken_deps = sum(1 for t in tasks.values() for d in t.get("depends_on", []) if d not in tasks)
         if orphaned == 0 and broken_deps == 0:
-            check("Task integrity", "pass", f"{len(tasks)} tasks, all clean")
+            chk("Task integrity", "pass", f"{len(tasks)} tasks, all clean")
         else:
-            issues = []
-            if orphaned:
-                issues.append(f"{orphaned} orphaned")
-            if broken_deps:
-                issues.append(f"{broken_deps} broken deps")
-            check("Task integrity", "warn", ", ".join(issues), "cc-flow validate")
+            parts = ([f"{orphaned} orphaned"] if orphaned else []) + ([f"{broken_deps} broken deps"] if broken_deps else [])
+            chk("Task integrity", "warn", ", ".join(parts), "cc-flow validate")
     else:
-        check("Task integrity", "pass", "no tasks yet")
+        chk("Task integrity", "pass", "no tasks yet")
 
-    # 7. Learnings
+    # Learnings
     if LEARNINGS_DIR.exists():
         count = len(list(LEARNINGS_DIR.glob("*.json")))
         patterns_dir = TASKS_DIR / "patterns"
         patterns = len(list(patterns_dir.glob("*.json"))) if patterns_dir.exists() else 0
-        check("Learnings", "pass", f"{count} learnings, {patterns} promoted patterns")
+        chk("Learnings", "pass", f"{count} learnings, {patterns} promoted patterns")
         if count >= 20 and patterns == 0:
-            check("Consolidation", "warn", f"{count} learnings not consolidated",
-                  "cc-flow consolidate")
-        elif count > 0:
-            check("Consolidation", "pass", "up to date")
+            chk("Consolidation", "warn", f"{count} learnings not consolidated", "cc-flow consolidate")
     else:
-        check("Learnings", "pass", "none yet (use cc-flow learn)")
+        chk("Learnings", "pass", "none yet (use cc-flow learn)")
 
-    # 8. Config
+    # Config + Claude Code env
     if CONFIG_FILE.exists():
-        config = safe_json_load(CONFIG_FILE, default={})
-        check("Config", "pass", f"{len(config)} settings")
+        chk("Config", "pass", f"{len(safe_json_load(CONFIG_FILE, default={}))} settings")
     else:
-        check("Config", "pass", "using defaults")
+        chk("Config", "pass", "using defaults")
 
-    # 9. Claude Code environment
-    import os
     in_claude = bool(os.environ.get("CLAUDE_CODE") or os.environ.get("CLAUDE_PROJECT_DIR")
                      or os.environ.get("CLAUDE_PLUGIN_ROOT"))
-    if in_claude:
-        check("Claude Code", "pass", "running inside Claude Code")
-    else:
-        check("Claude Code", "warn", "not detected (standalone mode)")
+    chk("Claude Code", "pass" if in_claude else "warn",
+        "running inside Claude Code" if in_claude else "not detected (standalone mode)")
 
-    # Output
+    return checks
+
+
+def cmd_doctor(args):
+    """Health check — validate environment, tools, config, and task integrity."""
+    checks = _doctor_checks()
+    fmt = getattr(args, "format", "text") or "text"
+
     if fmt == "json":
         passed = sum(1 for c in checks if c["status"] == "pass")
         warned = sum(1 for c in checks if c["status"] == "warn")
@@ -2345,157 +2327,120 @@ def cmd_doctor(args):
             if c.get("fix"):
                 print(f"    → fix: {c['fix']}")
         passed = sum(1 for c in checks if c["status"] == "pass")
-        total = len(checks)
-        print(f"\n  {passed}/{total} checks passed")
+        print(f"\n  {passed}/{len(checks)} checks passed")
 
     if any(c["status"] == "fail" for c in checks):
         sys.exit(1)
 
 
+STATUS_STYLE = {
+    "todo": {"mermaid": ":::todo", "icon": "○"},
+    "in_progress": {"mermaid": ":::inprog", "icon": "◐"},
+    "done": {"mermaid": ":::done", "icon": "●"},
+    "blocked": {"mermaid": ":::blocked", "icon": "✗"},
+}
+
+
+def _graph_mermaid(filtered, edges, as_json=False):
+    """Render Mermaid graph."""
+    lines = [
+        "graph TD",
+        "    classDef todo fill:#f9f9f9,stroke:#999,color:#333",
+        "    classDef inprog fill:#fff3cd,stroke:#ffc107,color:#333",
+        "    classDef done fill:#d4edda,stroke:#28a745,color:#333",
+        "    classDef blocked fill:#f8d7da,stroke:#dc3545,color:#333",
+    ]
+    for tid, t in sorted(filtered.items()):
+        label = t.get("title", tid)[:40]
+        size = f" [{t.get('size', '')}]" if t.get("size") else ""
+        style = STATUS_STYLE.get(t.get("status", "todo"), {}).get("mermaid", "")
+        lines.append(f'    {tid.replace(".", "_")}["{tid}: {label}{size}"]{style}')
+    for src, dst in edges:
+        lines.append(f"    {src.replace('.', '_')} --> {dst.replace('.', '_')}")
+    lines.append("\n    %% Legend: todo=gray, in_progress=yellow, done=green, blocked=red")
+    text = "\n".join(lines)
+
+    if as_json:
+        print(json.dumps({"success": True, "format": "mermaid",
+                          "nodes": len(filtered), "edges": len(edges), "mermaid": text}))
+    else:
+        print(f"```mermaid\n{text}\n```")
+
+
+def _graph_ascii(filtered, edges):
+    """Render ASCII dependency tree."""
+    has_incoming = {dst for _, dst in edges}
+    roots = [tid for tid in filtered if tid not in has_incoming] or sorted(filtered.keys())[:1]
+    children = {}
+    for src, dst in edges:
+        children.setdefault(src, []).append(dst)
+
+    printed = set()
+
+    def print_tree(tid, prefix="", is_last=True):
+        icon = STATUS_STYLE.get(filtered[tid]["status"], {}).get("icon", "?")
+        connector = "└── " if is_last else "├── "
+        if tid in printed:
+            print(f"{prefix}{connector}{icon} {tid} (↻ ref)")
+            return
+        printed.add(tid)
+        t = filtered[tid]
+        title = t.get("title", "")[:35]
+        size = f" [{t.get('size', '')}]" if t.get("size") else ""
+        print(f"{prefix}{connector}{icon} {tid}: {title}{size}")
+        kids = children.get(tid, [])
+        for i, kid in enumerate(kids):
+            print_tree(kid, prefix + ("    " if is_last else "│   "), i == len(kids) - 1)
+
+    for i, root in enumerate(sorted(roots)):
+        if i > 0:
+            print()
+        epic_id = filtered[root].get("epic", "")
+        if i == 0 and epic_id:
+            epic_spec = EPICS_DIR / f"{epic_id}.md"
+            if epic_spec.exists():
+                title = epic_spec.read_text().split("\n", 1)[0].lstrip("# ").replace("Epic:", "").strip()
+                print(f"📋 {title}" if title else f"📋 {epic_id}")
+        print_tree(root, "", i == len(roots) - 1)
+
+    done = sum(1 for t in filtered.values() if t["status"] == "done")
+    print(f"\n── {done}/{len(filtered)} done, {len(edges)} dependencies ──")
+
+
+def _graph_dot(filtered, edges):
+    """Render Graphviz DOT format."""
+    fill = {"todo": "#f9f9f9", "in_progress": "#fff3cd", "done": "#d4edda", "blocked": "#f8d7da"}
+    lines = ["digraph tasks {", "    rankdir=LR;", '    node [shape=box, style=filled];']
+    for tid, t in sorted(filtered.items()):
+        label = f"{tid}\\n{t.get('title', '')[:30]}"
+        color = fill.get(t.get("status", "todo"), "#f9f9f9")
+        lines.append(f'    "{tid}" [label="{label}", fillcolor="{color}"];')
+    for src, dst in edges:
+        lines.append(f'    "{src}" -> "{dst}";')
+    lines.append("}")
+    print("\n".join(lines))
+
+
 def cmd_graph(args):
-    """Generate dependency graph in Mermaid or ASCII format."""
+    """Generate dependency graph in Mermaid, ASCII, or DOT format."""
     tasks = all_tasks()
     epic_filter = getattr(args, "epic", "") or ""
     fmt = getattr(args, "format", "mermaid") or "mermaid"
 
-    # Filter tasks
-    filtered = {}
-    for tid, t in tasks.items():
-        if epic_filter and t.get("epic") != epic_filter:
-            continue
-        filtered[tid] = t
-
+    filtered = {tid: t for tid, t in tasks.items() if not epic_filter or t.get("epic") == epic_filter}
     if not filtered:
-        print(json.dumps({"success": False, "error": "No tasks found"}))
-        sys.exit(1)
+        _error("No tasks found")
 
-    # Collect edges and nodes
-    edges = []
-    for tid, t in filtered.items():
-        for dep in t.get("depends_on", []):
-            if dep in filtered:
-                edges.append((dep, tid))
-
-    # Status styling
-    status_style = {
-        "todo": {"mermaid": ":::todo", "icon": "○", "color": "white"},
-        "in_progress": {"mermaid": ":::inprog", "icon": "◐", "color": "yellow"},
-        "done": {"mermaid": ":::done", "icon": "●", "color": "green"},
-        "blocked": {"mermaid": ":::blocked", "icon": "✗", "color": "red"},
-    }
+    edges = [(dep, tid) for tid, t in filtered.items() for dep in t.get("depends_on", []) if dep in filtered]
 
     if fmt == "mermaid":
-        lines = ["graph TD"]
-        # Class definitions
-        lines.append("    classDef todo fill:#f9f9f9,stroke:#999,color:#333")
-        lines.append("    classDef inprog fill:#fff3cd,stroke:#ffc107,color:#333")
-        lines.append("    classDef done fill:#d4edda,stroke:#28a745,color:#333")
-        lines.append("    classDef blocked fill:#f8d7da,stroke:#dc3545,color:#333")
-
-        # Nodes
-        for tid, t in sorted(filtered.items()):
-            label = t.get("title", tid)[:40]
-            status = t.get("status", "todo")
-            size = t.get("size", "")
-            size_tag = f" [{size}]" if size else ""
-            style = status_style.get(status, {}).get("mermaid", "")
-            lines.append(f'    {tid.replace(".", "_")}["{tid}: {label}{size_tag}"]{style}')
-
-        # Edges
-        for src, dst in edges:
-            lines.append(f"    {src.replace('.', '_')} --> {dst.replace('.', '_')}")
-
-        # Legend
-        lines.append("")
-        lines.append("    %% Legend: todo=gray, in_progress=yellow, done=green, blocked=red")
-
-        mermaid_text = "\n".join(lines)
-
-        if getattr(args, "json", False):
-            print(json.dumps({
-                "success": True,
-                "format": "mermaid",
-                "nodes": len(filtered),
-                "edges": len(edges),
-                "mermaid": mermaid_text,
-            }))
-        else:
-            print("```mermaid")
-            print(mermaid_text)
-            print("```")
-
+        _graph_mermaid(filtered, edges, getattr(args, "json", False))
     elif fmt == "ascii":
-        # ASCII dependency tree
-        # Find roots (no incoming edges)
-        has_incoming = {dst for _, dst in edges}
-        roots = [tid for tid in filtered if tid not in has_incoming]
-        if not roots:
-            roots = sorted(filtered.keys())[:1]
-
-        # Build adjacency list
-        children = {}
-        for src, dst in edges:
-            children.setdefault(src, []).append(dst)
-
-        printed = set()
-
-        def print_tree(tid, prefix="", is_last=True):
-            if tid in printed:
-                icon = status_style.get(filtered[tid]["status"], {}).get("icon", "?")
-                print(f"{prefix}{'└── ' if is_last else '├── '}{icon} {tid} (↻ ref)")
-                return
-            printed.add(tid)
-
-            t = filtered[tid]
-            icon = status_style.get(t["status"], {}).get("icon", "?")
-            title = t.get("title", "")[:35]
-            size = t.get("size", "")
-            size_tag = f" [{size}]" if size else ""
-            connector = "└── " if is_last else "├── "
-            print(f"{prefix}{connector}{icon} {tid}: {title}{size_tag}")
-
-            kids = children.get(tid, [])
-            for i, kid in enumerate(kids):
-                child_prefix = prefix + ("    " if is_last else "│   ")
-                print_tree(kid, child_prefix, i == len(kids) - 1)
-
-        # Print each root
-        for i, root in enumerate(sorted(roots)):
-            if i > 0:
-                print()
-            epic_id = filtered[root].get("epic", "")
-            if i == 0 and epic_id:
-                # Print epic header
-                epic_spec = EPICS_DIR / f"{epic_id}.md"
-                epic_title = ""
-                if epic_spec.exists():
-                    first_line = epic_spec.read_text().split("\n", 1)[0]
-                    epic_title = first_line.lstrip("# ").replace("Epic:", "").strip()
-                header = f"📋 {epic_title}" if epic_title else f"📋 {epic_id}"
-                print(header)
-            print_tree(root, "", i == len(roots) - 1)
-
-        # Summary
-        total = len(filtered)
-        done = sum(1 for t in filtered.values() if t["status"] == "done")
-        print(f"\n── {done}/{total} done, {len(edges)} dependencies ──")
-
+        _graph_ascii(filtered, edges)
     elif fmt == "dot":
-        # Graphviz DOT format
-        lines = ["digraph tasks {", "    rankdir=LR;", '    node [shape=box, style=filled];']
-        fill = {"todo": "#f9f9f9", "in_progress": "#fff3cd", "done": "#d4edda", "blocked": "#f8d7da"}
-        for tid, t in sorted(filtered.items()):
-            label = f"{tid}\\n{t.get('title', '')[:30]}"
-            color = fill.get(t.get("status", "todo"), "#f9f9f9")
-            lines.append(f'    "{tid}" [label="{label}", fillcolor="{color}"];')
-        for src, dst in edges:
-            lines.append(f'    "{src}" -> "{dst}";')
-        lines.append("}")
-        print("\n".join(lines))
-
+        _graph_dot(filtered, edges)
     else:
-        print(json.dumps({"success": False, "error": f"Unknown format: {fmt}. Use: mermaid, ascii, dot"}))
-        sys.exit(1)
+        _error(f"Unknown format: {fmt}. Use: mermaid, ascii, dot")
 
 
 def main():

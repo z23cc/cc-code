@@ -675,6 +675,40 @@ class TestRollback:
         assert data["action"] in ("preview", "no_changes")
 
 
+    def test_rollback_confirm(self, workspace):
+        subprocess.run(["git", "init", "-q"], cwd=workspace)
+        subprocess.run(["git", "add", "."], cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=workspace)
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        subprocess.run(["git", "add", "."], cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "add tasks"], cwd=workspace)
+        run(["start", "epic-1-test.1"], cwd=workspace)
+        # Make a change
+        (workspace / "extra.txt").write_text("will be rolled back\n")
+        subprocess.run(["git", "add", "extra.txt"], cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "add extra"], cwd=workspace)
+        out, _, code = run(["rollback", "epic-1-test.1", "--confirm"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["action"] == "rolled_back"
+        # File should be gone after rollback
+        assert not (workspace / "extra.txt").exists()
+        # Task should be reset to todo
+        t = json.loads((workspace / ".tasks" / "tasks" / "epic-1-test.1.json").read_text())
+        assert t["status"] == "todo"
+
+
+class TestSessionEdgeCases:
+    def test_session_restore_empty(self, workspace):
+        _, _, code = run(["session", "restore"], cwd=workspace)
+        assert code == 1  # No sessions
+
+    def test_session_restore_nonexistent(self, workspace):
+        _, _, code = run(["session", "restore", "does-not-exist"], cwd=workspace)
+        assert code == 1
+
+
 class TestDiffTracking:
     def test_done_records_diff(self, workspace):
         subprocess.run(["git", "init", "-q"], cwd=workspace)
