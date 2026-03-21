@@ -1212,19 +1212,33 @@ def _auto_run(args):
         task["started"] = now_iso()
         save_task(TASKS_SUBDIR / f"{task_id}.json", task)
 
-        # Log and print instruction for Claude
+        # Determine team based on task content
+        team_rec = _recommend_team(task)
+
+        # Read spec content for context
+        spec_path = TASKS_SUBDIR / f"{task_id}.md"
+        spec_content = spec_path.read_text().strip() if spec_path.exists() else ""
+
+        # Output structured instruction for Claude
         print(json.dumps({
             "action": "implement",
             "task_id": task_id,
             "title": task["title"],
-            "spec": str(TASKS_SUBDIR / f"{task_id}.md"),
-            "instruction": "Read the task spec, implement the fix (< 50 lines diff), then verify. Report KEPT or DISCARDED.",
+            "size": task.get("size", "M"),
+            "spec": str(spec_path),
+            "spec_preview": spec_content[:200] if spec_content else "",
+            "team": team_rec,
+            "instruction": (
+                f"Execute this task using the {team_rec['template']} team pattern:\n"
+                f"1. {team_rec['steps'][0]}\n"
+                f"2. {team_rec['steps'][1]}\n"
+                f"3. {team_rec['steps'][2]}\n"
+                f"Max diff: {team_rec['max_diff']} lines. Verify before marking done."
+            ),
         }))
 
-        # The actual implementation happens in Claude's context (not in this script).
-        # This script sets up the task and waits for the result.
-        # In practice, autoimmune skill reads this output and acts on it.
-        break  # Return control to Claude for implementation
+        # Return control to Claude for implementation
+        break
 
     if iteration >= max_iterations:
         print(f"\n⏹ Max iterations ({max_iterations}) reached. Kept: {kept}, Discarded: {discarded}")
@@ -1287,6 +1301,111 @@ def _auto_status(args):
         print(f"| Log entries | {log_entries} |")
         print(f"| Kept | {kept} ({pct}%) |")
         print(f"| Discarded | {disc} |")
+
+
+TEAM_PATTERNS = [
+    {
+        "keywords": ["security", "bandit", "injection", "xss", "csrf", "auth", "secret", "vulnerability"],
+        "template": "security-fix",
+        "agents": ["researcher", "security-reviewer", "build-fixer"],
+        "steps": [
+            "Dispatch researcher: investigate the security issue, find affected code",
+            "Dispatch security-reviewer: verify the vulnerability and suggest fix",
+            "Apply minimal fix, run bandit to confirm resolved",
+        ],
+        "max_diff": 30,
+    },
+    {
+        "keywords": ["type", "mypy", "annotation", "hint", "typing"],
+        "template": "type-fix",
+        "agents": ["build-fixer"],
+        "steps": [
+            "Read the mypy error message carefully",
+            "Add type annotation or fix type mismatch (minimal change)",
+            "Run mypy to verify the error is resolved",
+        ],
+        "max_diff": 20,
+    },
+    {
+        "keywords": ["lint", "ruff", "unused", "import", "F401", "F841", "E741"],
+        "template": "lint-fix",
+        "agents": ["refactor-cleaner"],
+        "steps": [
+            "Run ruff check to see the exact violation",
+            "Apply minimal fix (remove unused import, rename variable, etc.)",
+            "Run ruff check to verify clean",
+        ],
+        "max_diff": 10,
+    },
+    {
+        "keywords": ["test", "pytest", "failing", "assert", "fixture"],
+        "template": "test-fix",
+        "agents": ["researcher", "build-fixer"],
+        "steps": [
+            "Dispatch researcher: read the failing test + code under test",
+            "Determine if it's a test bug or code bug",
+            "Fix minimally, run pytest to verify green",
+        ],
+        "max_diff": 30,
+    },
+    {
+        "keywords": ["refactor", "extract", "duplicate", "simplify", "complexity", "dead code"],
+        "template": "refactor",
+        "agents": ["researcher", "refactor-cleaner", "code-reviewer"],
+        "steps": [
+            "Dispatch researcher: map all usages and dependents",
+            "Dispatch refactor-cleaner: apply the refactoring",
+            "Dispatch code-reviewer: verify behavior preserved",
+        ],
+        "max_diff": 50,
+    },
+    {
+        "keywords": ["doc", "docstring", "readme", "comment"],
+        "template": "docs",
+        "agents": ["refactor-cleaner"],
+        "steps": [
+            "Read the code to understand what it does",
+            "Add/update documentation (docstring, comment, README)",
+            "Verify no code changes, only docs",
+        ],
+        "max_diff": 30,
+    },
+]
+
+DEFAULT_TEAM = {
+    "template": "general-fix",
+    "agents": ["researcher", "build-fixer"],
+    "steps": [
+        "Dispatch researcher: understand the issue and affected code",
+        "Apply minimal fix (< 50 lines diff)",
+        "Verify with lint + tests",
+    ],
+    "max_diff": 50,
+}
+
+
+def _recommend_team(task):
+    """Recommend a team template based on task title/content keywords."""
+    title_lower = task.get("title", "").lower()
+
+    for pattern in TEAM_PATTERNS:
+        score = sum(1 for kw in pattern["keywords"] if kw in title_lower)
+        if score > 0:
+            return {
+                "template": pattern["template"],
+                "agents": pattern["agents"],
+                "steps": pattern["steps"],
+                "max_diff": pattern["max_diff"],
+                "match_score": score,
+            }
+
+    return {
+        "template": DEFAULT_TEAM["template"],
+        "agents": DEFAULT_TEAM["agents"],
+        "steps": DEFAULT_TEAM["steps"],
+        "max_diff": DEFAULT_TEAM["max_diff"],
+        "match_score": 0,
+    }
 
 
 def cmd_dep_add(args):

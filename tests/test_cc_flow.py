@@ -255,3 +255,25 @@ class TestVersionFlag:
         out, _, code = run(["--version"])
         assert code == 0
         assert "cc-flow" in out
+
+
+class TestAutoTeamRouting:
+    def test_auto_run_selects_team(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "Fix ruff F401 unused import"], cwd=workspace)
+        out, _, code = run(["auto", "run", "--epic", "epic-1-test"], cwd=workspace)
+        assert code == 0
+        # Find the JSON instruction line
+        for line in out.split("\n"):
+            if '"team"' in line and '"action"' in line:
+                data = json.loads(line)
+                assert data["team"]["template"] == "lint-fix"
+                assert "refactor-cleaner" in data["team"]["agents"]
+                break
+        else:
+            pytest.fail("No team instruction found in auto run output")
+
+    def test_auto_status(self, workspace):
+        out, _, code = run(["auto", "status"], cwd=workspace)
+        assert code == 0
+        assert "Auto Status" in out
