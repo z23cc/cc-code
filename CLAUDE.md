@@ -9,7 +9,8 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 - `skills/` — 35 skills in 3 layers:
   - **Core (23, language-agnostic):** brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, teams, autoimmune, readiness-audit, search-strategy, git-workflow, prompt-engineering, clean-architecture, context-tips, docs, incident, dependency-upgrade, feedback-loop
   - **Python pack (12):** python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, scaffold, deploy, task-queues
-- `commands/` — 19 slash commands
+- `commands/` — 20 slash commands
+- `tests/` — pytest test suite (19 tests covering cc-flow lifecycle)
 - `rules/` — 4 always-on rules
 - `hooks/` — SessionStart + PreToolUse quality gate
 
