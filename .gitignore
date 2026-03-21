@@ -1,10 +1,11 @@
 __pycache__/
-*.py[cod]
-*.egg-info/
-dist/
-build/
+.mypy_cache/
 .pytest_cache/
 .ruff_cache/
-.mypy_cache/
 .tasks/
+*.egg-info/
+*.py[cod]
+build/
+dist/
 improvement-results.tsv
+scripts/__pycache__/

@@ -155,3 +155,39 @@ async def get_user(session: AsyncSession, user_id: int) -> User | None:
 - **cc-performance** — database query profiling and optimization
 - **cc-deploy** — database connection pooling in production
 - **cc-clean-architecture** — repository pattern, domain/adapter separation
+
+## E2E Example: Adding a Repository
+
+```python
+# Port (use_cases/ports.py)
+class UserRepository(Protocol):
+    async def get(self, user_id: str) -> User | None: ...
+    async def save(self, user: User) -> None: ...
+
+# Adapter (adapters/sqlalchemy_user.py)
+class SQLAlchemyUserRepo:
+    def __init__(self, session: AsyncSession):
+        self.session = session
+
+    async def get(self, user_id: str) -> User | None:
+        result = await self.session.execute(
+            select(UserModel).where(UserModel.id == user_id)
+        )
+        row = result.scalar_one_or_none()
+        return row.to_domain() if row else None
+
+# Test
+async def test_save_and_get(repo):
+    user = User(id="1", email="a@b.com")
+    await repo.save(user)
+    assert (await repo.get("1")).email == "a@b.com"
+```
+
+## Quality Metrics
+
+| Metric | Target | Check |
+|--------|--------|-------|
+| Queries per request | ≤ 3 | SQLAlchemy echo=True |
+| N+1 queries | 0 | pytest-sqlalchemy-logging |
+| Migrations reversible | All | `alembic downgrade -1` |
+| Connection pool | Configured | pool_size in engine |

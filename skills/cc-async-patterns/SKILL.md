@@ -146,3 +146,33 @@ async def test_concurrent_fetch():
 - **cc-python-patterns** — sync patterns and general Python idioms
 - **cc-performance** — when to choose async vs threading vs multiprocessing
 - **cc-python-testing** — pytest-asyncio patterns
+
+## E2E Example: Parallel API Calls
+
+```python
+# BEFORE (sequential — slow)
+async def get_user_data(user_id: str):
+    profile = await fetch_profile(user_id)      # 200ms
+    orders = await fetch_orders(user_id)         # 300ms
+    recommendations = await fetch_recs(user_id)  # 250ms
+    return {**profile, "orders": orders, "recs": recommendations}
+# Total: 750ms
+
+# AFTER (parallel — fast)
+async def get_user_data(user_id: str):
+    async with asyncio.TaskGroup() as tg:
+        t1 = tg.create_task(fetch_profile(user_id))
+        t2 = tg.create_task(fetch_orders(user_id))
+        t3 = tg.create_task(fetch_recs(user_id))
+    return {**t1.result(), "orders": t2.result(), "recs": t3.result()}
+# Total: 300ms (max of the three)
+```
+
+## Quality Metrics
+
+| Metric | Target | Check |
+|--------|--------|-------|
+| No sync I/O in async | 0 violations | `grep "requests\.\|time.sleep" in async functions` |
+| TaskGroup for parallel | Used for 2+ concurrent calls | Code review |
+| Timeout on all I/O | Every external call has timeout | `grep "timeout"` |
+| Graceful cancellation | TaskGroup handles exceptions | Test with failing subtask |

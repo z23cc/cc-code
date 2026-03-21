@@ -221,3 +221,44 @@ async def login(request: Request, data: LoginRequest):
 - **cc-prompt-engineering** — integrating LLM calls into API endpoints
 - **cc-task-queues** — Celery for background jobs behind API endpoints
 - **cc-python-testing** — testing FastAPI with `httpx.AsyncClient`
+
+## E2E Example: Adding an Endpoint
+
+```python
+# 1. Schema (schemas/user.py)
+class UserCreate(BaseModel):
+    email: EmailStr
+    password: str = Field(min_length=8)
+
+class UserResponse(BaseModel):
+    id: str
+    email: str
+
+# 2. Route (api/users.py)
+@router.post("/users", status_code=201, response_model=UserResponse)
+async def create_user(
+    data: UserCreate,
+    service: UserService = Depends(get_user_service),
+):
+    user = await service.create(data.email, data.password)
+    return UserResponse(id=user.id, email=user.email)
+
+# 3. Test (tests/test_users.py)
+async def test_create_user(client: AsyncClient):
+    resp = await client.post("/users", json={"email": "a@b.com", "password": "12345678"})
+    assert resp.status_code == 201
+    assert resp.json()["email"] == "a@b.com"
+
+async def test_create_user_invalid(client: AsyncClient):
+    resp = await client.post("/users", json={"email": "bad", "password": "short"})
+    assert resp.status_code == 422
+```
+
+## Quality Metrics
+
+| Metric | Target | Check |
+|--------|--------|-------|
+| Response time | < 200ms (p95) | Load test |
+| Validation coverage | All inputs validated via Pydantic | No raw dict access |
+| Error format | Consistent JSON structure | Custom exception handlers |
+| Auth on all endpoints | 0 unprotected mutation routes | Security review |

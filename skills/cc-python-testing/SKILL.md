@@ -157,3 +157,44 @@ def test_bulk_insert_performance():
 - **cc-python-patterns** — coding patterns being tested
 - **cc-refinement** — coverage thresholds checked during refinement
 - **cc-async-patterns** — pytest-asyncio patterns for async code
+
+## E2E Example: Testing a User Service
+
+```python
+# fixtures (conftest.py)
+@pytest.fixture
+def fake_repo():
+    return FakeUserRepo()
+
+@pytest.fixture
+def service(fake_repo):
+    return UserService(repo=fake_repo)
+
+# test_user_service.py
+class TestCreateUser:
+    def test_creates_with_valid_email(self, service):
+        user = service.create("test@example.com", "password123")
+        assert user.email == "test@example.com"
+        assert user.id is not None
+
+    def test_rejects_duplicate_email(self, service):
+        service.create("test@example.com", "pw")
+        with pytest.raises(UserAlreadyExists):
+            service.create("test@example.com", "pw2")
+
+    @pytest.mark.parametrize("email", ["", "no-at", "@no-local", "no-domain@"])
+    def test_rejects_invalid_email(self, service, email):
+        with pytest.raises(ValidationError):
+            service.create(email, "password123")
+
+# Run: pytest tests/test_user_service.py -v --cov=src/services --cov-fail-under=80
+```
+
+## Quality Metrics
+
+| Metric | Target | Command |
+|--------|--------|---------|
+| Coverage | ≥ 80% | `pytest --cov --cov-fail-under=80` |
+| Tests per function | ≥ 2 | happy + error path |
+| Test speed | < 5s each | `pytest --durations=5` |
+| No mocking internals | 0 mock.patch on private methods | Code review |

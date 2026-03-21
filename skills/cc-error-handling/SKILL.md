@@ -178,3 +178,52 @@ async def get_user_profile(user_id: str) -> UserProfile:
 - **cc-async-patterns** — async error handling, TaskGroup cancellation
 - **cc-debugging** — when errors are unexpected, switch to systematic debugging
 - **cc-task-queues** — Celery retry strategies and error handling
+
+## E2E Example: Layered Error Handling
+
+```python
+# 1. Domain exceptions (domain/exceptions.py)
+class AppError(Exception):
+    def __init__(self, message: str, code: str = "INTERNAL"):
+        self.message = message
+        self.code = code
+
+class NotFoundError(AppError):
+    def __init__(self, resource: str, id: str):
+        super().__init__(f"{resource} {id} not found", "NOT_FOUND")
+
+class ValidationError(AppError):
+    def __init__(self, field: str, reason: str):
+        super().__init__(f"{field}: {reason}", "VALIDATION")
+
+# 2. Use case (use_cases/get_user.py)
+async def get_user(user_id: str, repo: UserRepository) -> User:
+    user = await repo.get(user_id)
+    if not user:
+        raise NotFoundError("User", user_id)
+    return user
+
+# 3. API handler (api/error_handlers.py)
+@app.exception_handler(AppError)
+async def app_error_handler(request, exc: AppError):
+    status_map = {"NOT_FOUND": 404, "VALIDATION": 422, "INTERNAL": 500}
+    return JSONResponse(
+        status_code=status_map.get(exc.code, 500),
+        content={"error": exc.code, "message": exc.message},
+    )
+
+# 4. Test
+async def test_user_not_found(client):
+    resp = await client.get("/users/nonexistent")
+    assert resp.status_code == 404
+    assert resp.json()["error"] == "NOT_FOUND"
+```
+
+## Quality Metrics
+
+| Metric | Target | Check |
+|--------|--------|-------|
+| No bare `except:` | 0 | `ruff check --select E722` |
+| All errors have code | Every AppError has code field | Grep "raise.*Error" |
+| Consistent API errors | Same JSON structure | Test error responses |
+| Retry on transient | External calls have retry | Grep "retry\|tenacity" |

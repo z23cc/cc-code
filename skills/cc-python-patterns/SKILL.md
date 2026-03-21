@@ -158,3 +158,45 @@ bandit -r .                # Security
 - **cc-clean-architecture** — system-level structure using these patterns
 - **cc-python-testing** — testing patterns complement coding patterns
 - **cc-error-handling** — exception design and retry strategies
+
+## E2E Example: Refactoring to Pythonic Code
+
+```python
+# BEFORE (non-Pythonic)
+def get_user_names(users):
+    names = []
+    for i in range(len(users)):
+        if users[i].active == True:
+            names.append(users[i].name.upper())
+    return names
+
+# AFTER (Pythonic)
+def get_user_names(users: list[User]) -> list[str]:
+    return [user.name.upper() for user in users if user.active]
+```
+
+```python
+# BEFORE (no type hints, mutable default)
+def process(items, cache={}):
+    for item in items:
+        if not item in cache:
+            cache[item] = expensive_compute(item)
+    return cache
+
+# AFTER (typed, safe default, walrus operator)
+def process(items: list[str], cache: dict[str, Result] | None = None) -> dict[str, Result]:
+    cache = cache or {}
+    for item in items:
+        if (result := cache.get(item)) is None:
+            cache[item] = expensive_compute(item)
+    return cache
+```
+
+## Quality Metrics
+
+| Metric | Tool | Threshold |
+|--------|------|-----------|
+| PEP 8 compliance | `ruff check .` | 0 errors |
+| Type coverage | `mypy . --strict` | 0 errors |
+| Complexity | `radon cc src/ -nc` | CC ≤ 10 per function |
+| Import sorting | `ruff check --select I` | 0 errors |
