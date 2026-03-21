@@ -1144,6 +1144,7 @@ def cmd_dep_add(args):
 
 def main():
     parser = argparse.ArgumentParser(prog="cc-flow", description="cc-code task & workflow manager")
+    parser.add_argument("-V", "--version", action="version", version=f"cc-flow {VERSION}")
     sub = parser.add_subparsers(dest="command")
 
     sub.add_parser("init", help="Initialize .tasks/ directory")
