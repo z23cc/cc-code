@@ -85,6 +85,58 @@ Team dispatch is the best context management strategy:
 - Handoffs via filesystem, not conversation history
 - Orchestrator context stays minimal
 
+## Checkpoint Protocol (Save Game)
+
+Before long-running work, save state:
+
+```bash
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
+
+# Save checkpoint (records git SHA, in-progress tasks, progress)
+$CCFLOW checkpoint save --name "before-auth-refactor"
+
+# After compaction or session restart:
+$CCFLOW checkpoint restore latest
+# → Prints: branch, SHA, in-progress tasks, progress
+```
+
+**What to checkpoint:**
+| When | What to Save | Where |
+|------|-------------|-------|
+| Before risky refactor | `cc-flow checkpoint save` | .tasks/.checkpoints/ |
+| Research findings | Write to file | /tmp/cc-team-research.md |
+| Design decisions | Task spec or epic spec | .tasks/tasks/*.md |
+| Current approach | cc-flow learn | .tasks/learnings/ |
+
+## Token Budget Estimation
+
+| Action | Estimated Tokens |
+|--------|-----------------|
+| Read a 200-line file | ~3,000 |
+| Grep results (20 matches) | ~1,000 |
+| Agent dispatch (full cycle) | ~5,000-15,000 |
+| Autoimmune iteration | ~8,000-20,000 |
+| Research phase (4 layers) | ~10,000-25,000 |
+
+**Rule:** If remaining context < 30%, compact or dispatch to subagent.
+
+## Recovery Playbook (After Compaction)
+
+```
+1. Re-orient:
+   $ cc-flow dashboard              # Where am I?
+   $ cc-flow show <current-task>     # What was I doing?
+   $ git log --oneline -5            # What did I just commit?
+   $ git diff --stat                 # Uncommitted changes?
+
+2. Restore context:
+   $ cc-flow checkpoint restore latest   # Resume point
+   $ cat /tmp/cc-team-*.md 2>/dev/null   # Handoff files
+
+3. Continue:
+   $ cc-flow next                    # What's next?
+```
+
 ## Related Skills
 
 - **worker-protocol** — fresh context per task

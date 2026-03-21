@@ -115,8 +115,42 @@ git cherry-pick <sha>                      # Pick specific commit
 git bisect start && git bisect bad         # Find regression
 ```
 
+## Pre-PR Checklist
+
+Before creating a PR, verify:
+
+- [ ] `git diff main..HEAD --stat` — reasonable diff size (< 500 lines)
+- [ ] All commits follow conventional format
+- [ ] No `WIP`, `fixup`, `tmp` commits (squash or rebase)
+- [ ] Tests pass: `pytest` / `npm test` / `go test`
+- [ ] Lint clean: `ruff check .` / `eslint`
+- [ ] No secrets in diff: `git diff main..HEAD | grep -i "password\|secret\|key=\|token="`
+- [ ] PR description has Summary + Test Plan
+- [ ] Related issue/task referenced
+
+## Commit Size Guidelines
+
+| Commits in PR | Assessment | Action |
+|---------------|-----------|--------|
+| 1 | Good for small fixes | Ship it |
+| 2-5 | Good for features | Each commit should be atomic |
+| 6-10 | Consider splitting PR | Group by concern |
+| 10+ | **Too big** | Split into multiple PRs |
+
+**Each commit should:** compile, pass tests, and be revertable independently.
+
+## Rebase vs Merge Decision
+
+| Situation | Use | Why |
+|-----------|-----|-----|
+| Feature branch behind main | `git rebase main` | Clean linear history |
+| Shared branch (2+ people) | `git merge main` | Don't rewrite shared history |
+| PR with messy commits | `git rebase -i` to squash | Clean before merge |
+| Conflict-heavy rebase | `git merge` instead | Less painful |
+
 ## Related Skills
 
 - **verification** — run lint+test before every commit
 - **autoimmune** — commit format follows conventional commits
 - **task-tracking** — commit task state changes alongside code
+- **docs** — update docs in same PR as code changes

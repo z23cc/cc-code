@@ -150,6 +150,54 @@ def evaluate_prompt(prompt_template, test_cases, model):
 | "Don't make mistakes" | Define what correct looks like |
 | Parsing free-text output | Structured JSON output |
 
+## Pattern Selection Decision Tree
+
+```
+What's your task?
+├─ Classification/extraction (structured) → Structured output + zero-shot
+├─ Format-sensitive output → Few-shot (3-5 examples)
+├─ Reasoning/analysis required?
+│   ├─ Simple reasoning → Chain-of-thought
+│   └─ Complex multi-step → CoT + decomposition into sub-prompts
+├─ Domain expertise needed → Role-based + few-shot
+└─ Not sure → Start with zero-shot, add complexity only if quality is low
+```
+
+## E2E Example: Improving a Prompt
+
+**Before (bad):**
+```python
+prompt = "Review this code and tell me if there are problems"
+# Problems: vague output, no format, no focus area, no severity
+```
+
+**After (good):**
+```python
+system = """You are a Python security auditor. Return JSON only.
+
+Output format: {"issues": [{"severity": "critical|high|medium", "line": N, "description": "...", "fix": "..."}]}
+
+Rules:
+- Focus on security issues only (not style)
+- Include line numbers
+- Suggest specific fixes (not "validate input")
+- If clean, return {"issues": []}"""
+
+prompt = f"Review this code:\n```python\n{code}\n```"
+# Result: parseable JSON, focused scope, actionable fixes
+```
+
+**Evaluation:**
+```python
+test_cases = [
+    {"input": {"code": "subprocess.run(user_input, shell=True)"}, "expected": "critical"},
+    {"input": {"code": "x = 1 + 2"}, "expected": "empty"},
+    {"input": {"code": "open(path).read()"}, "expected": "medium"},
+]
+score = evaluate_prompt(system + prompt, test_cases, "sonnet")
+# Target: score >= 0.9 (90% of test cases correct)
+```
+
 ## Related Skills
 
 - **fastapi** — integrating LLM calls into API endpoints

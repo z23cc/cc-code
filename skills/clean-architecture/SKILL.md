@@ -167,9 +167,40 @@ Directory structure should scream the domain (`orders/`, `users/`, `payments/`),
 | Medium service | Yes — full layer separation |
 | Large system / microservices | Essential |
 
+## Violation Detection Checklist
+
+Run these to find architecture violations:
+
+```bash
+# Domain importing from adapters/infrastructure (VIOLATION)
+grep -rn "from.*adapters\|from.*infrastructure\|import.*fastapi\|import.*sqlalchemy" src/domain/
+
+# Use cases importing from infrastructure (VIOLATION)
+grep -rn "from.*infrastructure\|import.*sqlalchemy\|import.*redis" src/use_cases/
+
+# Circular dependencies
+grep -rn "from.*domain" src/adapters/ | grep -v "models\|exceptions\|value_objects"
+
+# Controllers doing business logic (VIOLATION — should be thin)
+# Look for files > 50 lines in api/
+wc -l src/adapters/api/*.py | sort -rn | head -5
+```
+
+**Clean result:** zero matches on violations, all API files < 50 lines.
+
+## Testing Strategy Per Layer
+
+| Layer | Test Type | Dependencies | Speed |
+|-------|-----------|-------------|-------|
+| **Domain** | Unit | None (pure logic) | < 1ms |
+| **Use Cases** | Unit | Fake repos (in-memory) | < 5ms |
+| **Adapters** | Integration | Real DB / test containers | < 500ms |
+| **Infrastructure** | E2E | Full stack | < 2s |
+
 ## Related Skills
 
 - **fastapi** — adapter layer patterns (routes, deps, middleware)
 - **database** — repository implementations
 - **python-patterns** — Python idioms within each layer
 - **error-handling** — domain exceptions vs adapter exceptions
+- **research** — use to map architecture before refactoring

@@ -104,11 +104,87 @@ Break large features into independently deliverable phases:
 
 Each phase should be mergeable independently.
 
+## Task Sizing Guide
+
+| Size | Lines | Time | When |
+|------|-------|------|------|
+| **XS** | < 5 | 1 min | Config change, typo fix |
+| **S** | < 20 | 2-5 min | Add type hints, rename, simple test |
+| **M** | < 50 | 5-15 min | New function with test, bug fix |
+| **L** | < 100 | 15-30 min | New endpoint, service method |
+| **XL** | 100+ | 30+ min | **Split this** — too big for one task |
+
+**Red flags** that a task is too big:
+- Touches 5+ files → split by file group
+- Has "and" in the title → split into two tasks
+- Needs 2+ commits → split per commit
+
+## Converting Plan to cc-flow Tasks
+
+```bash
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
+
+# Option 1: Auto-import from plan markdown
+$CCFLOW epic import --file docs/specs/auth-design.md --sequential
+
+# Option 2: Manual creation with templates
+$CCFLOW epic create --title "Add JWT Authentication"
+$CCFLOW task create --epic epic-1-add-jwt --title "Define User model" --size S --template feature --tags "auth,domain"
+$CCFLOW task create --epic epic-1-add-jwt --title "Implement token service" --size M --template feature --tags "auth,service" --deps "epic-1-add-jwt.1"
+$CCFLOW task create --epic epic-1-add-jwt --title "Add login endpoint" --size M --template feature --tags "auth,api" --deps "epic-1-add-jwt.2"
+
+# View the plan
+$CCFLOW graph --epic epic-1-add-jwt --format ascii
+```
+
+## E2E Example
+
+```
+Brainstorming output: "Add rate limiting to /login and /register, 5/min per IP, Redis"
+
+Plan:
+# Rate Limiting Implementation Plan
+
+**Goal:** Prevent brute-force attacks on auth endpoints
+**Architecture:** Redis sliding window counter as FastAPI middleware
+**Tech Stack:** FastAPI, Redis (existing), pytest
+
+### Task 1: Rate Limiter Domain Logic [S]
+Files: Create src/domain/rate_limiter.py, tests/test_rate_limiter.py
+
+- [ ] Write test: test_allows_under_limit, test_blocks_over_limit
+- [ ] Run: pytest → FAIL
+- [ ] Implement RateLimiter dataclass with check() method (pure logic, no Redis)
+- [ ] Run: pytest → PASS
+- [ ] Commit: "feat(domain): add rate limiter logic"
+
+### Task 2: Redis Adapter [M]
+Files: Create src/adapters/redis_rate_store.py, tests/test_redis_rate.py
+Depends on: Task 1
+
+- [ ] Write test with fakeredis: test_increment_and_check
+- [ ] Implement RedisRateStore (implements RateStore protocol)
+- [ ] Run: pytest → PASS
+- [ ] Commit: "feat(adapters): add Redis rate limiting store"
+
+### Task 3: Middleware + Routes [M]
+Files: Modify src/api/auth_routes.py, Create src/middleware/rate_limit.py
+Depends on: Task 2
+
+- [ ] Write test: test_login_rate_limited_returns_429
+- [ ] Add rate limit middleware to /login, /register
+- [ ] Run: pytest → PASS
+- [ ] Commit: "feat(api): add rate limiting to auth endpoints"
+
+→ Convert: cc-flow epic import --file docs/specs/rate-limit-plan.md --sequential
+```
+
 ## Related Skills
 
 - **brainstorming** — use BEFORE planning to explore intent and design
 - **tdd** — every task in the plan should follow Red-Green-Refactor
 - **verification** — verify each phase before moving to the next
+- **task-tracking** — convert plan to cc-flow tasks for tracking
 
 ## Remember
 - Exact file paths always
