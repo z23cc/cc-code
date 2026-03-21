@@ -227,18 +227,12 @@ class TestArchive:
 
 
 class TestCheckpoint:
-    def test_save_list_restore(self, workspace):
-        subprocess.run(["git", "init", "-q"], cwd=workspace)
-        subprocess.run(["git", "add", "."], cwd=workspace)
-        subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=workspace)
-        run(["epic", "create", "--title", "Test"], cwd=workspace)
-        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
-        out, _, _ = run(["checkpoint", "save", "--name", "s1"], cwd=workspace)
-        assert json.loads(out)["success"]
-        out, _, _ = run(["checkpoint", "list"], cwd=workspace)
-        assert len(json.loads(out)["checkpoints"]) == 1
-        out, _, _ = run(["checkpoint", "restore", "s1"], cwd=workspace)
-        assert "Resume" in out
+    def test_checkpoint_deprecated(self, workspace):
+        """Checkpoint redirects with deprecation message."""
+        out, _, code = run(["checkpoint", "save"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert "deprecated" in data["message"]
 
 
 class TestStats:
