@@ -16,10 +16,38 @@ CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 | "autoimmune full" / "全量改进" | `$CCFLOW auto full` | scan → run → test |
 | "autoimmune status" | `$CCFLOW auto status` | Session progress from task system |
 
-Before starting:
+## Before Starting
+
 1. `BASELINE_SHA=$(git rev-parse HEAD)`
 2. `git checkout -b auto/improve-YYYYMMDD`
-3. Run `$CCFLOW auto scan` to detect issues and create tasks
-4. Run `$CCFLOW auto run` — pick next task, read spec, implement, verify
-5. For each task: `$CCFLOW start <id>` → implement → verify → `$CCFLOW done <id>` or revert
-6. After loop: `$CCFLOW auto status` for summary, `$CCFLOW progress` for visual
+3. **Auto-save session** before starting:
+   ```bash
+   $CCFLOW session save --name "pre-autoimmune" --notes "baseline before auto improvement"
+   ```
+4. Run `$CCFLOW auto scan` to detect issues and create tasks
+
+## During Loop
+
+5. Run `$CCFLOW auto run` — pick next task, read spec, implement, verify
+6. For each task: `$CCFLOW start <id>` → implement → verify → `$CCFLOW done <id>` or revert
+7. After each done, **auto-record learning**:
+   ```bash
+   $CCFLOW learn --task "[task title]" --outcome [success/failed] \
+     --approach "[what was done]" --lesson "[what worked/didn't]" \
+     --score [1-5] --used-command /cc-autoimmune
+   ```
+
+## After Loop Ends
+
+8. Print session summary: `$CCFLOW auto status`
+9. Show dashboard: `$CCFLOW dashboard`
+10. **Auto-consolidate** if 10+ learnings accumulated:
+    ```bash
+    $CCFLOW consolidate
+    ```
+11. **Auto-save session** with results:
+    ```bash
+    $CCFLOW session save --name "post-autoimmune-YYYYMMDD" \
+      --notes "autoimmune complete: [N] kept, [M] discarded, [X]% success"
+    ```
+12. Suggest next: "Run `/cc-review` to review accumulated changes, or `/cc-commit` to commit."

@@ -4,6 +4,10 @@ description: "Run code review on recent changes. TRIGGER: 'review', 'code review
 
 Activate the cc-code-review-loop skill. Steps:
 
+```bash
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
+```
+
 1. Run `git diff --staged` and `git diff` to see all changes
 2. Classify changed files:
    - `.py` files → dispatch **python-reviewer** agent
@@ -14,4 +18,20 @@ Activate the cc-code-review-loop skill. Steps:
 6. If MAJOR_RETHINK → STOP, present issues to user
 7. Present consolidated findings sorted by severity
 
-Related skills: `code-review-loop`, `verification`, `security-review`
+## Auto-Learn from Review (NEW)
+
+After review completes, if non-trivial issues were found:
+```bash
+$CCFLOW learn --task "[what was reviewed]" --outcome [success/partial] \
+  --approach "review found: [issue types]" \
+  --lesson "[pattern to check next time]" \
+  --score [1-5] --used-command /cc-review
+```
+
+This helps the routing system learn which types of changes need more careful review.
+
+## Auto-Chain
+
+After SHIP verdict:
+- Suggest: "Review passed. Run `/cc-commit` to commit."
+- If cc-scout-docs-gap is relevant: "Consider running `/cc-scout docs-gap` to check if docs need updating."

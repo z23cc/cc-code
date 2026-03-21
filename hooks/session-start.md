@@ -2,27 +2,22 @@
 
 **Don't know which command to use? → `/cc-route` (smart routing with learning)**
 
-**Workflows:**
-- New feature → `/cc-brainstorm` → `/cc-plan` → `/cc-tdd` → `/cc-refine` → `/cc-commit`
+**Integrated workflows (each step auto-chains to the next):**
+- New feature → `/cc-brainstorm` *(auto-scouts)* → `/cc-plan` *(auto-imports tasks)* → `/cc-tdd` *(auto-chains)* → `/cc-refine` → `/cc-review` *(auto-learns)* → `/cc-commit`
+- Big project → `/cc-blueprint` (one-liner → phased plan with tasks)
 - Unfamiliar code → `/cc-research` → then plan/fix
-- Bug/error → `/cc-debug` → `/cc-fix` → `/cc-commit`
+- Bug/error → `/cc-debug` *(auto-learns after fix)* → `/cc-commit`
 - Code review → `/cc-review` or `/cc-pr-review`
 - Agent team → `/cc-team` (feature-dev / bug-fix / review / refactor / audit)
-- Performance → `/cc-perf`  |  Cleanup → `/cc-simplify`  |  New project → `/cc-scaffold`
+- New project → `/cc-prime` *(full assessment)* → `/cc-scaffold`
 - Task management → `/cc-tasks`  |  Documentation → `/cc-docs`  |  Health → `/cc-audit`
 
-**Scouts:** `/cc-scout [type]` | `/cc-prime` (full project assessment)
-**Blueprint:** `/cc-blueprint` (one-liner → phased plan) | `/cc-interview` (deep requirements)
-**Autonomous:** `/cc-autoimmune` (scan / code / test / full)
+**Scouts:** `/cc-scout [type]` — practices, repo, docs, gaps, security, testing, tooling, build, env, observability
+**Requirements:** `/cc-interview` (deep requirements extraction)
+**Autonomous:** `/cc-autoimmune` *(auto-learns + auto-session-save)*
 
-**Feedback loop:** `/cc-route` → execute → `cc-flow learn` → `cc-flow consolidate` → smarter routing
-
-**Learning system:**
-- `cc-flow route <task>` — uses past learnings + promoted patterns with confidence %
-- `cc-flow learn` — record what worked (or didn't)
-- `cc-flow consolidate` — promote recurring successes to patterns
-- `cc-flow history` — task completion timeline + velocity trends
-- `cc-flow config` — customize behavior (auto_consolidate, max_iterations, etc.)
+**Auto-learning:** commands auto-record learnings after completion → `/cc-route` gets smarter over time
+**Session:** `cc-flow session save/restore` — persist work across sessions
 
 **Gates:**
 - DO NOT implement without design (`/cc-brainstorm` first)

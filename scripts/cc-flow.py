@@ -51,7 +51,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "2.8.0"
+VERSION = "2.8.1"
 
 TASKS_DIR = Path(".tasks")
 EPICS_DIR = TASKS_DIR / "epics"
