@@ -1121,6 +1121,174 @@ def _search_learnings(query):
     return best if best_score >= 2 else None
 
 
+# ─── Auto (integrated autoimmune) ───
+
+
+def cmd_auto(args):
+    """Integrated autoimmune loop using cc-flow task system."""
+    mode = getattr(args, "auto_cmd", None)
+    if mode == "scan":
+        _auto_scan(args)
+    elif mode == "run":
+        _auto_run(args)
+    elif mode == "test":
+        _auto_test(args)
+    elif mode == "full":
+        print("## Mode: Full (scan → run → test)")
+        _auto_scan(args)
+        _auto_run(args)
+        _auto_test(args)
+    elif mode == "status":
+        _auto_status(args)
+    else:
+        print(json.dumps({"success": False, "error": "Usage: cc-flow auto [scan|run|test|full|status]"}))
+        sys.exit(1)
+
+
+def _auto_scan(args):
+    """Mode D: scan codebase, create epic + tasks."""
+    print("## Auto Scan: detecting issues...")
+    # Use existing scan with --create-tasks
+    scan_args = argparse.Namespace(create_tasks=True)
+    cmd_scan(scan_args)
+
+
+def _auto_run(args):
+    """Mode A: pick tasks, implement, verify, mark done/discarded."""
+    epic_filter = getattr(args, "epic", "") or ""
+
+    # Find the latest scan epic if no filter
+    if not epic_filter:
+        tasks = all_tasks()
+        scan_epics = [f.stem for f in sorted(EPICS_DIR.glob("epic-*-scan-*.md"))]
+        if scan_epics:
+            epic_filter = scan_epics[-1]
+
+    if not epic_filter:
+        # Fall back to any epic with todo tasks
+        for f in sorted(EPICS_DIR.glob("*.md"), reverse=True):
+            epic_tasks = [t for t in all_tasks().values() if t.get("epic") == f.stem and t["status"] == "todo"]
+            if epic_tasks:
+                epic_filter = f.stem
+                break
+
+    if not epic_filter:
+        print(json.dumps({"success": True, "action": "none", "reason": "No tasks to work on. Run: cc-flow auto scan"}))
+        return
+
+    max_iterations = getattr(args, "max", 0) or 20
+    iteration = 0
+    kept = 0
+    discarded = 0
+
+    print(f"## Auto Run: epic={epic_filter}, max={max_iterations}")
+
+    while iteration < max_iterations:
+        # Find next ready task
+        tasks = all_tasks()
+        ready = []
+        for t in tasks.values():
+            if t.get("epic") != epic_filter:
+                continue
+            if t["status"] != "todo":
+                continue
+            deps_done = all(tasks.get(d, {}).get("status") == "done" for d in t.get("depends_on", []))
+            if deps_done:
+                ready.append(t)
+
+        if not ready:
+            print(f"\n✅ All tasks done or blocked. Iterations: {iteration}, kept: {kept}, discarded: {discarded}")
+            break
+
+        ready.sort(key=lambda t: (t.get("priority", 999), t["id"]))
+        task = ready[0]
+        task_id = task["id"]
+        iteration += 1
+
+        print(f"\n--- Iteration {iteration}: {task_id} — {task['title']} ---")
+
+        # Start task
+        task["status"] = "in_progress"
+        task["started"] = now_iso()
+        save_task(TASKS_SUBDIR / f"{task_id}.json", task)
+
+        # Log and print instruction for Claude
+        print(json.dumps({
+            "action": "implement",
+            "task_id": task_id,
+            "title": task["title"],
+            "spec": str(TASKS_SUBDIR / f"{task_id}.md"),
+            "instruction": "Read the task spec, implement the fix (< 50 lines diff), then verify. Report KEPT or DISCARDED.",
+        }))
+
+        # The actual implementation happens in Claude's context (not in this script).
+        # This script sets up the task and waits for the result.
+        # In practice, autoimmune skill reads this output and acts on it.
+        break  # Return control to Claude for implementation
+
+    if iteration >= max_iterations:
+        print(f"\n⏹ Max iterations ({max_iterations}) reached. Kept: {kept}, Discarded: {discarded}")
+
+
+def _auto_test(args):
+    """Mode B: auto-fix lint/type/test errors."""
+    import subprocess as sp
+
+    print("## Auto Test: fixing lint + type + test errors...")
+
+    # Phase B1: ruff auto-fix
+    result = sp.run(["ruff", "check", ".", "--fix"], capture_output=True, text=True)
+    if result.returncode == 0:
+        print("B1 ruff: clean (or auto-fixed)")
+    else:
+        print(f"B1 ruff: {result.stdout[:200]}")
+
+    # Phase B2: Check for remaining issues
+    result = sp.run(["ruff", "check", "."], capture_output=True, text=True)
+    remaining = result.stdout.strip().count("\n") + 1 if result.stdout.strip() else 0
+    print(f"B2 remaining ruff issues: {remaining}")
+
+    # Note: mypy and pytest fixes require Claude's reasoning — print instructions
+    print(json.dumps({
+        "action": "fix_remaining",
+        "instruction": "Run mypy and pytest. Fix any errors with minimal changes. Verify after each fix.",
+    }))
+
+
+def _auto_status(args):
+    """Show autoimmune session status from cc-flow data."""
+    tasks = all_tasks()
+    total = len(tasks)
+    done = sum(1 for t in tasks.values() if t["status"] == "done")
+    in_prog = sum(1 for t in tasks.values() if t["status"] == "in_progress")
+    blocked = sum(1 for t in tasks.values() if t["status"] == "blocked")
+    todo = total - done - in_prog - blocked
+
+    # Check log
+    log_entries = 0
+    kept = 0
+    disc = 0
+    if LOG_FILE.exists():
+        lines = LOG_FILE.read_text().strip().split("\n")[1:]
+        log_entries = len(lines)
+        kept = sum(1 for row in lines if "KEPT" in row)
+        disc = sum(1 for row in lines if "DISCARDED" in row)
+
+    print("## Auto Status")
+    print("| Metric | Value |")
+    print("|--------|-------|")
+    print(f"| Tasks total | {total} |")
+    print(f"| Done | {done} |")
+    print(f"| In progress | {in_prog} |")
+    print(f"| Blocked | {blocked} |")
+    print(f"| Todo | {todo} |")
+    if log_entries > 0:
+        pct = int(kept / (kept + disc) * 100) if (kept + disc) > 0 else 0
+        print(f"| Log entries | {log_entries} |")
+        print(f"| Kept | {kept} ({pct}%) |")
+        print(f"| Discarded | {disc} |")
+
+
 def cmd_dep_add(args):
     """Add dependency to existing task."""
     path = TASKS_SUBDIR / f"{args.id}.json"
@@ -1214,6 +1382,16 @@ def main():
 
     sub.add_parser("summary", help="Autoimmune session summary")
     sub.add_parser("archive", help="Show completed epics/tasks")
+
+    auto_p = sub.add_parser("auto", help="Autoimmune loop integrated with task system")
+    auto_sub = auto_p.add_subparsers(dest="auto_cmd")
+    auto_sub.add_parser("scan", help="Detect issues, create epic + tasks")
+    auto_run = auto_sub.add_parser("run", help="Pick tasks, implement, verify, done/revert")
+    auto_run.add_argument("--epic", default="")
+    auto_run.add_argument("--max", type=int, default=20)
+    auto_sub.add_parser("test", help="Auto-fix lint + type + test errors")
+    auto_sub.add_parser("full", help="scan → run → test")
+    auto_sub.add_parser("status", help="Show autoimmune session status")
 
     cp_p = sub.add_parser("checkpoint", help="Save/restore session state")
     cp_sub = cp_p.add_subparsers(dest="cp_cmd")
@@ -1315,6 +1493,8 @@ def main():
         else:
             parser.print_help()
             sys.exit(1)
+    elif args.command == "auto":
+        cmd_auto(args)
     elif args.command == "checkpoint":
         cc = getattr(args, "cp_cmd", None)
         if cc == "save":
