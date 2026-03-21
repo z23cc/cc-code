@@ -2542,244 +2542,43 @@ def cmd_graph(args):
 
 
 def main():
-    parser = argparse.ArgumentParser(prog="cc-flow", description="cc-code task & workflow manager")
-    parser.add_argument("-V", "--version", action="version", version=f"cc-flow {VERSION}")
-    sub = parser.add_subparsers(dest="command")
+    """Entry point — delegates to cc_flow.cli for parsing and dispatch."""
+    sys.path.insert(0, str(Path(__file__).parent))
+    from cc_flow.cli import build_parser
 
-    sub.add_parser("init", help="Initialize .tasks/ directory")
-
-    epic_p = sub.add_parser("epic", help="Epic management (create/close/import/reset)")
-    epic_sub = epic_p.add_subparsers(dest="epic_cmd")
-    ec = epic_sub.add_parser("create")
-    ec.add_argument("--title", required=True)
-
-    tc = sub.add_parser("task", help="Task management (create/reset/set-spec)")
-    task_sub = tc.add_subparsers(dest="task_cmd")
-    tc_create = task_sub.add_parser("create")
-    tc_create.add_argument("--epic", required=True)
-    tc_create.add_argument("--title", required=True)
-    tc_create.add_argument("--deps", default="")
-    tc_create.add_argument("--size", choices=["XS", "S", "M", "L", "XL"], default="M",
-                           help="Task size: XS(<5 lines), S(<20), M(<50), L(<100), XL(100+)")
-    tc_create.add_argument("--tags", default="", help="Comma-separated tags (e.g. auth,api,urgent)")
-    tc_create.add_argument("--template", choices=["feature", "bugfix", "refactor", "security"], default="",
-                           help="Generate spec from template")
-
-    list_p = sub.add_parser("list", help="Show all epics + tasks")
-    list_p.add_argument("--json", action="store_true", default=False)
-    sub.add_parser("epics", help="List epics (JSON)")
-
-    tasks_p = sub.add_parser("tasks", help="Filter tasks by epic/status/tag")
-    tasks_p.add_argument("--epic", default="")
-    tasks_p.add_argument("--status", default="")
-    tasks_p.add_argument("--tag", default="", help="Filter by tag")
-
-    show_p = sub.add_parser("show", help="Show epic or task detail")
-    show_p.add_argument("id")
-
-    ready_p = sub.add_parser("ready", help="Tasks with all deps satisfied")
-    ready_p.add_argument("--epic", default="")
-
-    start_p = sub.add_parser("start", help="Start a task (checks deps)")
-    start_p.add_argument("id")
-
-    done_p = sub.add_parser("done", help="Complete a task")
-    done_p.add_argument("id")
-    done_p.add_argument("--summary", default="")
-
-    block_p = sub.add_parser("block", help="Block a task with reason")
-    block_p.add_argument("id")
-    block_p.add_argument("--reason", required=True)
-
-    rollback_p = sub.add_parser("rollback", help="Rollback failed task to git state at start")
-    rollback_p.add_argument("id")
-    rollback_p.add_argument("--confirm", action="store_true", default=False,
-                            help="Actually execute the rollback (default: preview)")
-
-    progress_p = sub.add_parser("progress", help="Progress bars per epic")
-    progress_p.add_argument("--epic", default="")
-    progress_p.add_argument("--json", action="store_true", default=False)
-
-    sub.add_parser("status", help="Global overview (JSON)")
-    sub.add_parser("version", help="Print cc-flow version")
-    sub.add_parser("validate", help="Check structure, deps, cycles")
-
-    scan_p = sub.add_parser("scan", help="Auto-detect issues via ruff/mypy/bandit")
-    scan_p.add_argument("--create-tasks", action="store_true", default=False)
-
-    log_p = sub.add_parser("log")
-    log_p.add_argument("--show", type=int, default=0, help="Show last N entries")
-    log_p.add_argument("--iteration", type=int, default=None)
-    log_p.add_argument("--mode", default="")
-    log_p.add_argument("--area", default="")
-    log_p.add_argument("--task-id", default="")
-    log_p.add_argument("--description", default="")
-    log_p.add_argument("--status", default="")
-    log_p.add_argument("--files", type=int, default=None)
-    log_p.add_argument("--diff-lines", type=int, default=None)
-    log_p.add_argument("--duration", type=int, default=None)
-    log_p.add_argument("--notes", default="")
-
-    sub.add_parser("summary", help="Autoimmune session summary")
-    sub.add_parser("archive", help="Show completed epics/tasks")
-
-    auto_p = sub.add_parser("auto", help="Autoimmune loop integrated with task system")
-    auto_sub = auto_p.add_subparsers(dest="auto_cmd")
-    auto_sub.add_parser("scan", help="Detect issues, create epic + tasks")
-    auto_run = auto_sub.add_parser("run", help="Pick tasks, implement, verify, done/revert")
-    auto_run.add_argument("--epic", default="")
-    auto_run.add_argument("--max", type=int, default=20)
-    auto_sub.add_parser("test", help="Auto-fix lint + type + test errors")
-    auto_sub.add_parser("full", help="scan → run → test")
-    auto_sub.add_parser("status", help="Show autoimmune session status")
-
-    sub.add_parser("stats", help="Productivity metrics")
-    sub.add_parser("consolidate", help="Merge similar learnings, promote high-score patterns")
-    sub.add_parser("history", help="Task completion timeline with velocity trends")
-
-    sess_p = sub.add_parser("session", help="Save/restore session state")
-    sess_sub = sess_p.add_subparsers(dest="session_cmd")
-    sess_save = sess_sub.add_parser("save")
-    sess_save.add_argument("--name", default="")
-    sess_save.add_argument("--notes", default="", help="Context notes for future self")
-    sess_restore = sess_sub.add_parser("restore")
-    sess_restore.add_argument("name", nargs="?", default="latest")
-    sess_sub.add_parser("list")
-
-    search_p = sub.add_parser("search", help="Semantic code search (morph → grep fallback)")
-    search_p.add_argument("query", nargs="*")
-    search_p.add_argument("--dir", default=".")
-    search_p.add_argument("--format", choices=["text", "json"], default="text")
-    search_p.add_argument("--rerank", action="store_true", default=False,
-                           help="Rerank grep results by relevance (needs MORPH_API_KEY)")
-
-    compact_p = sub.add_parser("compact", help="Compress text via morph compact")
-    compact_p.add_argument("--file", default="", help="Input file (or use stdin)")
-    compact_p.add_argument("--ratio", default="0.3", help="Compression ratio 0.05-1.0")
-    compact_p.add_argument("--output", default="", help="Output file (default: stdout)")
-
-    ghsearch_p = sub.add_parser("github-search", help="Search GitHub repos via morph")
-    ghsearch_p.add_argument("query", nargs="*")
-    ghsearch_p.add_argument("--repo", default="", help="owner/repo")
-    ghsearch_p.add_argument("--url", default="", help="GitHub URL")
-
-    dash_p = sub.add_parser("dashboard", help="One-screen overview (or --json for machine-readable)")
-    dash_p.add_argument("--json", action="store_true", default=False)
-    doctor_p = sub.add_parser("doctor", help="Health check — environment, tools, tasks")
-    doctor_p.add_argument("--format", choices=["text", "json"], default="text")
-
-    graph_p = sub.add_parser("graph", help="Dependency graph (mermaid/ascii/dot)")
-    graph_p.add_argument("--epic", default="")
-    graph_p.add_argument("--format", choices=["mermaid", "ascii", "dot"], default="mermaid")
-    graph_p.add_argument("--json", action="store_true", default=False)
-
-    config_p = sub.add_parser("config", help="View/set cc-flow configuration")
-    config_p.add_argument("key", nargs="?", default="")
-    config_p.add_argument("value", nargs="?", default="")
-
-    route_p = sub.add_parser("route", help="Smart router: analyze task → suggest command + team")
-    route_p.add_argument("query", nargs="*")
-
-    learn_p = sub.add_parser("learn", help="Record a learning for future routing")
-    learn_p.add_argument("--task", required=True)
-    learn_p.add_argument("--outcome", required=True, choices=["success", "partial", "failed"])
-    learn_p.add_argument("--approach", required=True)
-    learn_p.add_argument("--lesson", required=True)
-    learn_p.add_argument("--score", type=int, default=3, help="1-5 how useful was this approach")
-    learn_p.add_argument("--used-command", dest="used_command", default="",
-                           help="Which command was used (e.g. /debug, /tdd)")
-
-    learnings_p = sub.add_parser("learnings", help="List/search past learnings")
-    learnings_p.add_argument("--search", default="")
-    learnings_p.add_argument("--last", type=int, default=10)
-
-    next_p = sub.add_parser("next", help="Smart next task (priority-aware)")
-    next_p.add_argument("--epic", default="")
-
-    dep_p = sub.add_parser("dep", help="Dependency management")
-    dep_sub = dep_p.add_subparsers(dest="dep_cmd")
-    dep_add = dep_sub.add_parser("add")
-    dep_add.add_argument("id")
-    dep_add.add_argument("dep")
-
-    epic_close = epic_sub.add_parser("close")
-    epic_close.add_argument("id")
-
-    epic_import = epic_sub.add_parser("import")
-    epic_import.add_argument("--file", required=True)
-    epic_import.add_argument("--sequential", action="store_true", default=False)
-
-    task_reset = task_sub.add_parser("reset")
-    task_reset.add_argument("id")
-
-    task_set_spec = task_sub.add_parser("set-spec")
-    task_set_spec.add_argument("id")
-    task_set_spec.add_argument("--file", required=True)
-
-    epic_reset = epic_sub.add_parser("reset")
-    epic_reset.add_argument("id")
-
+    parser = build_parser()
     args = parser.parse_args()
 
+    # Build command dispatch table
     cmds = {
-        "init": cmd_init,
-        "list": cmd_list,
-        "epics": cmd_epics,
-        "tasks": cmd_tasks,
-        "show": cmd_show,
-        "ready": cmd_ready,
-        "start": cmd_start,
-        "done": cmd_done,
-        "block": cmd_block,
-        "progress": cmd_progress,
-        "status": cmd_status,
-        "version": cmd_version,
-        "validate": cmd_validate,
-        "next": cmd_next,
-        "scan": cmd_scan,
-        "route": cmd_route,
-        "learn": cmd_learn,
-        "learnings": cmd_learnings,
-        "log": cmd_log,
-        "summary": cmd_summary,
-        "archive": cmd_archive,
-        "stats": cmd_stats,
-        "consolidate": cmd_consolidate,
-        "history": cmd_history,
-        "config": cmd_config,
-        "graph": cmd_graph,
-        "doctor": cmd_doctor,
-        "dashboard": cmd_dashboard,
-        "rollback": cmd_rollback,
-        "search": cmd_search,
-        "compact": cmd_compact,
-        "github-search": cmd_github_search,
+        "init": cmd_init, "list": cmd_list, "epics": cmd_epics, "tasks": cmd_tasks,
+        "show": cmd_show, "ready": cmd_ready, "start": cmd_start, "done": cmd_done,
+        "block": cmd_block, "progress": cmd_progress, "status": cmd_status,
+        "version": cmd_version, "validate": cmd_validate, "next": cmd_next,
+        "scan": cmd_scan, "route": cmd_route, "learn": cmd_learn,
+        "learnings": cmd_learnings, "log": cmd_log, "summary": cmd_summary,
+        "archive": cmd_archive, "stats": cmd_stats, "consolidate": cmd_consolidate,
+        "history": cmd_history, "config": cmd_config, "graph": cmd_graph,
+        "doctor": cmd_doctor, "dashboard": cmd_dashboard, "rollback": cmd_rollback,
+        "search": cmd_search, "compact": cmd_compact, "github-search": cmd_github_search,
     }
 
-    if args.command == "epic":
-        ec = getattr(args, "epic_cmd", None)
-        if ec == "create":
-            cmd_epic_create(args)
-        elif ec == "close":
-            cmd_epic_close(args)
-        elif ec == "import":
-            cmd_epic_import(args)
-        elif ec == "reset":
-            cmd_epic_reset(args)
-        else:
-            parser.print_help()
-            sys.exit(1)
-    elif args.command == "task":
-        tc = getattr(args, "task_cmd", None)
-        if tc == "create":
-            cmd_task_create(args)
-        elif tc == "reset":
-            cmd_task_reset(args)
-        elif tc == "set-spec":
-            cmd_task_set_spec(args)
-        else:
-            parser.print_help()
-            sys.exit(1)
+    # Subcommand dispatch for nested commands
+    subcmd_map = {
+        "epic": {"epic_cmd": {"create": cmd_epic_create, "close": cmd_epic_close,
+                               "import": cmd_epic_import, "reset": cmd_epic_reset}},
+        "task": {"task_cmd": {"create": cmd_task_create, "reset": cmd_task_reset,
+                               "set-spec": cmd_task_set_spec}},
+    }
+
+    if args.command in subcmd_map:
+        for attr, handlers in subcmd_map[args.command].items():
+            sub = getattr(args, attr, None)
+            if sub in handlers:
+                handlers[sub](args)
+            else:
+                parser.print_help()
+                sys.exit(1)
     elif args.command == "auto":
         cmd_auto(args)
     elif args.command == "session":
