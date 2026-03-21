@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
-"""cc-flow — lightweight file-based task manager for cc-code plugin.
+"""cc-flow — task & workflow manager for cc-code plugin.
+
+Version: 2.2.3
 
 Usage:
     cc-flow init
@@ -31,6 +33,8 @@ import json
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
+
+VERSION = "2.2.3"
 
 TASKS_DIR = Path(".tasks")
 EPICS_DIR = TASKS_DIR / "epics"
@@ -406,6 +410,11 @@ def cmd_progress(args):
 
     if getattr(args, "json", False):
         print(json.dumps({"success": True, "epics": json_output}))
+
+
+def cmd_version(_args):
+    """Print cc-flow version."""
+    print(json.dumps({"success": True, "version": VERSION}))
 
 
 def cmd_status(_args):
@@ -936,6 +945,7 @@ def main():
     progress_p.add_argument("--json", action="store_true", default=False)
 
     sub.add_parser("status", help="Global overview (JSON)")
+    sub.add_parser("version", help="Print cc-flow version")
     sub.add_parser("validate", help="Check structure, deps, cycles")
 
     scan_p = sub.add_parser("scan", help="Auto-detect issues via ruff/mypy/bandit")
@@ -998,6 +1008,7 @@ def main():
         "block": cmd_block,
         "progress": cmd_progress,
         "status": cmd_status,
+        "version": cmd_version,
         "validate": cmd_validate,
         "next": cmd_next,
         "scan": cmd_scan,
