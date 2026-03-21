@@ -22,14 +22,13 @@ Follow Red-Green-Refactor strictly:
 
 Target 80%+ coverage. Use `pytest --cov` to measure.
 
-### Step 2: Dispatch code-reviewer
-After all tests pass, dispatch **code-reviewer** (or **python-reviewer** for .py):
-- Review the implementation + tests
-- Verdict: SHIP / NEEDS_WORK
-- If NEEDS_WORK → fix issues → re-review
+### Step 2: PARALLEL review (dispatch ALL applicable reviewers in ONE message)
+After all tests pass:
+- **code-reviewer** or **python-reviewer** → quality review
+- **security-reviewer** → if touches auth/input/API/DB (dispatch simultaneously)
 
-### Step 3: Dispatch security-reviewer (if applicable)
-Auto-dispatch if changes touch: auth, user input, API endpoints, database queries.
+Both run concurrently. Collect verdicts: worst verdict wins.
+If NEEDS_WORK → fix → re-review.
 
 ### Auto-Task Integration
 - Task started → read spec: `$CCFLOW show <task-id>`

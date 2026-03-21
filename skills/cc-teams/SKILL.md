@@ -145,10 +145,35 @@ FOR each task:
 
 ### Sequential vs Parallel
 
-| Rule | When |
-|------|------|
-| **Sequential** | Next agent needs previous agent's output |
-| **Parallel** | Agents review different file groups independently |
+| Rule | When | How |
+|------|------|-----|
+| **Sequential** | Next agent needs previous agent's output | One Agent call per message |
+| **Parallel** | Agents work on independent data | **Multiple Agent calls in ONE message** |
+
+### How to Dispatch in Parallel
+
+**Key:** Use multiple Agent tool calls in a single message. Claude Code executes them concurrently.
+
+```
+# SEQUENTIAL (slow — one at a time)
+Message 1: Agent(researcher, "investigate auth")  → wait → result
+Message 2: Agent(architect, "design based on research")  → wait → result
+
+# PARALLEL (fast — simultaneous)
+Message 1: Agent(python-reviewer, "review .py files")
+         + Agent(security-reviewer, "review auth files")
+         + Agent(db-reviewer, "review query files")
+→ all 3 run concurrently → collect results
+```
+
+Use parallel when agents:
+- Work on **different files** (reviewers split by type)
+- Run **independent checks** (lint + type + test)
+- Do **read-only analysis** (scouts)
+
+Use sequential when:
+- Next agent needs previous agent's **findings**
+- Agent **modifies files** that others will read
 
 ### Agent Handoff Protocol
 

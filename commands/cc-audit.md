@@ -4,24 +4,23 @@ agent: "architect"
 description: "8-pillar project readiness audit. TRIGGER: 'audit', 'project health', 'is this ready', '体检', '项目审计'. Fixes agent-readiness issues, reports production issues."
 ---
 
-Activate the cc-readiness-audit skill with **Audit team** dispatch.
+Activate the cc-readiness-audit skill with **parallel audit dispatch**.
 
-## Default Team: researcher → architect → security-reviewer
+## Team: researcher → PARALLEL(architect + security-reviewer) → consolidate
 
-### Step 1: Dispatch researcher
-Run all 8 pillar checks and write findings to `/tmp/cc-team-research.md`:
+### Step 1: Researcher (sequential — gathers data for others)
+Run all 8 pillar checks:
 - Pillar 1-5 (agent readiness): style, build, test, docs, env
 - Pillar 6-8 (production readiness): observability, security, CI/CD
+- Write findings to `/tmp/cc-team-research.md`
 
-### Step 2: Dispatch architect
-- Score each pillar (pass/warn/fail)
-- Propose fixes for agent readiness (Pillars 1-5)
-- Report production findings (Pillars 6-8, no changes)
+### Step 2: PARALLEL dispatch (both read research findings independently)
 
-### Step 3: Dispatch security-reviewer
-- Deep check on Pillar 7 (security)
-- Flag any critical vulnerabilities
+**IMPORTANT: Dispatch both agents in one message — they analyze different pillars.**
 
-### Output
-Structured audit report with pillar scores and recommendations.
+- **architect** agent → Score pillars 1-6, propose fixes for agent readiness (1-5)
+- **security-reviewer** agent → Deep check pillar 7 (security), flag vulnerabilities
+
+### Step 3: Consolidate (after both complete)
+Merge architect + security findings into audit report.
 Auto-fix agent readiness only. Report production issues without changing.

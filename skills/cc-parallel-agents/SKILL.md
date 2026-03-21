@@ -5,7 +5,9 @@ description: "Use when facing 2+ independent tasks that can be worked on without
 
 # Dispatching Parallel Agents
 
-Delegate tasks to specialized agents with isolated context. Craft precise instructions — agents should never inherit your session history.
+Delegate tasks to specialized agents with isolated context. **Use multiple Agent tool calls in ONE message** to run them concurrently.
+
+**How:** Include 2+ Agent tool use blocks in a single assistant message. Claude Code runs them simultaneously.
 
 ## When to Use
 

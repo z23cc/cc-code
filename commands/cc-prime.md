@@ -1,28 +1,35 @@
 ---
-description: "One-click project assessment — runs all scouts, generates comprehensive report with health scores. TRIGGER: 'project assessment', 'full scan', 'prime', '全面检查', '项目评估'. Use on new projects or before major changes."
+description: "One-click project assessment — runs all scouts in parallel, generates comprehensive report. TRIGGER: 'project assessment', 'full scan', 'prime', '全面检查', '项目评估'. Use on new projects or before major changes."
 ---
 
-Run a comprehensive project assessment using all cc-scout-* skills.
+Run a comprehensive project assessment using **parallel scout dispatch**.
 
-## Execution Order
+```bash
+CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
+```
 
-Run these scouts in parallel where possible, then synthesize:
+## Execution: PARALLEL(all scouts) → synthesize
 
-### Phase 1: Infrastructure (parallel)
+### Phase 1: Dispatch ALL scouts in PARALLEL
+
+**IMPORTANT: Launch all scouts simultaneously using multiple Agent tool calls in a single message. Do NOT run them sequentially.**
+
+Dispatch in one message:
 1. **cc-scout-build** — Build system, scripts, CI/CD
 2. **cc-scout-tooling** — Lint, format, type check, pre-commit
 3. **cc-scout-env** — Environment, Docker, runtime pinning
 4. **cc-scout-testing** — Test framework, coverage, CI
-
-### Phase 2: Quality (parallel)
 5. **cc-scout-security** — Branch protection, secrets, dependency audit
 6. **cc-scout-observability** — Logging, tracing, metrics, health
 7. **cc-scout-repo** — Existing patterns, conventions
 
-### Phase 3: Synthesis
-8. Combine all health scores into a dashboard
+Each scout is an independent Agent call — they don't depend on each other.
 
-## Output Format
+Also run `$CCFLOW doctor --format json` for environment health.
+
+### Phase 2: Synthesize (after all scouts complete)
+
+Combine all health scores:
 
 ```markdown
 # Project Assessment Report
@@ -44,16 +51,10 @@ Run these scouts in parallel where possible, then synthesize:
 1. [Most critical]
 2. ...
 
-## Project Conventions Found
-- [Key patterns to follow]
-
 ## Ready for Development: YES/NO
-- [Blockers if any]
 ```
 
-Also run `cc-flow doctor` for environment health.
-
 After the report, suggest:
-- If score < 50%: "Fix infrastructure issues first with /cc-fix"
-- If score 50-80%: "Good foundation, proceed with /cc-brainstorm"
-- If score > 80%: "Ready to go! Start with /cc-route"
+- Score < 50%: "Fix infrastructure first with /cc-fix"
+- Score 50-80%: "Good foundation, proceed with /cc-brainstorm"
+- Score > 80%: "Ready to go! Start with /cc-route"
