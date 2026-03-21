@@ -16,3 +16,5 @@ Do NOT write any code until design is approved by user.
 6. Write spec to `docs/specs/YYYY-MM-DD-<topic>-design.md`
 7. Ask user to review
 8. Transition to `/plan`
+
+For complex features, suggest `/team` (Feature Dev team: researcher → architect → planner → workers → reviewers).
