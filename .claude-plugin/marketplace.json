@@ -6,7 +6,7 @@
   "plugins": [
     {
       "name": "cc-code",
-      "version": "2.2.7",
+      "version": "2.2.8",
       "source": "./",
       "author": {
         "name": "z23cc"
