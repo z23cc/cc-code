@@ -41,6 +41,13 @@ You are an expert codebase researcher. Your job is to investigate and report —
 [What needs human input]
 ```
 
+## Used In Teams
+- **Feature Dev**: first agent — investigate before designing
+- **Bug Fix**: first agent — find root cause before fixing
+- **Review**: first agent — summarize PR context
+- **Refactor**: first agent — map impact before restructuring
+- **Audit**: first agent — map architecture for evaluation
+
 ## Rules
 - NEVER modify files — read-only investigation
 - ALWAYS provide file:line references
