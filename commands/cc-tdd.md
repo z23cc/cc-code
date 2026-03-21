@@ -1,32 +1,37 @@
 ---
+team: "feature-dev"
 description: "Start TDD workflow. TRIGGER: 'implement X', 'add feature', 'write X', '写功能', '加功能'. NOT for: fixing existing bugs (/fix), reviewing code (/review)."
 ---
 
-Activate the cc-tdd skill for the current task.
+Activate the cc-tdd skill with **worker + reviewer** team dispatch.
 
 ```bash
 CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 ```
 
-Follow the Red-Green-Refactor cycle strictly:
-1. Write a failing test for the desired behavior
-2. Run it to verify it fails correctly
-3. Write minimal code to make it pass
-4. Run tests to verify they pass
-5. Refactor while keeping tests green
-6. Repeat
+## Default Team: Worker → Reviewer
+
+### Step 1: Worker implements (you or worker agent)
+Follow Red-Green-Refactor strictly:
+1. Read task spec: `$CCFLOW show <task-id>` (if from cc-flow)
+2. Write a failing test
+3. Run it — verify it fails correctly
+4. Write minimal code to pass
+5. Run tests — verify green
+6. Refactor while keeping tests green
 
 Target 80%+ coverage. Use `pytest --cov` to measure.
 
-## Auto-Task Integration (NEW)
+### Step 2: Dispatch code-reviewer
+After all tests pass, dispatch **code-reviewer** (or **python-reviewer** for .py):
+- Review the implementation + tests
+- Verdict: SHIP / NEEDS_WORK
+- If NEEDS_WORK → fix issues → re-review
 
-If working from a cc-flow task:
-- Task is already started → read spec: `$CCFLOW show <task-id>`
-- After all tests pass → mark done: `$CCFLOW done <task-id> --summary "[what was implemented]"`
-- Auto-tracks diff (lines changed) and duration
+### Step 3: Dispatch security-reviewer (if applicable)
+Auto-dispatch if changes touch: auth, user input, API endpoints, database queries.
 
-## Auto-Chain After Green
-
-After implementation is complete (all tests green):
-- Suggest: "Tests pass. Run `/cc-refine` to check coverage/complexity, or `/cc-commit` if ready."
-- If part of a plan with more tasks: "Task done. Next task: `$CCFLOW next`"
+### Auto-Task Integration
+- Task started → read spec: `$CCFLOW show <task-id>`
+- After SHIP → mark done: `$CCFLOW done <task-id> --summary "..."`
+- Suggest: "Task done. Next: `$CCFLOW next`"

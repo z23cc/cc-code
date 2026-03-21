@@ -1,15 +1,28 @@
 ---
+team: "refactor"
 description: "Post-TDD quality hardening with measurable thresholds. TRIGGER: 'refine', 'harden', 'production ready', 'polish', 'quality check', '加固', '打磨', '上线前检查'. Use AFTER /tdd passes."
 ---
 
-Activate the cc-refinement skill. Quality loop with thresholds:
+Activate the cc-refinement skill with **Refactor team** support.
 
-1. **Coverage**: `pytest --cov --cov-fail-under=80` → add tests if below
-2. **Complexity**: `radon cc src/ -a -nc` → split functions with CC > 10
-3. **Type safety**: `mypy . --strict` → add annotations
-4. **Performance**: Run perf tests → fix if over budget
-5. **Security**: `bandit -r src/` → fix HIGH/CRITICAL findings
-6. **Dependencies**: `pip-audit` → update vulnerable packages
+## Default Team: researcher → refactor-cleaner → code-reviewer
 
-Each dimension: MEASURE → COMPARE → FIX → RE-MEASURE → COMMIT or REVERT.
+### Step 1: Dispatch researcher
+Measure all quality dimensions:
+1. **Coverage**: `pytest --cov --cov-fail-under=80`
+2. **Complexity**: `radon cc src/ -a -nc` (CC > 10 = BLOCK)
+3. **Type safety**: `mypy . --strict`
+4. **Security**: `bandit -r src/`
+5. **Dependencies**: `pip-audit`
+
+Write findings to `/tmp/cc-team-research.md` with pass/fail per dimension.
+
+### Step 2: Dispatch refactor-cleaner
+Fix failing dimensions (priority: security → types → coverage → complexity):
+- Each fix: MEASURE → FIX → RE-MEASURE → COMMIT or REVERT
+- Max 50 lines diff per fix
+
+### Step 3: Dispatch code-reviewer
+Review all refinement changes. Ensure no behavior change.
+
 Stop when all thresholds met or diminishing returns.

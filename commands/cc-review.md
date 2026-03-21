@@ -1,27 +1,38 @@
 ---
+team: "review"
 agent: "code-reviewer"
-description: "Run code review on recent changes. TRIGGER: 'review', 'code review', 'check my code', '看看代码', '代码审查'. Dispatches python-reviewer + security-reviewer."
+description: "Run code review on recent changes. TRIGGER: 'review', 'code review', 'check my code', '看看代码', '代码审查'. Dispatches review team."
 ---
 
-Activate the cc-code-review-loop skill. Steps:
+Activate code review with **Review team** dispatch.
 
 ```bash
 CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 ```
 
-1. Run `git diff --staged` and `git diff` to see all changes
-2. Classify changed files:
-   - `.py` files → dispatch **python-reviewer** agent
-   - Other files → dispatch **code-reviewer** agent
-3. **MUST dispatch security-reviewer** if changes touch: auth, database queries, file uploads, API endpoints, user input, secrets, or serialization
-4. Collect all agent verdicts (SHIP / NEEDS_WORK / MAJOR_RETHINK)
-5. If NEEDS_WORK → auto-fix issues, re-review (max 3 loops)
-6. If MAJOR_RETHINK → STOP, present issues to user
-7. Present consolidated findings sorted by severity
+## Default Team: researcher → parallel(reviewers) → consolidate
 
-## Auto-Learn from Review (NEW)
+### Step 1: Dispatch researcher
+- `git diff --staged` and `git diff` to see all changes
+- Classify changed files by type and risk level
+- Write context to `/tmp/cc-team-research.md`
 
-After review completes, if non-trivial issues were found:
+### Step 2: Dispatch reviewers in parallel
+Based on file types:
+- `.py` files → **python-reviewer**
+- Other files → **code-reviewer**
+- Auth/input/API/DB → **security-reviewer** (ALWAYS if applicable)
+- Schema/query changes → **db-reviewer** (if applicable)
+
+### Step 3: Consolidate verdicts
+- Collect all verdicts (SHIP / NEEDS_WORK / MAJOR_RETHINK)
+- If NEEDS_WORK → auto-fix → re-review (max 3 loops)
+- If MAJOR_RETHINK → STOP, present to user
+- Present consolidated findings sorted by severity
+
+## Auto-Learn
+
+After review completes:
 ```bash
 $CCFLOW learn --task "[what was reviewed]" --outcome [success/partial] \
   --approach "review found: [issue types]" \
@@ -29,10 +40,6 @@ $CCFLOW learn --task "[what was reviewed]" --outcome [success/partial] \
   --score [1-5] --used-command /cc-review
 ```
 
-This helps the routing system learn which types of changes need more careful review.
-
 ## Auto-Chain
-
-After SHIP verdict:
-- Suggest: "Review passed. Run `/cc-commit` to commit."
-- If cc-scout-docs-gap is relevant: "Consider running `/cc-scout docs-gap` to check if docs need updating."
+After SHIP → suggest `/cc-commit`.
+If docs changed → suggest `/cc-scout docs-gap`.

@@ -1,52 +1,44 @@
 ---
+team: "feature-dev"
 agent: "planner"
 description: "Create implementation plan with TDD tasks. TRIGGER: 'plan this', 'how should we build', 'design X', '规划', '写计划'. Use AFTER brainstorming, BEFORE /tdd."
 ---
 
-Use the cc-plan skill to create a comprehensive implementation plan.
+Create implementation plan with **Feature Dev team** support.
 
 ```bash
 CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 ```
 
-## Planning Phase
+## Default Team: researcher → architect → planner
 
-1. Analyze the user's request or existing spec
-2. If unfamiliar codebase: dispatch **researcher** agent first
-3. If architectural change: dispatch **architect** agent before planning
-4. Map out the file structure
-5. Create bite-sized tasks with TDD workflow
-6. Include exact file paths, code, and commands
+### Step 1: Dispatch researcher (if unfamiliar codebase)
+- Scan related code, dependencies, test patterns
+- Write findings to `/tmp/cc-team-research.md`
 
-## Auto-Import to cc-flow (NEW)
+### Step 2: Dispatch architect (if architectural change)
+- Review research findings
+- Propose component structure, boundaries, interfaces
+- Write architecture to `/tmp/cc-team-design.md`
+
+### Step 3: Planner creates plan (you or planner agent)
+1. Analyze spec + research + architecture findings
+2. Map out file structure
+3. Create bite-sized TDD tasks
+4. Include exact file paths, code, and commands
+
+## Auto-Import to cc-flow
 
 After the plan is written:
-
-7. Save the plan to `docs/plans/YYYY-MM-DD-<feature>.md`
-8. **Automatically import into cc-flow tasks:**
+1. Save to `docs/plans/YYYY-MM-DD-<feature>.md`
+2. **Auto-import:**
    ```bash
    $CCFLOW epic import --file docs/plans/YYYY-MM-DD-<feature>.md --sequential
    ```
-9. Show the task graph:
+3. Auto-tag tasks based on content (api, database, auth, test)
+4. Auto-select template per task (feature/bugfix/refactor/security)
+5. Show dependency graph:
    ```bash
    $CCFLOW graph --format ascii
    ```
-10. Confirm with user: "Plan imported as [epic-id] with [N] tasks. Start with `/cc-tdd`?"
-
-## Auto-Tagging
-
-When creating tasks via cc-flow, add tags based on content:
-- Task touches API routes → `--tags api`
-- Task touches database → `--tags database`
-- Task is a test → `--tags test`
-- Task touches auth → `--tags auth,security`
-
-## Auto-Template
-
-Select template based on task type:
-- New file creation → `--template feature`
-- Bug fix in plan → `--template bugfix`
-- Refactoring step → `--template refactor`
-- Security hardening → `--template security`
-
-If import fails or user prefers manual control, show the cc-flow commands they can run themselves.
+6. Confirm: "Plan imported as [epic-id] with [N] tasks. Start with `/cc-tdd`?"
