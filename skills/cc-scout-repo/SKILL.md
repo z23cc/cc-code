@@ -15,9 +15,9 @@ Research-only. Scan the current codebase to find patterns, conventions, and reus
 
 ## Tool Priority
 
-**Use morph/rp-cli when available, Grep as fallback:**
+**Use cc-flow morph commands, then rp-cli, then Grep:**
 ```
-morph search --query "naming conventions"    ← semantic (broad)
+cc-flow search "naming conventions"          ← semantic (broad)
 rp -e 'structure src/'                       ← code structure (signatures)
 Grep "^class \|^def " src/                   ← exact patterns (fallback)
 ```
@@ -28,7 +28,7 @@ Grep "^class \|^def " src/                   ← exact patterns (fallback)
 
 ```bash
 # BEST: semantic search for patterns
-morph search --query "naming conventions and code patterns"
+cc-flow search "naming conventions and code patterns"
 rp -e 'structure src/'    # Function/class signatures
 
 # Fallback: grep

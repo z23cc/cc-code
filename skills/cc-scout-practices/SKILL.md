@@ -37,9 +37,9 @@ Prefer: official docs > reputable blogs > Stack Overflow
 ### 3. Find Real-World Examples on GitHub
 
 ```bash
-# BEST: morph github search (no cloning needed, semantic)
-morph github --repo fastapi/fastapi --query "[feature] implementation"
-morph github --repo pallets/flask --query "[feature] pattern"
+# BEST: cc-flow github search (no cloning needed)
+cc-flow github-search "[feature] implementation" --repo fastapi/fastapi
+cc-flow github-search "[feature] pattern" --repo pallets/flask
 
 # Alternative: gh CLI
 gh search code "[pattern]" --language python --json repository,path -L 10

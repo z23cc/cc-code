@@ -36,8 +36,8 @@ Alternative entries: `/cc-blueprint`, `/cc-interview`, `/cc-prime`, `/cc-debug`,
 
 ## Tool Priority
 
-1. morph MCP (`codebase_search`, `edit_file`) → semantic search, fast edits
-2. rp-cli (`context_builder`, `structure`, `review`) → deep analysis
+1. cc-flow morph commands (`search`, `apply`, `embed`, `compact`) → semantic search, fast edits, embeddings
+2. rp-cli (`context_builder`, `structure`, `review`) → deep cross-file analysis
 3. Built-in (Grep, Read, Edit) → fallback
 
 ## cc-flow Quick Reference

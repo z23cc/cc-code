@@ -1,7 +1,7 @@
 ---
 name: cc-search-strategy
 description: >
-  Multi-tool search strategy — prioritizes morph MCP and rp-cli when available,
+  Multi-tool search strategy — uses cc-flow morph commands and rp-cli,
   falls back to built-in Grep/Glob. Choose the right tool for each task.
   TRIGGER: searching codebase, exploring code, finding where X is used,
   understanding architecture, refactoring, security audit, '搜索', '查找'.
@@ -11,34 +11,27 @@ description: >
 
 ## Priority Rule
 
-**Always prefer MCP tools when available. Fall back to built-in tools only if MCP fails.**
+**Use cc-flow morph commands first. Fall back to rp-cli, then built-in tools.**
 
 ```
-Search Priority:
-1. morph codebase_search → semantic search (broad exploration)
-2. RepoPrompt file_search → combined content + path + regex
-3. Built-in Grep/Glob → exact patterns (always available)
-
-Edit Priority:
-1. morph edit_file → fast apply, accepts partial snippets
-2. Built-in Edit/Write → fallback
-
-Deep Analysis Priority:
-1. rp-cli context_builder → AI-powered cross-file analysis
-2. rp-cli structure → function/type signatures
-3. Built-in Read + Grep → manual tracing
+Search:  cc-flow search "query"      → rp file_search → Grep
+Edit:    cc-flow apply --file X      → rp apply_edits → Edit
+Embed:   cc-flow embed --input X     → (no fallback)
+Rerank:  cc-flow search --rerank     → (no fallback)
+Compact: cc-flow compact --file X    → (no fallback)
+Deep:    rp context_builder          → Read + Grep
 ```
 
 ## Decision Framework
 
 ```
 Do you know the exact text/pattern?
-├─ YES → Grep (fastest, ~20ms, always works)
+├─ YES → Grep (fastest, ~20ms)
 └─ NO → What are you looking for?
-         ├─ Meaning/concept → morph codebase_search
-         ├─ Function/class definition → rp-cli get_code_structure
-         ├─ Cross-file understanding → rp-cli context_builder
-         ├─ Code structure/pattern → AST matching (ast-grep)
+         ├─ Meaning/concept → cc-flow search "query"
+         ├─ Function/class definition → rp structure src/
+         ├─ Cross-file understanding → rp context_builder
+         ├─ Relevance ranking → cc-flow search "query" --rerank
          └─ Dependency chain → Grep for imports + call sites
 ```
 
@@ -46,114 +39,99 @@ Do you know the exact text/pattern?
 
 | Task | Best Tool | Fallback | Speed |
 |------|-----------|----------|-------|
-| Broad exploration | `codebase_search` (morph) | Grep + Read | ~500ms |
+| Broad exploration | `cc-flow search` | Grep + Read | ~2s |
 | Exact string match | Grep (built-in) | — | ~20ms |
-| File name search | `file_search` (RepoPrompt) | Glob | ~100ms |
-| Code structure | `get_code_structure` (rp-cli) | Grep for def/class | ~200ms |
-| Deep Q&A | `context_builder` (rp-cli) | Agent dispatch | ~3s |
-| Architecture plan | `context_builder` + response_type="plan" | Manual research | ~5s |
-| Code review | `context_builder` + response_type="review" | Agent dispatch | ~5s |
-| Find files | Glob (built-in) | `file_search` | instant |
-| AST pattern | ast-grep (if installed) | Grep regex | ~200ms |
+| File name search | Glob / `rp file_search` | — | instant |
+| Code structure | `rp structure src/` | Grep def/class | ~200ms |
+| Deep Q&A | `rp context_builder` | Agent dispatch | ~3s |
+| Quick file edit | `cc-flow apply` | Built-in Edit | ~1s |
+| Multi-file edit | `rp apply_edits` | Sequential Edit | ~2s |
+| Similarity | `cc-flow embed` | — | ~500ms |
+| Relevance sort | `cc-flow search --rerank` | — | ~1s |
+| Text compression | `cc-flow compact` | — | ~2s |
 
-## morph MCP Usage
+## cc-flow Morph Commands
 
 ```bash
-# Semantic search — "how does X work?"
-codebase_search: "how does the auth middleware validate tokens"
-# NOT for: exact string matching (use Grep)
+# Semantic search (WarpGrep — multi-turn agent)
+cc-flow search "how does the auth middleware work"
+cc-flow search "authentication" --rerank    # grep + relevance sorting
 
-# Fast edit — accepts partial code snippets
-edit_file: path + new content
-# 10x faster than built-in Edit
+# Fast edit (10,500+ tok/s)
+cc-flow apply --file src/app.py --instruction "add input validation" --update "snippet"
 
-# GitHub code search (no cloning needed)
-github_codebase_search: "FastAPI rate limiting" in owner/repo
+# Code embedding (1536 dims)
+cc-flow embed --input "def authenticate(token): ..."
+
+# Text compression
+cc-flow compact --file long-context.txt --ratio 0.3
+
+# GitHub search
+cc-flow github-search "rate limiting" --repo fastapi/fastapi
 ```
 
-## rp-cli Usage
+## rp-cli Commands
 
 ```bash
-# Deep cross-file Q&A (AI reasoning across files)
-rp -e 'builder "how does the payment system work?" --response-type question'
-
-# Code structure overview (function/type signatures)
-rp -e 'structure src/'
-
-# Architecture planning
-rp -e 'plan "Design user permissions system"'
-
-# Code review with git diff context
-rp -e 'review "What changed and is it safe?"'
-
-# File tree (80% fewer tokens than ls/find)
-rp -e 'tree'
-
-# Search with file filter
-rp -e 'search "TODO" --extensions .py'
-
-# Read specific lines (targeted, saves tokens)
-rp -e 'read src/main.py 100 50'
+rp -e 'tree'                                  # File tree (saves tokens)
+rp -e 'structure src/'                        # Function/type signatures
+rp -e 'builder "how does auth work?"'         # Deep cross-file AI analysis
+rp -e 'review "What changed?"'               # AI code review
+rp -e 'search "TODO" --extensions .py'        # Search with filter
+rp -e 'read src/main.py 100 50'              # Targeted read
 ```
 
 ## When to Use What
 
-| Scenario | Use morph | Use rp-cli | Use built-in |
-|----------|-----------|------------|-------------|
-| "How does X work?" | `codebase_search` | `context_builder` (deeper) | — |
+| Scenario | Use cc-flow | Use rp-cli | Use built-in |
+|----------|-------------|------------|-------------|
+| "How does X work?" | `search "X"` | `context_builder` (deeper) | — |
 | "Find all usages of X" | — | `file_search` | Grep |
-| "What functions are in X?" | — | `get_code_structure` | Grep "def " |
+| "What functions are in X?" | — | `structure` | Grep "def " |
 | "Is this change safe?" | — | `context_builder --review` | Agent dispatch |
-| "Plan how to build X" | — | `context_builder --plan` | /cc-plan |
-| Quick file edit | `edit_file` | — | Edit |
-| Multi-file batch edit | — | `rp apply_edits` | — |
-| "Find pattern in GitHub" | `github_codebase_search` | — | `gh search code` |
+| Quick file edit | `apply --file X` | — | Edit |
+| Similarity between code | `embed --input` | — | — |
+| Rank search results | `search --rerank` | — | — |
+| "Find pattern in GitHub" | `github-search` | — | `gh search code` |
 
 ## Workflow Recipes
 
 ### Recipe 1: Explore New Codebase
 ```
-Step 1: rp -e 'tree'                              # File structure
-Step 2: codebase_search "how does the main flow work"  # Broad understanding
-Step 3: rp -e 'structure src/core/'                # Key signatures
-Step 4: Grep for specific symbols as needed         # Details
+Step 1: rp -e 'tree'                          # File structure
+Step 2: cc-flow search "how does the main flow work"  # Broad understanding
+Step 3: rp -e 'structure src/core/'            # Key signatures
+Step 4: Grep for specific symbols              # Details
 ```
 
 ### Recipe 2: Refactoring Safely
 ```
-Step 1: Grep "function_name" src/                  # All usages (exact)
-Step 2: rp -e 'builder "what depends on function_name?"'  # Impact analysis
-Step 3: Apply changes with morph edit_file         # Fast edit
-Step 4: Grep for function_name in tests/           # Verify test coverage
+Step 1: Grep "function_name" src/              # All usages (exact)
+Step 2: rp -e 'builder "what depends on function_name?"'  # Impact
+Step 3: cc-flow apply --file X --instruction "rename Y"  # Fast edit
+Step 4: Grep function_name in tests/           # Verify coverage
 ```
 
 ### Recipe 3: Security Audit
 ```
-Step 1: codebase_search "where is user input handled"  # Semantic scan
-Step 2: Grep "shell=True\|yaml.load\|\.format.*sql"    # Known patterns
-Step 3: rp -e 'builder "trace user input flow"'         # Data flow analysis
-```
-
-### Recipe 4: Code Review
-```
-Step 1: rp -e 'review "What changed and any concerns?"'  # AI review
-Step 2: Grep for patterns in the diff                      # Specific checks
+Step 1: cc-flow search "where is user input handled"  # Semantic scan
+Step 2: Grep "shell=True\|yaml.load" src/              # Known patterns
+Step 3: rp -e 'builder "trace user input flow"'        # Data flow
 ```
 
 ## Common Pitfalls
 
 | Mistake | Fix |
 |---------|-----|
-| Using Grep for "how does X work" | Use `codebase_search` (semantic) |
-| Using `codebase_search` for exact string | Use Grep (faster, precise) |
-| Reading entire files for one function | Use `get_code_structure` or targeted Read |
-| Manual multi-file analysis | Use `context_builder` (AI-powered) |
-| Not using morph edit_file | 10x faster than built-in Edit |
+| Grep for "how does X work" | Use `cc-flow search` (semantic) |
+| Reading entire files | Use `rp structure` or targeted Read |
+| Manual multi-file analysis | Use `rp context_builder` |
+| Slow manual edits | Use `cc-flow apply` (10x faster) |
 
 ## Related Skills
 
-- **cc-debugging** — use search strategy during Phase 1 (root cause investigation)
-- **cc-performance** — Recipe 4 for performance investigation
+- **cc-debugging** — use search during Phase 1 (root cause)
+- **cc-performance** — search for performance anti-patterns
 - **cc-security-review** — Recipe 3 for security audits
-- **cc-scout-context** — token-efficient exploration techniques
+- **cc-scout-context** — token-efficient exploration
 - **cc-research** — full 4-layer research methodology
