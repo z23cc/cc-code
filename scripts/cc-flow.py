@@ -55,7 +55,7 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-VERSION = "3.1.0"
+VERSION = "3.2.0"
 
 TASKS_DIR = Path(".tasks")
 EPICS_DIR = TASKS_DIR / "epics"
@@ -2108,9 +2108,19 @@ def cmd_session(args):
         _error("Usage: cc-flow session [save|restore|list]")
 
 
+def _get_morph_client():
+    """Try to create a MorphClient. Returns None if API key not set."""
+    try:
+        morph_dir = Path(__file__).parent
+        sys.path.insert(0, str(morph_dir))
+        from morph_client import MorphClient
+        return MorphClient()
+    except (ImportError, ValueError):
+        return None
+
+
 def cmd_search(args):
-    """Semantic code search via morph CLI, with Grep fallback."""
-    import shutil
+    """Semantic code search via Morph API (Python), with grep fallback."""
     import subprocess as _sp
 
     query = " ".join(args.query) if args.query else ""
@@ -2120,27 +2130,20 @@ def cmd_search(args):
     search_dir = getattr(args, "dir", ".") or "."
     fmt = getattr(args, "format", "text") or "text"
 
-    # Try morph search first
-    if shutil.which("morph"):
+    # Try Morph Python client first
+    client = _get_morph_client()
+    if client:
         try:
-            cmd = ["morph", "search", "--query", query]
-            if search_dir != ".":
-                cmd.extend(["--dir", search_dir])
-            result = _sp.run(cmd, capture_output=True, text=True, timeout=30)
-            if result.returncode == 0 and result.stdout.strip():
+            result = client.search(query, search_dir)
+            if result:
                 if fmt == "json":
-                    print(json.dumps({
-                        "success": True,
-                        "engine": "morph",
-                        "query": query,
-                        "results": result.stdout.strip(),
-                    }))
+                    print(json.dumps({"success": True, "engine": "morph-python", "query": query, "results": result}))
                 else:
                     print(f"## Search: {query} (morph semantic)\n")
-                    print(result.stdout.strip())
+                    print(result if isinstance(result, str) else json.dumps(result, indent=2))
                 return
-        except (_sp.TimeoutExpired, OSError):
-            pass
+        except Exception:
+            pass  # Fall through to grep
 
     # Fallback to grep
     try:
@@ -2150,35 +2153,26 @@ def cmd_search(args):
              "-i", query, search_dir],
             capture_output=True, text=True, timeout=15,
         )
-        lines = result.stdout.strip().split("\n")[:20]  # Limit results
+        lines = result.stdout.strip().split("\n")[:20]
         if fmt == "json":
-            print(json.dumps({
-                "success": True,
-                "engine": "grep-fallback",
-                "query": query,
-                "results": lines,
-                "count": len(lines),
-            }))
+            print(json.dumps({"success": True, "engine": "grep-fallback", "query": query,
+                              "results": lines, "count": len(lines)}))
         else:
             print(f"## Search: {query} (grep fallback)\n")
             for line in lines:
                 if line.strip():
                     print(f"  {line}")
-            if len(lines) >= 20:
-                print(f"\n  ... (showing first 20 of {result.stdout.count(chr(10))} matches)")
     except (_sp.TimeoutExpired, OSError):
         _error("Search failed")
 
 
 def cmd_compact(args):
-    """Compress text via morph compact CLI."""
-    import shutil
-    import subprocess as _sp
+    """Compress text via Morph API (Python)."""
+    client = _get_morph_client()
+    if not client:
+        _error("MORPH_API_KEY not set. Get one at https://morphllm.com/dashboard/api-keys")
 
-    if not shutil.which("morph"):
-        _error("morph CLI not found. Install: npm i -g @duange/morph-plugin")
-
-    ratio = getattr(args, "ratio", "0.3") or "0.3"
+    ratio = float(getattr(args, "ratio", "0.3") or "0.3")
     input_file = getattr(args, "file", "") or ""
 
     if input_file:
@@ -2186,7 +2180,6 @@ def cmd_compact(args):
             _error(f"File not found: {input_file}")
         content = Path(input_file).read_text()
     else:
-        # Read from stdin
         import select
         if select.select([sys.stdin], [], [], 0.1)[0]:
             content = sys.stdin.read()
@@ -2194,40 +2187,26 @@ def cmd_compact(args):
             _error("Provide input via --file or stdin: cat file.txt | cc-flow compact")
 
     try:
-        result = _sp.run(
-            ["morph", "compact", "--ratio", str(ratio)],
-            input=content, capture_output=True, text=True, timeout=30,
-        )
-        if result.returncode == 0:
-            output = result.stdout.strip()
-            original_len = len(content)
-            compact_len = len(output)
-            savings = int((1 - compact_len / original_len) * 100) if original_len > 0 else 0
-            print(json.dumps({
-                "success": True,
-                "original_chars": original_len,
-                "compact_chars": compact_len,
-                "savings": f"{savings}%",
-                "ratio": ratio,
-            }))
-            if getattr(args, "output", ""):
-                Path(args.output).write_text(output)
-                print(f"Written to {args.output}")
-            else:
-                print(output)
+        output = client.compact(content, ratio)
+        original_len = len(content)
+        compact_len = len(output)
+        savings = int((1 - compact_len / original_len) * 100) if original_len > 0 else 0
+        print(json.dumps({
+            "success": True, "original_chars": original_len,
+            "compact_chars": compact_len, "savings": f"{savings}%",
+        }))
+        if getattr(args, "output", ""):
+            Path(args.output).write_text(output)
+            print(f"Written to {args.output}")
         else:
-            _error(f"morph compact failed: {result.stderr[:200]}")
-    except (_sp.TimeoutExpired, OSError) as exc:
-        _error(f"morph compact error: {exc}")
+            print(output)
+    except Exception as exc:
+        _error(f"compact failed: {exc}")
 
 
 def cmd_github_search(args):
-    """Search GitHub repos via morph github CLI."""
-    import shutil
+    """Search GitHub repos — uses Morph Embedding + Rerank (Python)."""
     import subprocess as _sp
-
-    if not shutil.which("morph"):
-        _error("morph CLI not found. Install: npm i -g @duange/morph-plugin")
 
     query = " ".join(args.query) if args.query else ""
     if not query:
@@ -2239,21 +2218,28 @@ def cmd_github_search(args):
     if not repo and not url:
         _error("Provide --repo owner/repo or --url github-url")
 
-    cmd = ["morph", "github", "--query", query]
-    if repo:
-        cmd.extend(["--repo", repo])
-    elif url:
-        cmd.extend(["--url", url])
-
+    # Use gh CLI to search GitHub (no morph node dependency needed)
+    target = repo or url.replace("https://github.com/", "").rstrip("/")
     try:
-        result = _sp.run(cmd, capture_output=True, text=True, timeout=30)
-        if result.returncode == 0:
-            print(f"## GitHub Search: {query}\n")
-            print(result.stdout.strip())
+        result = _sp.run(
+            ["gh", "search", "code", query, "--repo", target, "--json", "repository,path,textMatches", "-L", "10"],
+            capture_output=True, text=True, timeout=30,
+        )
+        if result.returncode == 0 and result.stdout.strip():
+            data = json.loads(result.stdout)
+            print(f"## GitHub Search: {query} in {target}\n")
+            for item in data:
+                path = item.get("path", "")
+                repo_name = item.get("repository", {}).get("nameWithOwner", "")
+                print(f"  {repo_name}/{path}")
+                for match in item.get("textMatches", [])[:2]:
+                    fragment = match.get("fragment", "")[:100]
+                    print(f"    > {fragment}")
+            print(f"\n  {len(data)} results found")
         else:
-            _error(f"morph github failed: {result.stderr[:200]}")
-    except (_sp.TimeoutExpired, OSError) as exc:
-        _error(f"morph github error: {exc}")
+            _error(f"gh search failed: {result.stderr[:200]}")
+    except (OSError, _sp.TimeoutExpired) as exc:
+        _error(f"GitHub search error: {exc}")
 
 
 def cmd_dashboard(_args):
