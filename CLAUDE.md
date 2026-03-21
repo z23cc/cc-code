@@ -4,32 +4,32 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 ## Architecture
 
-- `scripts/cc-flow.py` — Task & workflow CLI (28 subcommands: epic/task lifecycle, scan, checkpoint, route, learn, learnings)
+- `scripts/cc-flow.py` — Task & workflow CLI (35 subcommands: epic/task lifecycle, scan, graph, dashboard, doctor, route, learn, consolidate)
 - `agents/` — 8 agents: researcher, architect, planner, code-reviewer, python-reviewer, security-reviewer, refactor-cleaner, build-fixer
-- `skills/` — 35 skills in 3 layers:
-  - **Core (23, language-agnostic):** brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, teams, autoimmune, readiness-audit, search-strategy, git-workflow, prompt-engineering, clean-architecture, context-tips, docs, incident, dependency-upgrade, feedback-loop
-  - **Python pack (12):** python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, scaffold, deploy, task-queues
-- `commands/` — 20 slash commands
-- `tests/` — pytest test suite (19 tests covering cc-flow lifecycle)
-- `rules/` — 4 always-on rules
-- `hooks/` — SessionStart + PreToolUse quality gate
+- `skills/` — 35 skills (all prefixed `cc-` to avoid conflicts with other plugins):
+  - **Core (23, language-agnostic):** cc-brainstorming, cc-plan, cc-tdd, cc-verification, cc-refinement, cc-code-review-loop, cc-worker-protocol, cc-task-tracking, cc-debugging, cc-research, cc-parallel-agents, cc-teams, cc-autoimmune, cc-readiness-audit, cc-search-strategy, cc-git-workflow, cc-prompt-engineering, cc-clean-architecture, cc-context-tips, cc-docs, cc-incident, cc-dependency-upgrade, cc-feedback-loop
+  - **Python pack (12):** cc-python-patterns, cc-python-testing, cc-async-patterns, cc-database, cc-fastapi, cc-error-handling, cc-performance, cc-logging, cc-security-review, cc-scaffold, cc-deploy, cc-task-queues
+- `commands/` — 20 slash commands (all prefixed `/cc-`)
+- `tests/` — 85 pytest tests covering cc-flow lifecycle
+- `rules/` — 5 always-on rules
+- `hooks/` — 3 hooks: SessionStart + PreToolUse + PostToolUse
 
 ## Key Workflow
 
 ```
-/route → suggests → /brainstorm → /plan → /tdd → /refine → /review → /commit → cc-flow learn
-                                    ↑
-                    /debug ─────────┘ (when stuck)
+/cc-route → suggests → /cc-brainstorm → /cc-plan → /cc-tdd → /cc-refine → /cc-review → /cc-commit → cc-flow learn
+                                          ↑
+                          /cc-debug ──────┘ (when stuck)
 
-/autoimmune — autonomous improvement loop (scan/code/test/full)
-/team — assemble agent team (feature-dev/bug-fix/review/refactor/audit)
-/tasks — file-based task management via cc-flow CLI
-/audit — 8-pillar readiness assessment
+/cc-autoimmune — autonomous improvement loop (scan/code/test/full)
+/cc-team — assemble agent team (feature-dev/bug-fix/review/refactor/audit)
+/cc-tasks — file-based task management via cc-flow CLI
+/cc-audit — 8-pillar readiness assessment
 ```
 
 ## Language Detection
 
-Core skills (brainstorming, plan, tdd, debugging, autoimmune, etc.) work with ANY language.
+Core skills work with ANY language.
 When commands need to run verification/lint/test, detect the project language:
 
 | File Present | Language | Verify Command | Lint |
@@ -47,7 +47,8 @@ When commands need to run verification/lint/test, detect the project language:
 - `git push origin main` → other devices: `claude plugin update cc-code@cc-code`
 
 ### Adding Skills
-1. Core skills: `skills/<name>/SKILL.md` — language-agnostic
-2. Language-pack skills: `skills/<lang>-<name>/SKILL.md` — prefix with language
-3. Always add Related Skills section
-4. Bump version in plugin.json + marketplace.json
+1. All skills: `skills/cc-<name>/SKILL.md` — always use `cc-` prefix
+2. Core skills: language-agnostic
+3. Language-pack skills: `skills/cc-<lang>-<name>/SKILL.md`
+4. Always add Related Skills section (reference `cc-` prefixed names)
+5. Bump version in plugin.json

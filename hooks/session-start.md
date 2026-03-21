@@ -1,19 +1,19 @@
 ## cc-code — Development Workflow Toolkit
 
-**Don't know which command to use? → `/route` (smart routing with learning)**
+**Don't know which command to use? → `/cc-route` (smart routing with learning)**
 
 **Workflows:**
-- New feature → `/brainstorm` → `/plan` → `/tdd` → `/refine` → `/commit`
-- Unfamiliar code → `/research` → then plan/fix
-- Bug/error → `/debug` → `/fix` → `/commit`
-- Code review → `/review` or `/pr-review`
-- Agent team → `/team` (feature-dev / bug-fix / review / refactor / audit)
-- Performance → `/perf`  |  Cleanup → `/simplify`  |  New project → `/scaffold`
-- Task management → `/tasks`  |  Documentation → `/docs`  |  Health → `/audit`
+- New feature → `/cc-brainstorm` → `/cc-plan` → `/cc-tdd` → `/cc-refine` → `/cc-commit`
+- Unfamiliar code → `/cc-research` → then plan/fix
+- Bug/error → `/cc-debug` → `/cc-fix` → `/cc-commit`
+- Code review → `/cc-review` or `/cc-pr-review`
+- Agent team → `/cc-team` (feature-dev / bug-fix / review / refactor / audit)
+- Performance → `/cc-perf`  |  Cleanup → `/cc-simplify`  |  New project → `/cc-scaffold`
+- Task management → `/cc-tasks`  |  Documentation → `/cc-docs`  |  Health → `/cc-audit`
 
-**Autonomous:** `/autoimmune` (scan / code / test / full)
+**Autonomous:** `/cc-autoimmune` (scan / code / test / full)
 
-**Feedback loop:** `/route` → execute → `cc-flow learn` → `cc-flow consolidate` → smarter routing
+**Feedback loop:** `/cc-route` → execute → `cc-flow learn` → `cc-flow consolidate` → smarter routing
 
 **Learning system:**
 - `cc-flow route <task>` — uses past learnings + promoted patterns with confidence %
@@ -23,6 +23,6 @@
 - `cc-flow config` — customize behavior (auto_consolidate, max_iterations, etc.)
 
 **Gates:**
-- DO NOT implement without design (`/brainstorm` first)
-- DO NOT commit without verification (`/commit` runs lint+typecheck)
-- DO NOT claim success without evidence (verification skill)
+- DO NOT implement without design (`/cc-brainstorm` first)
+- DO NOT commit without verification (`/cc-commit` runs lint+typecheck)
+- DO NOT claim success without evidence (cc-verification skill)
