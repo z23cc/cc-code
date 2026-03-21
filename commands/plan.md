@@ -9,3 +9,6 @@ Use the plan skill to create a comprehensive implementation plan.
 3. Create bite-sized tasks with TDD workflow
 4. Include exact file paths, code, and commands
 5. Save the plan to `docs/plans/YYYY-MM-DD-<feature>.md`
+6. For multi-task plans, import into cc-flow: `cc-flow epic import --file <plan> --sequential`
+
+For unfamiliar codebases, dispatch **researcher** agent first. For architectural changes, dispatch **architect** agent before planning.

@@ -13,3 +13,5 @@ Phase 4: Implementation — create failing test, implement single fix, verify
 
 If fix fails 2+ times → PUA escalation activates (L1→L2→L3→L4).
 If fix fails 3+ times → question the architecture, discuss with user.
+
+For complex bugs, use `/team` (Bug Fix team: researcher → build-fixer → code-reviewer).
