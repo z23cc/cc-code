@@ -1,26 +1,21 @@
 ## cc-code — Development Workflow Toolkit
 
+**Don't know which command to use? → `/route` (smart routing with learning)**
+
 **Workflows:**
 - New feature → `/brainstorm` → `/plan` → `/tdd` → `/refine` → `/commit`
 - Unfamiliar code → `/research` → then plan/fix
 - Bug/error → `/debug` → `/fix` → `/commit`
 - Code review → `/review` or `/pr-review`
-- Performance → `/perf`
-- Cleanup → `/simplify` → `/commit`
-- New project → `/scaffold`
-- Agent team → `/team` (auto-selects: feature-dev / bug-fix / review / refactor / audit)
-- Project health → `/audit` → feeds into `/autoimmune`
-- Task management → `/tasks` (cc-flow CLI: list / create / start / done / progress)
+- Agent team → `/team` (feature-dev / bug-fix / review / refactor / audit)
+- Performance → `/perf`  |  Cleanup → `/simplify`  |  New project → `/scaffold`
+- Task management → `/tasks`  |  Documentation → `/docs`  |  Health → `/audit`
 
-**Autonomous improvement:**
-- `/autoimmune scan` — auto-detect issues, generate tasks, then fix
-- `/autoimmune` — pick from task list, implement, verify, commit/revert
-- `/autoimmune test` — auto-fix lint + type + test errors
-- `/autoimmune full` — scan → improve → fix (all three)
+**Autonomous:** `/autoimmune` (scan / code / test / full)
 
-**Language detection:** Core skills auto-detect project language from pyproject.toml / package.json / go.mod / Cargo.toml and adapt verify/lint/test commands.
+**Feedback loop:** `/route` → execute → `cc-flow learn` → better routing next time
 
 **Gates:**
-- DO NOT implement without design approval (`/brainstorm` first)
+- DO NOT implement without design (`/brainstorm` first)
 - DO NOT commit without verification (`/commit` runs lint+typecheck)
-- DO NOT claim success without test evidence (verification skill)
+- DO NOT claim success without evidence (verification skill)
