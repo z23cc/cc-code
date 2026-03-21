@@ -2,6 +2,7 @@
 name: python-reviewer
 description: Expert Python code reviewer — PEP 8, type hints, security, Pythonic idioms, performance. MUST BE USED for all Python code changes.
 tools: ["Read", "Grep", "Glob", "Bash"]
+disallowedTools: ["Write", "Edit"]
 model: inherit
 ---
 

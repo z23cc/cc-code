@@ -53,6 +53,9 @@ def cmd_done(args):
 
     data = safe_json_load(path)
 
+    if data["status"] not in ("in_progress", "todo"):
+        error(f"Cannot complete task with status: {data['status']}")
+
     # Calculate duration if started
     duration_sec = None
     if data.get("started"):

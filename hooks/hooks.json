@@ -2,7 +2,7 @@
   "hooks": {
     "SessionStart": [
       {
-        "matcher": "startup|clear|compact",
+        "matcher": "startup|resume|clear|compact",
         "hooks": [
           {
             "type": "command",
@@ -18,10 +18,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-commit-gate.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-commit-gate.sh",
+            "timeout": 5
           }
         ],
-        "description": "Quality gate: remind to verify before git commit"
+        "description": "Quality gate: remind to verify before git commit",
+        "statusMessage": "Checking commit quality..."
       }
     ],
     "PostToolUse": [
@@ -30,10 +32,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-task-hint.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-task-hint.sh",
+            "timeout": 5
           }
         ],
-        "description": "After cc-flow done/scan, suggest next steps (learn/next/commit)"
+        "description": "After cc-flow done/scan, suggest next steps",
+        "statusMessage": "Checking workflow hints..."
       }
     ],
     "PreCompact": [
@@ -42,10 +46,12 @@
         "hooks": [
           {
             "type": "command",
-            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-compact.sh"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-compact.sh",
+            "timeout": 10
           }
         ],
-        "description": "Auto-save session state before context compaction"
+        "description": "Auto-save session state before context compaction",
+        "statusMessage": "Saving session before compaction..."
       }
     ],
     "Stop": [

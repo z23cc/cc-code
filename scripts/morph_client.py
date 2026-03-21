@@ -192,8 +192,15 @@ class MorphClient:
         return "Search reached max turns without finishing"
 
     def _execute_tool(self, name, args, base_dir):
-        """Execute a WarpGrep tool locally."""
+        """Execute a WarpGrep tool locally (paths validated against base_dir)."""
         import subprocess as sp
+
+        def _safe_path(p):
+            """Validate path is within base_dir to prevent traversal."""
+            resolved = Path(p).resolve()
+            if not str(resolved).startswith(str(base_dir.resolve())):
+                return None
+            return resolved
 
         if name == "grep_search":
             pattern = args.get("pattern", "")
@@ -210,7 +217,9 @@ class MorphClient:
                 return "grep failed"
 
         elif name == "read":
-            path = Path(args["path"])
+            path = _safe_path(args["path"])
+            if not path:
+                return "Access denied: path outside project directory"
             if not path.exists():
                 return f"File not found: {path}"
             content = path.read_text()
@@ -224,7 +233,9 @@ class MorphClient:
             return "\n".join(f"{i + start + 1}: {line}" for i, line in enumerate(lines))
 
         elif name == "list_directory":
-            path = Path(args["path"])
+            path = _safe_path(args["path"])
+            if not path:
+                return "Access denied: path outside project directory"
             if not path.exists():
                 return f"Directory not found: {path}"
             entries = sorted(path.iterdir())[:50]

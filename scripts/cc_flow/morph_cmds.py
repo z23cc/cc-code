@@ -108,13 +108,16 @@ def cmd_search(args):
 
         # Rerank with Morph if requested
         engine = "grep"
-        if do_rerank and lines and client:
-            try:
-                ranked = client.rerank(query, lines, top_n=min(10, len(lines)))
-                lines = [r["document"] for r in ranked]
-                engine = "grep+rerank"
-            except Exception:
-                pass
+        if do_rerank and lines:
+            if client:
+                try:
+                    ranked = client.rerank(query, lines, top_n=min(10, len(lines)))
+                    lines = [r["document"] for r in ranked]
+                    engine = "grep+rerank"
+                except Exception:
+                    engine = "grep (rerank failed)"
+            else:
+                engine = "grep (rerank skipped: MORPH_API_KEY not set)"
 
         if fmt == "json":
             print(json.dumps({"success": True, "engine": engine, "query": query,

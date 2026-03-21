@@ -113,11 +113,19 @@ def _run_checks():
     else:
         chk("Learnings", "pass", "none yet")
 
-    # Config + Claude Code
+    # Config
     if CONFIG_FILE.exists():
         chk("Config", "pass", f"{len(safe_json_load(CONFIG_FILE, default={}))} settings")
     else:
         chk("Config", "pass", "defaults")
+
+    # Morph API
+    morph_key = os.environ.get("MORPH_API_KEY", "")
+    if morph_key:
+        chk("Morph API", "pass", f"key set ({morph_key[:8]}...)")
+    else:
+        chk("Morph API", "warn", "MORPH_API_KEY not set (search/apply/embed disabled)",
+            "export MORPH_API_KEY=your_key")
 
     in_claude = bool(os.environ.get("CLAUDE_CODE") or os.environ.get("CLAUDE_PROJECT_DIR")
                      or os.environ.get("CLAUDE_PLUGIN_ROOT"))
