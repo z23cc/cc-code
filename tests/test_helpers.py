@@ -6,6 +6,8 @@ from pathlib import Path
 # Ensure cc_flow package is importable
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
+import json
+
 from cc_flow.config import _age_days, _safe_load_json
 from cc_flow.core import now_iso, safe_json_load, slugify
 from cc_flow.doctor import _check_python, _chk
@@ -306,3 +308,91 @@ class TestEmbeddings:
 
     def test_content_hash_length(self):
         assert len(_content_hash("test")) == 16
+
+
+class TestPluginSystem:
+    def test_discover_empty(self, tmp_path, monkeypatch):
+        import cc_flow.plugins as plug_mod
+        monkeypatch.setattr(plug_mod, "PLUGINS_DIR", tmp_path / "nope")
+        from cc_flow.plugins import discover_plugins
+        assert discover_plugins() == []
+
+    def test_discover_with_plugin(self, tmp_path, monkeypatch):
+        import cc_flow.plugins as plug_mod
+        plug_dir = tmp_path / "plugins"
+        plug_dir.mkdir()
+        (plug_dir / "test_plug.py").write_text(
+            'PLUGIN_NAME = "test"\nPLUGIN_VERSION = "1.0"\nPLUGIN_DESCRIPTION = "A test"\n',
+        )
+        monkeypatch.setattr(plug_mod, "PLUGINS_DIR", plug_dir)
+        monkeypatch.setattr(plug_mod, "_loaded_plugins", {})
+        from cc_flow.plugins import discover_plugins
+        plugins = discover_plugins()
+        assert len(plugins) == 1
+        assert plugins[0]["name"] == "test"
+        assert plugins[0]["version"] == "1.0"
+
+    def test_is_enabled_default(self, tmp_path, monkeypatch):
+        import cc_flow.plugins as plug_mod
+        monkeypatch.setattr(plug_mod, "PLUGIN_REGISTRY_FILE", tmp_path / "nope.json")
+        from cc_flow.plugins import is_enabled
+        assert is_enabled("anything") is True
+
+    def test_is_enabled_disabled(self, tmp_path, monkeypatch):
+        import cc_flow.plugins as plug_mod
+        reg_file = tmp_path / "plugins.json"
+        reg_file.write_text(json.dumps({"disabled": ["my-plug"]}))
+        monkeypatch.setattr(plug_mod, "PLUGIN_REGISTRY_FILE", reg_file)
+        from cc_flow.plugins import is_enabled
+        assert is_enabled("my-plug") is False
+        assert is_enabled("other") is True
+
+    def test_fire_hook_no_plugins(self, tmp_path, monkeypatch):
+        import cc_flow.plugins as plug_mod
+        monkeypatch.setattr(plug_mod, "PLUGINS_DIR", tmp_path / "nope")
+        from cc_flow.plugins import fire_hook
+        results = fire_hook("on_task_done", task={"id": "t1"})
+        assert results == []
+
+    def test_broken_plugin_graceful(self, tmp_path, monkeypatch):
+        import cc_flow.plugins as plug_mod
+        plug_dir = tmp_path / "plugins"
+        plug_dir.mkdir()
+        (plug_dir / "broken.py").write_text("raise RuntimeError('boom')")
+        monkeypatch.setattr(plug_mod, "PLUGINS_DIR", plug_dir)
+        monkeypatch.setattr(plug_mod, "_loaded_plugins", {})
+        from cc_flow.plugins import discover_plugins
+        plugins = discover_plugins()
+        assert len(plugins) == 1
+        assert "error" in plugins[0]
+
+
+class TestWorkflowHelpers:
+    def test_builtin_workflows(self):
+        from cc_flow.workflow import BUILTIN_WORKFLOWS
+        assert "feature" in BUILTIN_WORKFLOWS
+        assert "release" in BUILTIN_WORKFLOWS
+        assert "health" in BUILTIN_WORKFLOWS
+        for wf in BUILTIN_WORKFLOWS.values():
+            assert "steps" in wf
+            assert "description" in wf
+
+    def test_all_workflows_includes_builtins(self, tmp_path, monkeypatch):
+        import cc_flow.workflow as wf_mod
+        monkeypatch.setattr(wf_mod, "WORKFLOWS_DIR", tmp_path / "nope")
+        from cc_flow.workflow import _all_workflows
+        workflows = _all_workflows()
+        assert len(workflows) >= 3
+
+    def test_custom_workflow_loaded(self, tmp_path, monkeypatch):
+        import cc_flow.workflow as wf_mod
+        wf_dir = tmp_path / "workflows"
+        wf_dir.mkdir()
+        (wf_dir / "my-wf.json").write_text(json.dumps({
+            "description": "Custom", "steps": [{"name": "lint", "command": "verify"}],
+        }))
+        monkeypatch.setattr(wf_mod, "WORKFLOWS_DIR", wf_dir)
+        from cc_flow.workflow import _all_workflows
+        workflows = _all_workflows()
+        assert "my-wf" in workflows
+        assert workflows["my-wf"]["description"] == "Custom"
