@@ -188,6 +188,7 @@ def _add_quality_commands(sub):
     auto_run.add_argument("--max", type=int, default=20)
     auto_sub.add_parser("test")
     auto_sub.add_parser("full")
+    auto_sub.add_parser("deep", help="Multi-dimensional scan (architecture+tests+docs+deps)")
     auto_sub.add_parser("status")
 
 

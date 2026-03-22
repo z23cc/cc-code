@@ -273,7 +273,7 @@ class TestAutoTeamRouting:
     def test_auto_status(self, workspace):
         out, _, code = run(["auto", "status"], cwd=workspace)
         assert code == 0
-        assert "Auto Status" in out
+        assert "success" in out
 
 
 class TestConsolidate:

@@ -1,4 +1,12 @@
-"""cc-flow auto commands."""
+"""cc-flow auto commands — OODA-loop autonomous improvement.
+
+v2 architecture:
+  OBSERVE: multi-dimensional scan (lint + architecture + tests + docs + deps)
+  ORIENT:  Q-learning adaptive priority + trend analysis
+  DECIDE:  generate proposals ranked by ROI
+  ACT:     implement, verify, learn
+  LOOP:    track effect, update Q-table, continue or stop
+"""
 
 import argparse
 import json
@@ -13,7 +21,7 @@ from cc_flow.core import (
     now_iso,
     save_task,
 )
-from cc_flow.quality import cmd_scan  # cross-module dependency
+from cc_flow.quality import cmd_scan
 
 TEAM_PATTERNS = [
     {
@@ -50,7 +58,7 @@ TEAM_PATTERNS = [
         "max_diff": 10,
     },
     {
-        "keywords": ["test", "pytest", "failing", "assert", "fixture"],
+        "keywords": ["test", "pytest", "failing", "assert", "fixture", "coverage", "no_test"],
         "template": "test-fix",
         "agents": ["researcher", "build-fixer"],
         "steps": [
@@ -61,7 +69,8 @@ TEAM_PATTERNS = [
         "max_diff": 30,
     },
     {
-        "keywords": ["refactor", "extract", "duplicate", "simplify", "complexity", "dead code"],
+        "keywords": ["refactor", "extract", "duplicate", "simplify", "complexity", "dead code",
+                     "large_file", "many_functions", "duplication"],
         "template": "refactor",
         "agents": ["researcher", "refactor-cleaner", "code-reviewer"],
         "steps": [
@@ -72,7 +81,7 @@ TEAM_PATTERNS = [
         "max_diff": 50,
     },
     {
-        "keywords": ["doc", "docstring", "readme", "comment"],
+        "keywords": ["doc", "docstring", "readme", "comment", "missing_docstrings"],
         "template": "docs",
         "agents": ["refactor-cleaner"],
         "steps": [
@@ -83,7 +92,6 @@ TEAM_PATTERNS = [
         "max_diff": 30,
     },
 ]
-
 
 DEFAULT_TEAM = {
     "template": "general-fix",
@@ -98,7 +106,7 @@ DEFAULT_TEAM = {
 
 
 def cmd_auto(args):
-    """Integrated autoimmune loop using cc-flow task system."""
+    """Integrated autoimmune loop using OODA pattern."""
     mode = getattr(args, "auto_cmd", None)
     if mode == "scan":
         _auto_scan(args)
@@ -107,26 +115,99 @@ def cmd_auto(args):
     elif mode == "test":
         _auto_test(args)
     elif mode == "full":
-        print("## Mode: Full (scan → run → test)")
+        print("## Mode: Full (observe → orient → decide → act)")
         _auto_scan(args)
         _auto_run(args)
         _auto_test(args)
     elif mode == "status":
         _auto_status(args)
+    elif mode == "deep":
+        _auto_deep_scan(args)
     else:
-        error("Usage: cc-flow auto [scan|run|test|full|status]")
+        error("Usage: cc-flow auto [scan|run|test|full|deep|status]")
 
 
 def _auto_scan(args):
-    """Mode D: scan codebase, create epic + tasks."""
-    print("## Auto Scan: detecting issues...")
-    # Use existing scan with --create-tasks
+    """OBSERVE: lint scan + create tasks."""
+    print("## OBSERVE: scanning with lint tools...")
     scan_args = argparse.Namespace(create_tasks=True)
     cmd_scan(scan_args)
 
 
+def _auto_deep_scan(args):
+    """OBSERVE+ORIENT: multi-dimensional scan with adaptive priority."""
+    from cc_flow.scanner import get_scan_trend, record_scan_snapshot, run_smart_scan
+
+    print("## OBSERVE: deep multi-dimensional scan...")
+
+    # Run all smart scanners
+    findings = run_smart_scan()
+
+    # Also run standard lint scan
+    print("## Running lint scan...")
+    scan_args = argparse.Namespace(create_tasks=False)
+    cmd_scan(scan_args)
+
+    # Count total findings
+    total = sum(len(v) for v in findings.values())
+    record_scan_snapshot(total)
+    trend = get_scan_trend()
+
+    # ORIENT: apply Q-learning priority adjustment
+    prioritized = _orient_findings(findings)
+
+    print(json.dumps({
+        "success": True,
+        "scan_type": "deep",
+        "findings": {k: len(v) for k, v in findings.items()},
+        "total": total,
+        "trend": trend,
+        "prioritized": prioritized[:10],
+        "instruction": "Run 'cc-flow auto run' to start fixing, or review findings first.",
+    }))
+
+
+def _orient_findings(findings):
+    """ORIENT: rank findings by estimated ROI using Q-learning data."""
+    try:
+        from cc_flow.qrouter import _load_qtable
+        qtable = _load_qtable()
+    except ImportError:
+        qtable = {}
+
+    # Severity weights
+    severity_weight = {"P1": 4, "P2": 3, "P3": 2, "P4": 1}
+
+    prioritized = []
+    for category, items in findings.items():
+        for item in items:
+            sev = item.get("severity", "P4")
+            base_score = severity_weight.get(sev, 1)
+
+            # Q-learning boost: if this type was successfully fixed before, boost priority
+            q_boost = 0
+            item_type = item.get("type", "")
+            for cat_key, q_values in qtable.items():
+                if item_type in cat_key or category in cat_key:
+                    best_q = max(q_values.values()) if q_values else 0
+                    q_boost = max(q_boost, best_q)
+
+            final_score = base_score + q_boost
+            prioritized.append({
+                "category": category,
+                "type": item.get("type", ""),
+                "message": item.get("message", ""),
+                "severity": sev,
+                "score": round(final_score, 2),
+                "file": item.get("file", ""),
+            })
+
+    prioritized.sort(key=lambda x: -x["score"])
+    return prioritized
+
+
 def _find_auto_epic(explicit_epic=""):
-    """Find the best epic to work on: explicit → latest scan → any with todo tasks."""
+    """Find the best epic to work on."""
     if explicit_epic:
         return explicit_epic
     scan_epics = [f.stem for f in sorted(EPICS_DIR.glob("epic-*-scan-*.md"))]
@@ -139,7 +220,7 @@ def _find_auto_epic(explicit_epic=""):
 
 
 def _find_ready_tasks(epic_filter):
-    """Find todo tasks in an epic whose dependencies are all done, sorted by priority."""
+    """Find todo tasks with satisfied deps, sorted by priority."""
     tasks = all_tasks()
     ready = [
         t for t in tasks.values()
@@ -151,8 +232,30 @@ def _find_ready_tasks(epic_filter):
     return ready
 
 
+def _recommend_team(task):
+    """Recommend a team template based on task keywords."""
+    title_lower = task.get("title", "").lower()
+    for pattern in TEAM_PATTERNS:
+        score = sum(1 for kw in pattern["keywords"] if kw in title_lower)
+        if score > 0:
+            return {
+                "template": pattern["template"],
+                "agents": pattern["agents"],
+                "steps": pattern["steps"],
+                "max_diff": pattern["max_diff"],
+                "match_score": score,
+            }
+    return {
+        "template": DEFAULT_TEAM["template"],
+        "agents": DEFAULT_TEAM["agents"],
+        "steps": DEFAULT_TEAM["steps"],
+        "max_diff": DEFAULT_TEAM["max_diff"],
+        "match_score": 0,
+    }
+
+
 def _emit_task_instruction(task):
-    """Start a task and emit structured instruction for Claude."""
+    """ACT: start task and emit structured instruction."""
     task_id = task["id"]
     task["status"] = "in_progress"
     task["started"] = now_iso()
@@ -178,19 +281,19 @@ def _emit_task_instruction(task):
             f"Max diff: {team_rec['max_diff']} lines. Verify before marking done."
         ),
         "morph_available": get_morph_client() is not None,
-        "morph_hint": "Use cc-flow apply for fast edits, cc-flow search for exploration.",
     }))
 
 
 def _auto_run(args):
-    """Mode A: pick tasks, implement, verify, mark done/discarded."""
+    """DECIDE+ACT: pick next task, execute."""
     epic_filter = _find_auto_epic(getattr(args, "epic", "") or "")
     if not epic_filter:
-        print(json.dumps({"success": True, "action": "none", "reason": "No tasks to work on. Run: cc-flow auto scan"}))
+        print(json.dumps({"success": True, "action": "none",
+                          "reason": "No tasks to work on. Run: cc-flow auto scan"}))
         return
 
     max_iterations = getattr(args, "max", 0) or 20
-    print(f"## Auto Run: epic={epic_filter}, max={max_iterations}")
+    print(f"## DECIDE+ACT: epic={epic_filter}, max={max_iterations}")
 
     for iteration in range(1, max_iterations + 1):
         ready = _find_ready_tasks(epic_filter)
@@ -200,38 +303,35 @@ def _auto_run(args):
 
         print(f"\n--- Iteration {iteration}: {ready[0]['id']} — {ready[0]['title']} ---")
         _emit_task_instruction(ready[0])
-        return  # Return control to Claude for implementation
+        return
 
     print(f"\n⏹ Max iterations ({max_iterations}) reached.")
 
 
 def _auto_test(args):
-    """Mode B: auto-fix lint/type/test errors."""
+    """ACT: auto-fix lint/type/test errors."""
     import subprocess as sp
 
-    print("## Auto Test: fixing lint + type + test errors...")
+    print("## ACT: fixing lint + type + test errors...")
 
-    # Phase B1: ruff auto-fix
     result = sp.run(["ruff", "check", ".", "--fix"], check=False, capture_output=True, text=True)
     if result.returncode == 0:
         print("B1 ruff: clean (or auto-fixed)")
     else:
         print(f"B1 ruff: {result.stdout[:200]}")
 
-    # Phase B2: Check for remaining issues
     result = sp.run(["ruff", "check", "."], check=False, capture_output=True, text=True)
     remaining = result.stdout.strip().count("\n") + 1 if result.stdout.strip() else 0
     print(f"B2 remaining ruff issues: {remaining}")
 
-    # Note: mypy and pytest fixes require Claude's reasoning — print instructions
     print(json.dumps({
         "action": "fix_remaining",
-        "instruction": "Run mypy and pytest. Fix any errors with minimal changes. Verify after each fix.",
+        "instruction": "Run mypy and pytest. Fix any errors with minimal changes.",
     }))
 
 
 def _auto_status(args):
-    """Show autoimmune session status from cc-flow data."""
+    """LEARN: show session status with trend analysis."""
     tasks = all_tasks()
     total = len(tasks)
     done = sum(1 for t in tasks.values() if t["status"] == "done")
@@ -239,7 +339,6 @@ def _auto_status(args):
     blocked = sum(1 for t in tasks.values() if t["status"] == "blocked")
     todo = total - done - in_prog - blocked
 
-    # Check log
     log_entries = 0
     kept = 0
     disc = 0
@@ -249,40 +348,30 @@ def _auto_status(args):
         kept = sum(1 for row in lines if "KEPT" in row)
         disc = sum(1 for row in lines if "DISCARDED" in row)
 
-    print("## Auto Status")
-    print("| Metric | Value |")
-    print("|--------|-------|")
-    print(f"| Tasks total | {total} |")
-    print(f"| Done | {done} |")
-    print(f"| In progress | {in_prog} |")
-    print(f"| Blocked | {blocked} |")
-    print(f"| Todo | {todo} |")
+    # Trend
+    try:
+        from cc_flow.scanner import get_scan_trend
+        trend = get_scan_trend()
+    except ImportError:
+        trend = "unknown"
+
+    # Q-learning stats
+    try:
+        from cc_flow.qrouter import q_stats
+        q_data = q_stats()
+    except ImportError:
+        q_data = {}
+
+    result = {
+        "success": True,
+        "tasks": {"total": total, "done": done, "in_progress": in_prog,
+                  "blocked": blocked, "todo": todo},
+        "trend": trend,
+    }
     if log_entries > 0:
         pct = int(kept / (kept + disc) * 100) if (kept + disc) > 0 else 0
-        print(f"| Log entries | {log_entries} |")
-        print(f"| Kept | {kept} ({pct}%) |")
-        print(f"| Discarded | {disc} |")
+        result["autoimmune"] = {"kept": kept, "discarded": disc, "success_rate": pct}
+    if q_data:
+        result["q_learning"] = q_data
 
-
-def _recommend_team(task):
-    """Recommend a team template based on task title/content keywords."""
-    title_lower = task.get("title", "").lower()
-
-    for pattern in TEAM_PATTERNS:
-        score = sum(1 for kw in pattern["keywords"] if kw in title_lower)
-        if score > 0:
-            return {
-                "template": pattern["template"],
-                "agents": pattern["agents"],
-                "steps": pattern["steps"],
-                "max_diff": pattern["max_diff"],
-                "match_score": score,
-            }
-
-    return {
-        "template": DEFAULT_TEAM["template"],
-        "agents": DEFAULT_TEAM["agents"],
-        "steps": DEFAULT_TEAM["steps"],
-        "max_diff": DEFAULT_TEAM["max_diff"],
-        "match_score": 0,
-    }
+    print(json.dumps(result))
