@@ -112,10 +112,10 @@ def cmd_search(args):
 
     client = get_morph_client()
 
-    # Try Morph WarpGrep first (5s timeout to avoid blocking)
+    # Try Morph WarpGrep first (semantic search, more accurate than grep)
     if client:
         try:
-            result = client.search(query, search_dir, max_turns=3)
+            result = client.search(query, search_dir, max_turns=6)
             if result:
                 _print_search_results(query, result, "morph-warpgrep", fmt)
                 return
@@ -131,7 +131,7 @@ def cmd_search(args):
              "--exclude-dir=build", "--exclude-dir=.next", "--exclude-dir=coverage",
              "--exclude-dir=__pycache__", "--exclude-dir=.venv",
              "-i", query, search_dir],
-            check=False, capture_output=True, text=True, timeout=10,
+            check=False, capture_output=True, text=True, timeout=15,
         )
         lines = [ln for ln in result.stdout.strip().split("\n") if ln.strip()][:30]
 
