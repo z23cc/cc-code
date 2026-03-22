@@ -6,8 +6,10 @@ from pathlib import Path
 # Ensure cc_flow package is importable
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
+from cc_flow.core import now_iso, safe_json_load, slugify
+from cc_flow.doctor import _check_python, _chk
 from cc_flow.quality import _check_task_integrity, _detect_cycles
-from cc_flow.route_learn import _keyword_route, _keyword_search, _make_result
+from cc_flow.route_learn import _calc_confidence, _keyword_route, _keyword_search, _make_result
 from cc_flow.views import _task_counts
 from cc_flow.work import _calc_duration, _format_duration
 
@@ -125,3 +127,78 @@ class TestDetectCycles:
         errors = _detect_cycles(tasks)
         assert len(errors) > 0
         assert "cycle" in errors[0].lower()
+
+    def test_three_node_cycle(self):
+        tasks = {
+            "a": {"depends_on": ["c"]},
+            "b": {"depends_on": ["a"]},
+            "c": {"depends_on": ["b"]},
+        }
+        errors = _detect_cycles(tasks)
+        assert len(errors) > 0
+
+
+class TestCoreUtils:
+    def test_now_iso_format(self):
+        result = now_iso()
+        assert result.endswith("Z")
+        assert "T" in result
+        assert len(result) == 20  # 2026-03-22T12:00:00Z
+
+    def test_slugify(self):
+        assert slugify("Hello World") == "hello-world"
+        assert slugify("  Foo  Bar  ") == "foo-bar"
+
+    def test_safe_json_load_missing(self, tmp_path):
+        result = safe_json_load(tmp_path / "nope.json", default={"x": 1})
+        assert result == {"x": 1}
+
+    def test_safe_json_load_corrupt(self, tmp_path):
+        bad = tmp_path / "bad.json"
+        bad.write_text("not json")
+        result = safe_json_load(bad, default={})
+        assert result == {}
+
+    def test_safe_json_load_valid(self, tmp_path):
+        good = tmp_path / "good.json"
+        good.write_text('{"a": 1}')
+        result = safe_json_load(good)
+        assert result == {"a": 1}
+
+
+class TestDoctorHelpers:
+    def test_chk_format(self):
+        result = _chk("Test", "pass", "ok")
+        assert result == {"name": "Test", "status": "pass", "message": "ok", "fix": None}
+
+    def test_chk_with_fix(self):
+        result = _chk("Git", "fail", "missing", "brew install git")
+        assert result["fix"] == "brew install git"
+
+    def test_check_python(self):
+        results = _check_python()
+        assert len(results) == 1
+        assert results[0]["name"] == "Python"
+        # We must be running 3.9+ in CI
+        assert results[0]["status"] in ("pass", "warn")
+
+
+class TestCalcConfidence:
+    def test_no_signals(self):
+        assert _calc_confidence(None, None, None, {}) == 0
+
+    def test_keyword_only(self):
+        best = {"score": 3, "command": "/debug", "team": "bug-fix", "description": "debug"}
+        result = _calc_confidence(best, None, None, {})
+        assert result == 75  # 3 * 25, capped at 80 → 75
+
+    def test_past_match_dominates(self):
+        best = {"score": 1, "command": "/debug", "team": "bug-fix", "description": "debug"}
+        past = {"confidence": 90}
+        result = _calc_confidence(best, past, None, {})
+        assert result == 90
+
+    def test_capped_at_99(self):
+        past = {"confidence": 100}
+        result = _calc_confidence(None, past, None, {})
+        assert result == 99
