@@ -47,95 +47,114 @@ def cmd_doctor(args):
         sys.exit(1)
 
 
-def _run_checks():
-    """Run all health checks, return list of results."""
-    checks = []
+def _chk(name, status, msg, fix=None):
+    """Build a single check result dict."""
+    return {"name": name, "status": status, "message": msg, "fix": fix}
 
-    def chk(name, status, msg, fix=None):
-        checks.append({"name": name, "status": status, "message": msg, "fix": fix})
 
-    # Python
+def _check_python():
     v = sys.version_info
+    ver_str = f"{v.major}.{v.minor}.{v.micro}"
     if v >= (3, 9):
-        chk("Python", "pass", f"{v.major}.{v.minor}.{v.micro}")
-    elif v >= (3, 7):
-        chk("Python", "warn", f"{v.major}.{v.minor} (3.9+ recommended)", "brew install python@3.12")
-    else:
-        chk("Python", "fail", f"{v.major}.{v.minor} (3.9+ required)", "brew install python@3.12")
+        return [_chk("Python", "pass", ver_str)]
+    if v >= (3, 7):
+        return [_chk("Python", "warn", f"{v.major}.{v.minor} (3.9+ recommended)", "brew install python@3.12")]
+    return [_chk("Python", "fail", f"{v.major}.{v.minor} (3.9+ required)", "brew install python@3.12")]
 
-    # Git
-    if shutil.which("git"):
-        try:
-            ver = sp.run(["git", "--version"], check=False, capture_output=True, text=True, timeout=5).stdout.strip()
-            chk("Git", "pass", ver)
-            result = sp.run(["git", "rev-parse", "--is-inside-work-tree"],
-                            check=False, capture_output=True, text=True, timeout=5)
-            if result.returncode == 0:
-                branch = sp.run(["git", "branch", "--show-current"],
-                                check=False, capture_output=True, text=True, timeout=5).stdout.strip()
-                chk("Git repo", "pass", f"branch: {branch}" if branch else "detached HEAD")
-            else:
-                chk("Git repo", "warn", "not a git repo", "git init")
-        except (sp.TimeoutExpired, OSError):
-            chk("Git", "warn", "git found but not responding")
-    else:
-        chk("Git", "fail", "git not found", "brew install git")
 
-    # Lint tools
-    for tool, pkg in [("ruff", "pip install ruff"), ("mypy", "pip install mypy")]:
-        chk(tool, "pass" if shutil.which(tool) else "warn",
-            "available" if shutil.which(tool) else "not installed",
-            None if shutil.which(tool) else pkg)
-
-    # .tasks/
-    if TASKS_DIR.exists() and META_FILE.exists():
-        chk(".tasks/", "pass", f"initialized (next_epic={load_meta().get('next_epic', '?')})")
-    elif TASKS_DIR.exists():
-        chk(".tasks/", "warn", "meta.json missing", "cc-flow init")
-    else:
-        chk(".tasks/", "warn", "not initialized", "cc-flow init")
-
-    # Task integrity
-    tasks = all_tasks()
-    if tasks:
-        orphaned = sum(1 for t in tasks.values() if not (EPICS_DIR / f"{t.get('epic', '')}.md").exists())
-        broken = sum(1 for t in tasks.values() for d in t.get("depends_on", []) if d not in tasks)
-        if orphaned == 0 and broken == 0:
-            chk("Task integrity", "pass", f"{len(tasks)} tasks, all clean")
+def _check_git():
+    if not shutil.which("git"):
+        return [_chk("Git", "fail", "git not found", "brew install git")]
+    try:
+        ver = sp.run(["git", "--version"], check=False, capture_output=True, text=True, timeout=5).stdout.strip()
+        results = [_chk("Git", "pass", ver)]
+        result = sp.run(["git", "rev-parse", "--is-inside-work-tree"],
+                        check=False, capture_output=True, text=True, timeout=5)
+        if result.returncode == 0:
+            branch = sp.run(["git", "branch", "--show-current"],
+                            check=False, capture_output=True, text=True, timeout=5).stdout.strip()
+            results.append(_chk("Git repo", "pass", f"branch: {branch}" if branch else "detached HEAD"))
         else:
-            parts = ([f"{orphaned} orphaned"] if orphaned else []) + ([f"{broken} broken deps"] if broken else [])
-            chk("Task integrity", "warn", ", ".join(parts), "cc-flow validate")
-    else:
-        chk("Task integrity", "pass", "no tasks yet")
+            results.append(_chk("Git repo", "warn", "not a git repo", "git init"))
+        return results
+    except (sp.TimeoutExpired, OSError):
+        return [_chk("Git", "warn", "git found but not responding")]
 
-    # Learnings
-    if LEARNINGS_DIR.exists():
-        count = len(list(LEARNINGS_DIR.glob("*.json")))
-        patterns_dir = TASKS_DIR / "patterns"
-        patterns = len(list(patterns_dir.glob("*.json"))) if patterns_dir.exists() else 0
-        chk("Learnings", "pass", f"{count} learnings, {patterns} patterns")
-        if count >= 20 and patterns == 0:
-            chk("Consolidation", "warn", f"{count} not consolidated", "cc-flow consolidate")
-    else:
-        chk("Learnings", "pass", "none yet")
 
-    # Config
+def _check_lint_tools():
+    results = []
+    for tool, pkg in [("ruff", "pip install ruff"), ("mypy", "pip install mypy")]:
+        found = shutil.which(tool) is not None
+        results.append(_chk(tool, "pass" if found else "warn",
+                            "available" if found else "not installed",
+                            None if found else pkg))
+    return results
+
+
+def _check_tasks_dir():
+    results = []
+    if TASKS_DIR.exists() and META_FILE.exists():
+        results.append(_chk(".tasks/", "pass", f"initialized (next_epic={load_meta().get('next_epic', '?')})"))
+    elif TASKS_DIR.exists():
+        results.append(_chk(".tasks/", "warn", "meta.json missing", "cc-flow init"))
+    else:
+        results.append(_chk(".tasks/", "warn", "not initialized", "cc-flow init"))
+
+    tasks = all_tasks()
+    if not tasks:
+        results.append(_chk("Task integrity", "pass", "no tasks yet"))
+        return results
+
+    orphaned = sum(1 for t in tasks.values() if not (EPICS_DIR / f"{t.get('epic', '')}.md").exists())
+    broken = sum(1 for t in tasks.values() for d in t.get("depends_on", []) if d not in tasks)
+    if orphaned == 0 and broken == 0:
+        results.append(_chk("Task integrity", "pass", f"{len(tasks)} tasks, all clean"))
+    else:
+        parts = ([f"{orphaned} orphaned"] if orphaned else []) + ([f"{broken} broken deps"] if broken else [])
+        results.append(_chk("Task integrity", "warn", ", ".join(parts), "cc-flow validate"))
+    return results
+
+
+def _check_learnings():
+    if not LEARNINGS_DIR.exists():
+        return [_chk("Learnings", "pass", "none yet")]
+    count = len(list(LEARNINGS_DIR.glob("*.json")))
+    patterns_dir = TASKS_DIR / "patterns"
+    patterns = len(list(patterns_dir.glob("*.json"))) if patterns_dir.exists() else 0
+    results = [_chk("Learnings", "pass", f"{count} learnings, {patterns} patterns")]
+    if count >= 20 and patterns == 0:
+        results.append(_chk("Consolidation", "warn", f"{count} not consolidated", "cc-flow consolidate"))
+    return results
+
+
+def _check_env():
+    results = []
     if CONFIG_FILE.exists():
-        chk("Config", "pass", f"{len(safe_json_load(CONFIG_FILE, default={}))} settings")
+        results.append(_chk("Config", "pass", f"{len(safe_json_load(CONFIG_FILE, default={}))} settings"))
     else:
-        chk("Config", "pass", "defaults")
+        results.append(_chk("Config", "pass", "defaults"))
 
-    # Morph API
     morph_key = os.environ.get("MORPH_API_KEY", "")
     if morph_key:
-        chk("Morph API", "pass", f"key set ({morph_key[:8]}...)")
+        results.append(_chk("Morph API", "pass", f"key set ({morph_key[:8]}...)"))
     else:
-        chk("Morph API", "warn", "MORPH_API_KEY not set (search/apply/embed disabled)",
-            "export MORPH_API_KEY=your_key")
+        results.append(_chk("Morph API", "warn", "MORPH_API_KEY not set (search/apply/embed disabled)",
+                            "export MORPH_API_KEY=your_key"))
 
     in_claude = bool(os.environ.get("CLAUDE_CODE") or os.environ.get("CLAUDE_PROJECT_DIR")
                      or os.environ.get("CLAUDE_PLUGIN_ROOT"))
-    chk("Claude Code", "pass" if in_claude else "warn",
-        "detected" if in_claude else "standalone mode")
+    results.append(_chk("Claude Code", "pass" if in_claude else "warn",
+                        "detected" if in_claude else "standalone mode"))
+    return results
 
-    return checks
+
+def _run_checks():
+    """Run all health checks, return list of results."""
+    return (
+        _check_python()
+        + _check_git()
+        + _check_lint_tools()
+        + _check_tasks_dir()
+        + _check_learnings()
+        + _check_env()
+    )
