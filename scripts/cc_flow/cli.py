@@ -56,6 +56,19 @@ def _add_project_commands(sub):
     _add_template_commands(sub)
 
 
+def _add_plugin_commands(sub):
+    """Add plugin management subcommands."""
+    plug_p = sub.add_parser("plugin", help="Plugin management (list/enable/disable/create)")
+    plug_sub = plug_p.add_subparsers(dest="plugin_cmd")
+    plug_sub.add_parser("list", help="List installed plugins")
+    plug_en = plug_sub.add_parser("enable", help="Enable a plugin")
+    plug_en.add_argument("name")
+    plug_dis = plug_sub.add_parser("disable", help="Disable a plugin")
+    plug_dis.add_argument("name")
+    plug_create = plug_sub.add_parser("create", help="Scaffold a new plugin")
+    plug_create.add_argument("name")
+
+
 def _add_workflow_commands(sub):
     """Add workflow subcommands."""
     wf_p = sub.add_parser("workflow", help="Multi-step workflow pipelines")
@@ -307,6 +320,14 @@ def build_parser():
     _add_session_commands(sub)
     _add_morph_commands(sub)
     _add_workflow_commands(sub)
+    _add_plugin_commands(sub)
     _add_misc_commands(sub)
+
+    # Let plugins register their own commands
+    try:
+        from cc_flow.plugins import register_plugin_commands
+        register_plugin_commands(sub)
+    except ImportError:
+        pass
 
     return parser

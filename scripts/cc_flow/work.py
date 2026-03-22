@@ -16,6 +16,15 @@ from cc_flow.core import (
 )
 
 
+def _fire_plugin_hook(hook_name, **kwargs):
+    """Fire lifecycle hook on plugins, silently ignoring failures."""
+    try:
+        from cc_flow.plugins import fire_hook
+        fire_hook(hook_name, **kwargs)
+    except ImportError:
+        pass
+
+
 def cmd_start(args):
     """Start a task — check deps, record git SHA, set status to in_progress."""
     path = TASKS_SUBDIR / f"{args.id}.json"
@@ -47,6 +56,7 @@ def cmd_start(args):
         pass
 
     save_task(path, data)
+    _fire_plugin_hook("on_task_start", task=data)
     print(json.dumps({"success": True, "id": args.id, "status": "in_progress"}))
 
 
@@ -103,6 +113,7 @@ def cmd_done(args):
     if diff_stats:
         data["diff"] = diff_stats
     save_task(path, data)
+    _fire_plugin_hook("on_task_done", task=data)
 
     result = {"success": True, "id": args.id, "status": "done"}
     if duration_sec is not None:
@@ -127,6 +138,7 @@ def cmd_block(args):
     data["blocked_reason"] = args.reason
     data["blocked_at"] = now_iso()
     save_task(path, data)
+    _fire_plugin_hook("on_task_block", task=data)
     print(json.dumps({"success": True, "id": args.id, "status": "blocked"}))
 
 
