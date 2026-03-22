@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 from cc_flow.config import _age_days, _safe_load_json
 from cc_flow.core import now_iso, safe_json_load, slugify
 from cc_flow.doctor import _check_python, _chk
+from cc_flow.embeddings import _content_hash, cosine_similarity
 from cc_flow.graph import STATUS_STYLE, _mermaid
 from cc_flow.quality import _check_task_integrity, _detect_cycles, _detect_language
 from cc_flow.route_learn import _calc_confidence, _keyword_route, _keyword_search, _make_result
@@ -283,3 +284,25 @@ class TestAgeDays:
         result = _age_days(f)
         assert isinstance(result, int)
         assert result >= 0
+
+
+class TestEmbeddings:
+    def test_cosine_similarity_identical(self):
+        v = [1.0, 2.0, 3.0]
+        assert cosine_similarity(v, v) > 0.999
+
+    def test_cosine_similarity_orthogonal(self):
+        assert cosine_similarity([1, 0], [0, 1]) == 0.0
+
+    def test_cosine_similarity_opposite(self):
+        assert cosine_similarity([1, 0], [-1, 0]) < -0.999
+
+    def test_cosine_similarity_zero_vector(self):
+        assert cosine_similarity([0, 0], [1, 2]) == 0.0
+
+    def test_content_hash_deterministic(self):
+        assert _content_hash("hello") == _content_hash("hello")
+        assert _content_hash("hello") != _content_hash("world")
+
+    def test_content_hash_length(self):
+        assert len(_content_hash("test")) == 16
