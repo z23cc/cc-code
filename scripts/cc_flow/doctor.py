@@ -76,9 +76,10 @@ def _check_git():
             results.append(_chk("Git repo", "pass", f"branch: {branch}" if branch else "detached HEAD"))
         else:
             results.append(_chk("Git repo", "warn", "not a git repo", "git init"))
-        return results
     except (sp.TimeoutExpired, OSError):
         return [_chk("Git", "warn", "git found but not responding")]
+    else:
+        return results
 
 
 def _check_lint_tools():

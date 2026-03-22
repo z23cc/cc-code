@@ -343,66 +343,54 @@ class MorphClient:
 
 # ── CLI ──
 
-def main():
-    """CLI entry point."""
+def _build_morph_parser():
+    """Build argparse parser for the morph CLI."""
     import argparse
 
     parser = argparse.ArgumentParser(prog="morph", description="Morph API client (Python)")
     parser.add_argument("--version", action="version", version="morph-py 1.0.0")
     sub = parser.add_subparsers(dest="command")
 
-    # apply
     apply_p = sub.add_parser("apply", help="Apply code changes to a file")
     apply_p.add_argument("--file", required=True)
     apply_p.add_argument("--instruction", required=True)
     apply_p.add_argument("--update", default="")
     apply_p.add_argument("--model", default="auto", choices=["morph-v3-fast", "morph-v3-large", "auto"])
 
-    # search
     search_p = sub.add_parser("search", help="Semantic code search")
     search_p.add_argument("--query", required=True)
     search_p.add_argument("--dir", default=".")
 
-    # embed
     embed_p = sub.add_parser("embed", help="Generate code embeddings")
     embed_p.add_argument("--input", required=True)
 
-    # rerank
     rerank_p = sub.add_parser("rerank", help="Rerank documents by relevance")
     rerank_p.add_argument("--query", required=True)
     rerank_p.add_argument("--documents", nargs="+", required=True)
     rerank_p.add_argument("--top-n", type=int, default=None)
 
-    # compact
     compact_p = sub.add_parser("compact", help="Compress text")
     compact_p.add_argument("--file", default="")
     compact_p.add_argument("--ratio", type=float, default=0.3)
 
-    args = parser.parse_args()
+    return parser
 
-    try:
-        client = MorphClient()
-    except ValueError as exc:
-        print(json.dumps({"success": False, "error": str(exc)}))
-        sys.exit(1)
 
+def _dispatch_morph(client, args):
+    """Dispatch a morph CLI command."""
     if args.command == "apply":
         update = args.update if args.update else (sys.stdin.read() if not sys.stdin.isatty() else "")
         result = client.apply_file(args.file, args.instruction, update, args.model)
         print(json.dumps({"success": True, "file": args.file, "chars": len(result)}))
-
     elif args.command == "search":
         result = client.search(args.query, args.dir)
         print(result if isinstance(result, str) else json.dumps(result))
-
     elif args.command == "embed":
         vectors = client.embed(args.input)
         print(json.dumps({"success": True, "dimensions": len(vectors[0]), "count": len(vectors)}))
-
     elif args.command == "rerank":
         results = client.rerank(args.query, args.documents, args.top_n)
         print(json.dumps({"success": True, "results": results}))
-
     elif args.command == "compact":
         text = Path(args.file).read_text() if args.file else sys.stdin.read()
         result = client.compact(text, args.ratio)
@@ -411,8 +399,23 @@ def main():
         savings = int((1 - compressed / original) * 100) if original > 0 else 0
         print(json.dumps({"success": True, "original": original, "compressed": compressed, "savings": f"{savings}%"}))
         print(result)
-
     else:
+        return False
+    return True
+
+
+def main():
+    """CLI entry point."""
+    parser = _build_morph_parser()
+    args = parser.parse_args()
+
+    try:
+        client = MorphClient()
+    except ValueError as exc:
+        print(json.dumps({"success": False, "error": str(exc)}))
+        sys.exit(1)
+
+    if not _dispatch_morph(client, args):
         parser.print_help()
         sys.exit(1)
 
