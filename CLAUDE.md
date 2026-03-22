@@ -6,7 +6,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 - `scripts/cc_flow/` — Task & workflow CLI package (38 subcommands, entry: `cc_flow.entry:main`)
 - `scripts/morph_client.py` — Pure Python Morph API client (Apply, WarpGrep, Embed, Rerank)
-- `agents/` — 23 agents (11 core + 12 cc-scout-* scouts, all `model: inherit`)
+- `agents/` — 11 general agents + 12 scout agents (read-only specialists), all `model: inherit`
 - `skills/` — 47 skills (all prefixed `cc-`):
   - **Core (23):** brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, teams, autoimmune, readiness-audit, search-strategy, git-workflow, prompt-engineering, clean-architecture, context-tips, docs, incident, dependency-upgrade, feedback-loop
   - **Python pack (12):** python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, scaffold, deploy, task-queues
@@ -16,36 +16,40 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 - `rules/` — 9 always-on rules: python-style, testing, security, git, docs-sync, agent-orchestration, workflow, performance, tool-priority
 - `hooks/` — 5 hooks: SessionStart, PreToolUse, PostToolUse, PreCompact, Stop
 
-## Key Workflow (team-first, auto-integrated)
+## Quick Decision Tree
 
-```
-/cc-route → suggests command + team + confidence % (morph rerank)
-    ↓
-/cc-brainstorm (auto-scouts → interview → architect)
-    ↓
-/cc-plan (auto-imports tasks to cc-flow with tags + templates)
-    ↓
-/cc-tdd (worker → code-reviewer → security-reviewer)
-    ↓
-/cc-review (researcher → parallel reviewers → consolidate)
-    ↓
-/cc-commit → cc-flow learn → cc-flow consolidate → smarter routing
-```
+| You want to... | Start with |
+|----------------|------------|
+| Build a new feature | `/cc-brainstorm` → `/cc-plan` → `/cc-tdd` |
+| Fix a bug | `/cc-debug` (researcher → fixer → reviewer) |
+| Fix build/lint errors | `/cc-fix` (build-fixer agent) |
+| Review code quality | `/cc-review` (parallel reviewers) |
+| Understand unfamiliar code | `/cc-research` (researcher agent) |
+| Assess project health | `/cc-audit` or `/cc-prime` (all scouts) |
+| Not sure what to do | `/cc-route "describe your task"` |
 
-Alternative entries: `/cc-blueprint`, `/cc-interview`, `/cc-prime`, `/cc-debug`, `/cc-autoimmune`
+## Teams
+
+| Team | Agents | Used by |
+|------|--------|---------|
+| feature-dev | scouts → architect → planner → worker | `/cc-brainstorm`, `/cc-plan`, `/cc-tdd` |
+| bug-fix | researcher → build-fixer → code-reviewer | `/cc-debug`, `/cc-fix` |
+| review | python-reviewer + security-reviewer (parallel) → consolidate | `/cc-review`, `/cc-pr-review` |
+| refactor | researcher → refactor-cleaner → code-reviewer | `/cc-simplify` |
+| audit | all 12 scouts (parallel) | `/cc-prime`, `/cc-audit` |
 
 ## Tool Priority
 
-1. cc-flow morph commands (`search`, `apply`, `embed`, `compact`) → semantic search, fast edits, embeddings
-2. rp-cli (`context_builder`, `structure`, `review`) → deep cross-file analysis
-3. Built-in (Grep, Read, Edit) → fallback
+1. MCP tools (`edit_file`, `codebase_search`) → fastest, use when available
+2. cc-flow morph commands (`search`, `apply`, `embed`, `compact`) → CLI fallback
+3. rp-cli (`context_builder`, `structure`, `review`) → deep cross-file analysis
+4. Built-in (Grep, Read, Edit) → last resort
 
 ## cc-flow Quick Reference
 
 ```bash
 # After: pip install -e .  →  cc-flow <command>
 # Or:    python -m cc_flow <command>  (from scripts/)
-# Or:    CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py" (legacy shim)
 
 cc-flow dashboard                              # one-screen overview
 cc-flow search "auth flow" --rerank            # semantic search + rerank
