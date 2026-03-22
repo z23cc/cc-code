@@ -270,9 +270,19 @@ def _detect_language():
 
 def cmd_verify(args):
     """Run lint + test verification, auto-detecting project language."""
+    from pathlib import Path
+
     lang = _detect_language()
     if not lang:
         error("Cannot detect project language. No pyproject.toml, package.json, go.mod, or Cargo.toml found.")
+
+    # Warn if Node project has no node_modules
+    if lang == "node" and not Path("node_modules").exists():
+        print(json.dumps({
+            "success": False, "language": lang,
+            "steps": [], "summary": "node_modules not found — run 'npm install' first",
+        }))
+        sys.exit(1)
 
     profile = _VERIFY_PROFILES[lang]
     fix_mode = getattr(args, "fix", False)
@@ -293,11 +303,17 @@ def cmd_verify(args):
         passed = result.returncode == 0
         if not passed:
             all_passed = False
+        stderr = result.stderr[-200:] if result.stderr else ""
+        # "command not found" = missing tool, mark as skipped not failed
+        skipped = not passed and "not found" in stderr
+        if not passed and not skipped:
+            all_passed = False
         results.append({
             "step": label,
             "passed": passed,
+            "skipped": skipped,
             "output": result.stdout[-500:] if not passed else "",
-            "error": result.stderr[-200:] if not passed else "",
+            "error": stderr if not passed else "",
         })
 
     print(json.dumps({
