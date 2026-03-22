@@ -251,9 +251,13 @@ def _add_morph_commands(sub):
 
 
 def _add_misc_commands(sub):
-    """Add misc subcommands: log, summary, archive, stats, perf, version, config."""
+    """Add misc subcommands: log, summary, archive, stats, perf, insights, version, config."""
     perf_p = sub.add_parser("perf", help="Command performance analytics")
     perf_p.add_argument("--top", type=int, default=10)
+    forecast_p = sub.add_parser("forecast", help="Predict epic completion date from velocity")
+    forecast_p.add_argument("--epic", default="")
+    sub.add_parser("evolve", help="Meta-learning: recommend next improvement focus")
+    sub.add_parser("health", help="Composite project health score (0-100)")
     log_p = sub.add_parser("log")
     log_p.add_argument("--show", type=int, default=0)
     log_p.add_argument("--iteration", type=int, default=None)
