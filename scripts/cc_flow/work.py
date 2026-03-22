@@ -27,6 +27,8 @@ def _fire_plugin_hook(hook_name, **kwargs):
 
 def cmd_start(args):
     """Start a task — check deps, record git SHA, set status to in_progress."""
+    from cc_flow.core import resolve_task_id
+    args.id = resolve_task_id(args.id)
     path = TASKS_SUBDIR / f"{args.id}.json"
     if not path.exists():
         error(f"Task not found: {args.id}")
@@ -93,6 +95,8 @@ def _consolidation_hint():
 
 def cmd_done(args):
     """Complete a task — record duration, diff stats, and optional summary."""
+    from cc_flow.core import resolve_task_id
+    args.id = resolve_task_id(args.id)
     path = TASKS_SUBDIR / f"{args.id}.json"
     if not path.exists():
         error(f"Task not found: {args.id}")
@@ -129,6 +133,8 @@ def cmd_done(args):
 
 def cmd_block(args):
     """Block a task with a reason."""
+    from cc_flow.core import resolve_task_id
+    args.id = resolve_task_id(args.id)
     path = TASKS_SUBDIR / f"{args.id}.json"
     if not path.exists():
         error(f"Task not found: {args.id}")
@@ -144,6 +150,8 @@ def cmd_block(args):
 
 def cmd_reopen(args):
     """Reopen a done or blocked task back to todo."""
+    from cc_flow.core import resolve_task_id
+    args.id = resolve_task_id(args.id)
     path = TASKS_SUBDIR / f"{args.id}.json"
     if not path.exists():
         error(f"Task not found: {args.id}")
@@ -167,6 +175,9 @@ def cmd_diff(args):
     """Show git changes since a task was started."""
     import subprocess as _sp
 
+    from cc_flow.core import resolve_task_id
+
+    args.id = resolve_task_id(args.id)
     path = TASKS_SUBDIR / f"{args.id}.json"
     if not path.exists():
         error(f"Task not found: {args.id}")

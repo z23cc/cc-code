@@ -163,6 +163,30 @@ def allocate_epic_num(meta):
     return n
 
 
+def resolve_task_id(task_id):
+    """Resolve a potentially abbreviated task ID to the full ID.
+
+    Supports: exact match, prefix match, and epic-N.M → epic-N-slug.M shorthand.
+    """
+    if not TASKS_SUBDIR.exists():
+        return task_id
+    # Exact match
+    if (TASKS_SUBDIR / f"{task_id}.json").exists():
+        return task_id
+    # Prefix match
+    candidates = [f.stem for f in TASKS_SUBDIR.glob("*.json") if f.stem.startswith(task_id)]
+    if len(candidates) == 1:
+        return candidates[0]
+    # Shorthand: epic-1.3 → epic-1-*.3
+    if "." in task_id:
+        prefix, num = task_id.rsplit(".", 1)
+        candidates = [f.stem for f in TASKS_SUBDIR.glob("*.json")
+                      if f.stem.startswith(prefix) and f.stem.endswith(f".{num}")]
+        if len(candidates) == 1:
+            return candidates[0]
+    return task_id
+
+
 def resolve_epic_id(epic_id):
     """Resolve a potentially abbreviated epic ID to the full ID.
 
