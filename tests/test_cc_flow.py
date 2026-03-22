@@ -1075,3 +1075,28 @@ class TestTemplateCmd:
         out, _, _ = run(["template", "list"], cwd=workspace)
         data = json.loads(out)
         assert "hotfix" in data["templates"]
+
+
+class TestPlugin:
+    def test_plugin_list_empty(self, workspace):
+        out, _, code = run(["plugin", "list"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["count"] == 0
+
+    def test_plugin_create_and_list(self, workspace):
+        _, _, code = run(["plugin", "create", "test-plug"], cwd=workspace)
+        assert code == 0
+        out, _, _ = run(["plugin", "list"], cwd=workspace)
+        data = json.loads(out)
+        assert data["count"] == 1
+        assert data["plugins"][0]["name"] == "test-plug"
+
+    def test_plugin_disable_enable(self, workspace):
+        run(["plugin", "create", "test-plug"], cwd=workspace)
+        out, _, _ = run(["plugin", "disable", "test-plug"], cwd=workspace)
+        data = json.loads(out)
+        assert data["enabled"] is False
+        out, _, _ = run(["plugin", "enable", "test-plug"], cwd=workspace)
+        data = json.loads(out)
+        assert data["enabled"] is True

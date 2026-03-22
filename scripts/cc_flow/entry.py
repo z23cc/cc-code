@@ -73,6 +73,10 @@ _SUBCMD_MAP = {
         "list": "workflow:cmd_workflow_list", "show": "workflow:cmd_workflow_show",
         "run": "workflow:cmd_workflow_run", "create": "workflow:cmd_workflow_create",
     }),
+    "plugin": ("plugin_cmd", {
+        "list": "plugins:cmd_plugin_list", "enable": "plugins:cmd_plugin_enable",
+        "disable": "plugins:cmd_plugin_disable", "create": "plugins:cmd_plugin_create",
+    }),
 }
 
 # Special dispatchers (these modules handle their own subcommand parsing)
@@ -112,5 +116,12 @@ def main():
     elif cmd in _COMMANDS:
         _resolve(_COMMANDS[cmd])(args)
     else:
+        # Try plugin commands before giving up
+        try:
+            from cc_flow.plugins import dispatch_plugin_command
+            if dispatch_plugin_command(cmd, args):
+                return
+        except ImportError:
+            pass
         parser.print_help()
         sys.exit(1)
