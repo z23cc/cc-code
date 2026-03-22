@@ -41,12 +41,17 @@ def _add_project_commands(sub):
     task_update.add_argument("--priority", type=int, default=None)
     task_update.add_argument("--size", choices=["XS", "S", "M", "L", "XL"], default="")
     task_update.add_argument("--tags", default="")
+    task_comment = task_sub.add_parser("comment", help="Add a note to a task")
+    task_comment.add_argument("id")
+    task_comment.add_argument("--text", required=True)
 
     dep_p = sub.add_parser("dep", help="Dependency management")
     dep_sub = dep_p.add_subparsers(dest="dep_cmd")
     dep_add = dep_sub.add_parser("add")
     dep_add.add_argument("id")
     dep_add.add_argument("dep")
+    dep_show = dep_sub.add_parser("show", help="Show dependency chain for a task")
+    dep_show.add_argument("id")
 
 
 def _add_view_commands(sub):
@@ -196,6 +201,8 @@ def _add_misc_commands(sub):
     sub.add_parser("summary", help="Autoimmune session summary")
     sub.add_parser("archive", help="Show completed epics/tasks")
     sub.add_parser("stats", help="Productivity metrics")
+    standup_p = sub.add_parser("standup", help="Daily standup report (done/active/blocked/next)")
+    standup_p.add_argument("--hours", type=int, default=24, help="Lookback period (default: 24h)")
     sub.add_parser("version", help="Print cc-flow version")
     config_p = sub.add_parser("config", help="View/set cc-flow configuration")
     config_p.add_argument("key", nargs="?", default="")

@@ -287,6 +287,20 @@ def cmd_task_update(args):
     print(json.dumps({"success": True, "id": args.id, "updated": updated}))
 
 
+def cmd_task_comment(args):
+    """Add a comment/note to a task without changing its status."""
+    path = TASKS_SUBDIR / f"{args.id}.json"
+    if not path.exists():
+        error(f"Task not found: {args.id}")
+
+    data = safe_json_load(path)
+    comments = data.get("comments", [])
+    comments.append({"text": args.text, "at": now_iso()})
+    data["comments"] = comments
+    save_task(path, data)
+    print(json.dumps({"success": True, "id": args.id, "comment_count": len(comments)}))
+
+
 def cmd_task_set_spec(args):
     """Update task spec from file."""
     task_id = args.id
@@ -341,3 +355,47 @@ def cmd_dep_add(args):
         data["depends_on"] = deps
         save_task(path, data)
     print(json.dumps({"success": True, "id": args.id, "depends_on": deps}))
+
+
+def cmd_dep_show(args):
+    """Show dependency chain for a task — what it needs and what needs it."""
+    task_id = args.id
+    tasks = all_tasks()
+    if task_id not in tasks:
+        error(f"Task not found: {task_id}")
+
+    task = tasks[task_id]
+
+    # Upstream: what this task depends on (recursive)
+    def _upstream(tid, visited=None):
+        if visited is None:
+            visited = set()
+        if tid in visited:
+            return []
+        visited.add(tid)
+        result = []
+        for dep in tasks.get(tid, {}).get("depends_on", []):
+            if dep in tasks:
+                result.append({"id": dep, "title": tasks[dep].get("title", ""), "status": tasks[dep]["status"]})
+                result.extend(_upstream(dep, visited))
+        return result
+
+    # Downstream: what depends on this task
+    downstream = [
+        {"id": tid, "title": t.get("title", ""), "status": t["status"]}
+        for tid, t in tasks.items()
+        if task_id in t.get("depends_on", [])
+    ]
+
+    print(json.dumps({
+        "success": True,
+        "id": task_id,
+        "title": task.get("title", ""),
+        "status": task["status"],
+        "upstream": _upstream(task_id),
+        "downstream": downstream,
+        "blocked_by": [
+            u["id"] for u in _upstream(task_id)
+            if u["status"] != "done" and u["id"] in task.get("depends_on", [])
+        ],
+    }))
