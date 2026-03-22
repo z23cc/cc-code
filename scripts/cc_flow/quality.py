@@ -37,9 +37,11 @@ def cmd_validate(args):
             warnings.append(f"Task {tid}: spec file missing")
         if t.get("status") not in ("todo", "in_progress", "done", "blocked"):
             errors.append(f"Task {tid}: invalid status '{t.get('status')}'")
-        for dep in t.get("depends_on", []):
-            if dep not in tasks:
-                errors.append(f"Task {tid}: dependency {dep} not found")
+        errors.extend(
+            f"Task {tid}: dependency {dep} not found"
+            for dep in t.get("depends_on", [])
+            if dep not in tasks
+        )
 
     def has_cycle(task_id, visited, rec_stack):
         visited.add(task_id)
