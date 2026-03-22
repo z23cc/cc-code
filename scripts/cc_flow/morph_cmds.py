@@ -7,6 +7,9 @@ from pathlib import Path
 
 from cc_flow.core import error, get_morph_client
 
+# Exceptions that Morph API calls can raise
+_MORPH_ERRORS = (RuntimeError, TimeoutError, OSError, json.JSONDecodeError, KeyError, ValueError)
+
 
 def cmd_apply(args):
     """Apply code changes to a file using Morph Fast Apply (10,500+ tok/s)."""
@@ -36,7 +39,7 @@ def cmd_apply(args):
             "chars": len(result),
             "model": model,
         }))
-    except Exception as exc:
+    except _MORPH_ERRORS as exc:
         error(f"apply failed: {exc}")
 
 
@@ -66,7 +69,7 @@ def cmd_embed(args):
             "count": len(vectors),
             "preview": vectors[0][:5],  # First 5 dims as preview
         }))
-    except Exception as exc:
+    except _MORPH_ERRORS as exc:
         error(f"embed failed: {exc}")
 
 
@@ -93,7 +96,7 @@ def _rerank_lines(client, query, lines):
     try:
         ranked = client.rerank(query, lines, top_n=min(10, len(lines)))
         return [r["document"] for r in ranked], "grep+rerank"
-    except Exception:
+    except _MORPH_ERRORS:
         return lines, "grep (rerank failed)"
 
 
@@ -116,7 +119,7 @@ def cmd_search(args):
             if result:
                 _print_search_results(query, result, "morph-warpgrep", fmt)
                 return
-        except Exception:
+        except _MORPH_ERRORS:
             pass
 
     # Fallback to grep
@@ -166,7 +169,7 @@ def cmd_compact(args):
             Path(args.output).write_text(output)
         else:
             print(output)
-    except Exception as exc:
+    except _MORPH_ERRORS as exc:
         error(f"compact failed: {exc}")
 
 
