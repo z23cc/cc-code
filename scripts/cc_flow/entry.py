@@ -126,6 +126,12 @@ def _run_with_perf(cmd, handler, args):
 
 def main():
     """Parse args and dispatch to the appropriate command handler."""
+    # No arguments → enter interactive REPL
+    if len(sys.argv) <= 1:
+        from cc_flow.repl import run_repl
+        run_repl()
+        return
+
     parser = build_parser()
     args = parser.parse_args()
 
