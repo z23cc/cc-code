@@ -41,7 +41,8 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 ## Tool Priority
 
 1. cc-flow CLI (`search`, `apply`, `embed`, `compact`) → semantic search, fast edits
-2. Built-in (Grep, Read, Edit) → exact patterns, targeted operations
+2. rp-cli (`context_builder`, `structure`, `review`) → deep cross-file analysis
+3. Built-in (Grep, Read, Edit) → exact patterns, targeted operations
 
 ## cc-flow Quick Reference
 
