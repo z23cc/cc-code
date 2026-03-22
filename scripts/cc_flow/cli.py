@@ -69,6 +69,42 @@ def _add_plugin_commands(sub):
     plug_create.add_argument("name")
 
 
+def _add_gh_commands(sub):
+    """Add GitHub integration subcommands."""
+    gh_p = sub.add_parser("gh", help="GitHub integration (import/export/status)")
+    gh_sub = gh_p.add_subparsers(dest="gh_cmd")
+    gh_import = gh_sub.add_parser("import", help="Import GitHub issues as tasks")
+    gh_import.add_argument("--epic", required=True)
+    gh_import.add_argument("--label", default="")
+    gh_import.add_argument("--limit", type=int, default=20)
+    gh_export = gh_sub.add_parser("export", help="Create GitHub issues from tasks")
+    gh_export.add_argument("--epic", default="")
+    gh_export.add_argument("--dry-run", action="store_true", default=False)
+    gh_sub.add_parser("status", help="Show GitHub repo + cc-flow sync status")
+
+
+def _add_context_commands(sub):
+    """Add context management subcommands."""
+    ctx_p = sub.add_parser("context", help="Project context management")
+    ctx_sub = ctx_p.add_subparsers(dest="context_cmd")
+    ctx_save = ctx_sub.add_parser("save", help="Save current context snapshot")
+    ctx_save.add_argument("--name", default="default")
+    ctx_sub.add_parser("show", help="Show saved context")
+    ctx_sub.add_parser("brief", help="One-paragraph project brief")
+
+
+def _add_alias_commands(sub):
+    """Add alias management subcommands."""
+    alias_p = sub.add_parser("alias", help="Command aliases (shortcuts)")
+    alias_sub = alias_p.add_subparsers(dest="alias_cmd")
+    alias_sub.add_parser("list", help="List aliases")
+    alias_set = alias_sub.add_parser("set", help="Set alias: alias set <name> <cmd...>")
+    alias_set.add_argument("name")
+    alias_set.add_argument("target", nargs="*", help="Command to alias")
+    alias_rm = alias_sub.add_parser("remove", help="Remove an alias")
+    alias_rm.add_argument("name")
+
+
 def _add_workflow_commands(sub):
     """Add workflow subcommands."""
     wf_p = sub.add_parser("workflow", help="Multi-step workflow pipelines")
@@ -331,6 +367,9 @@ def build_parser():
     _add_morph_commands(sub)
     _add_workflow_commands(sub)
     _add_plugin_commands(sub)
+    _add_gh_commands(sub)
+    _add_context_commands(sub)
+    _add_alias_commands(sub)
     _add_misc_commands(sub)
 
     # Let plugins register their own commands
