@@ -93,6 +93,10 @@ _SUBCMD_MAP = {
         "list": "aliases:cmd_alias_list", "set": "aliases:cmd_alias_set",
         "remove": "aliases:cmd_alias_remove",
     }),
+    "eval": ("eval_cmd", {
+        "run": "eval_harness:cmd_eval_run", "detail": "eval_harness:cmd_eval_detail",
+        "history": "eval_harness:cmd_eval_history",
+    }),
 }
 
 # Special dispatchers (these modules handle their own subcommand parsing)

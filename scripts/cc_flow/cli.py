@@ -286,6 +286,17 @@ def _add_morph_commands(sub):
     ghsearch_p.add_argument("--url", default="")
 
 
+def _add_eval_commands(sub):
+    """Add evaluation harness subcommands."""
+    ev_p = sub.add_parser("eval", help="Coding capability evaluation")
+    ev_sub = ev_p.add_subparsers(dest="eval_cmd")
+    ev_run = ev_sub.add_parser("run", help="Run evaluation suite")
+    ev_run.add_argument("--dimensions", default="", help="Comma-separated: route,search,speed,health")
+    ev_detail = ev_sub.add_parser("detail", help="Detailed results for one dimension")
+    ev_detail.add_argument("dimension")
+    ev_sub.add_parser("history", help="Score history and trends")
+
+
 def _add_misc_commands(sub):
     """Add misc subcommands: log, summary, archive, stats, perf, insights, version, config."""
     perf_p = sub.add_parser("perf", help="Command performance analytics")
@@ -370,6 +381,7 @@ def build_parser():
     _add_gh_commands(sub)
     _add_context_commands(sub)
     _add_alias_commands(sub)
+    _add_eval_commands(sub)
     _add_misc_commands(sub)
 
     # Let plugins register their own commands

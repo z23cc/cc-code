@@ -132,11 +132,13 @@ def cmd_search(args):
         )
         lines = [ln for ln in result.stdout.strip().split("\n") if ln.strip()][:30]
 
-        engine = "grep"
-        if do_rerank and lines:
-            lines, engine = _rerank_lines(client, query, lines)
-
-        _print_search_results(query, lines, engine, fmt)
+        if not lines:
+            _print_search_results(query, "No matches", "grep", fmt)
+        else:
+            engine = "grep"
+            if do_rerank:
+                lines, engine = _rerank_lines(client, query, lines)
+            _print_search_results(query, lines, engine, fmt)
     except (_sp.TimeoutExpired, OSError):
         error("Search failed")
 
