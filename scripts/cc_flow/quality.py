@@ -88,13 +88,10 @@ def cmd_validate(args):
         sys.exit(1)
 
 
-def cmd_scan(args):
-    """Scan codebase for issues, generate improvement epic + tasks."""
+def _scan_ruff():
+    """Run ruff and return P3 findings grouped by rule."""
     import subprocess
-
-    findings = {"P1": [], "P2": [], "P3": [], "P4": []}
-
-    # Ruff
+    findings = []
     try:
         result = subprocess.run(["ruff", "check", ".", "--output-format", "json"],
                                 check=False, capture_output=True, text=True, timeout=30)
@@ -104,21 +101,31 @@ def cmd_scan(args):
             for i in issues:
                 by_rule.setdefault(i.get("code", "?"), []).append(i)
             for rule, items in sorted(by_rule.items(), key=lambda x: -len(x[1]))[:10]:
-                findings["P3"].append(f"Fix {len(items)}x ruff {rule}: {items[0].get('message', '')}")
+                findings.append(f"Fix {len(items)}x ruff {rule}: {items[0].get('message', '')}")
     except (FileNotFoundError, subprocess.TimeoutExpired, json.JSONDecodeError):
         pass
+    return findings
 
-    # Mypy
+
+def _scan_mypy():
+    """Run mypy and return P2 findings."""
+    import subprocess
     try:
         result = subprocess.run(["mypy", ".", "--no-error-summary"],
                                 check=False, capture_output=True, text=True, timeout=60)
-        for line in result.stdout.strip().split("\n")[:10]:
-            if line.strip() and "error:" in line:
-                findings["P2"].append(f"Fix mypy: {line.strip()}")
+        return [
+            f"Fix mypy: {line.strip()}"
+            for line in result.stdout.strip().split("\n")[:10]
+            if line.strip() and "error:" in line
+        ]
     except (FileNotFoundError, subprocess.TimeoutExpired):
-        pass
+        return []
 
-    # Bandit
+
+def _scan_bandit():
+    """Run bandit and return findings keyed by priority (P1 or P3)."""
+    import subprocess
+    findings = {"P1": [], "P3": []}
     try:
         result = subprocess.run(["bandit", "-r", ".", "-f", "json", "-q"],
                                 check=False, capture_output=True, text=True, timeout=30)
@@ -131,7 +138,42 @@ def cmd_scan(args):
                     f"[{sev}] {r.get('issue_text', '')} ({r.get('filename', '')}:{r.get('line_number', '')})")
     except (FileNotFoundError, subprocess.TimeoutExpired, json.JSONDecodeError):
         pass
+    return findings
 
+
+_PRIORITY_NUM = {"P1": 1, "P2": 2, "P3": 3, "P4": 4}
+
+
+def _create_scan_tasks(findings, epic_id):
+    """Create cc-flow tasks from scan findings. Returns task count."""
+    spec_lines = ["# Epic: Code scan\n\n## Findings\n"]
+    task_num = 0
+    for priority in ("P1", "P2", "P3", "P4"):
+        for finding in findings[priority]:
+            task_num += 1
+            task_id = f"{epic_id}.{task_num}"
+            save_task(TASKS_SUBDIR / f"{task_id}.json", {
+                "id": task_id, "epic": epic_id, "title": f"[{priority}] {finding}",
+                "status": "todo", "depends_on": [],
+                "priority": _PRIORITY_NUM[priority],
+                "created": now_iso(),
+            })
+            (TASKS_SUBDIR / f"{task_id}.md").write_text(f"# Task: {finding}\n\n## Fix\n\n[Describe the fix]\n")
+            spec_lines.append(f"- [{priority}] {finding}")
+
+    (EPICS_DIR / f"{epic_id}.md").write_text("\n".join(spec_lines) + "\n")
+    return task_num
+
+
+def cmd_scan(args):
+    """Scan codebase for issues, generate improvement epic + tasks."""
+    bandit_findings = _scan_bandit()
+    findings = {
+        "P1": bandit_findings["P1"],
+        "P2": _scan_mypy(),
+        "P3": _scan_ruff() + bandit_findings["P3"],
+        "P4": [],
+    }
     total = sum(len(v) for v in findings.values())
 
     if args.create_tasks and total > 0:
@@ -145,28 +187,12 @@ def cmd_scan(args):
 
         epic_num = locked_meta_update(allocate)
         epic_id = f"epic-{epic_num}-scan-{date_slug}"
+        task_num = _create_scan_tasks(findings, epic_id)
 
-        spec_lines = [f"# Epic: Code scan {date_slug}\n\n## Findings\n"]
-        task_num = 0
-        for priority in ("P1", "P2", "P3", "P4"):
-            for finding in findings[priority]:
-                task_num += 1
-                task_id = f"{epic_id}.{task_num}"
-                save_task(TASKS_SUBDIR / f"{task_id}.json", {
-                    "id": task_id, "epic": epic_id, "title": f"[{priority}] {finding}",
-                    "status": "todo", "depends_on": [],
-                    "priority": {"P1": 1, "P2": 2, "P3": 3, "P4": 4}[priority],
-                    "created": now_iso(),
-                })
-                (TASKS_SUBDIR / f"{task_id}.md").write_text(f"# Task: {finding}\n\n## Fix\n\n[Describe the fix]\n")
-                spec_lines.append(f"- [{priority}] {finding}")
-
-        (EPICS_DIR / f"{epic_id}.md").write_text("\n".join(spec_lines) + "\n")
         print(json.dumps({"success": True, "epic": epic_id, "tasks_created": task_num,
                           "findings": {k: len(v) for k, v in findings.items()}}))
     else:
-        output = {"success": True, "total": total, "findings": {}}
-        for p in ("P1", "P2", "P3", "P4"):
-            if findings[p]:
-                output["findings"][p] = findings[p]
+        output = {"success": True, "total": total, "findings": {
+            p: findings[p] for p in ("P1", "P2", "P3", "P4") if findings[p]
+        }}
         print(json.dumps(output))
