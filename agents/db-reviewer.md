@@ -2,7 +2,6 @@
 name: db-reviewer
 description: Database specialist — query optimization, schema design, migrations, index strategy, security (SQL injection, RLS). Use when changes touch database queries, models, or migrations.
 tools: ["Read", "Grep", "Glob", "Bash"]
-disallowedTools: ["Write", "Edit"]
 model: inherit
 ---
 

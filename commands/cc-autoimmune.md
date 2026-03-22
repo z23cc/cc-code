@@ -1,5 +1,6 @@
 ---
 description: "Autonomous improvement loop integrated with cc-flow tasks. TRIGGER: 'autoimmune', 'auto improve', 'auto scan', '自动改进', '自动扫描', '跑改进循环'. 4 modes: code/test/full/scan."
+team: "autoimmune"
 ---
 
 Activate the cc-autoimmune skill. **Use cc-flow auto commands for task-integrated loops.**

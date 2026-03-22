@@ -2,7 +2,6 @@
 name: code-reviewer
 description: General code review specialist — quality, security, maintainability. Use after writing or modifying code.
 tools: ["Read", "Grep", "Glob", "Bash"]
-disallowedTools: ["Write", "Edit"]
 model: inherit
 ---
 

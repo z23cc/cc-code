@@ -1,5 +1,6 @@
 ---
 description: "One-line goal → multi-step construction plan. Turns a brief objective into a phased implementation blueprint with dependency graph. TRIGGER: 'blueprint', 'build plan from scratch', 'how to build X', '蓝图', '从零开始规划'. Use for multi-PR/multi-session projects."
+team: "blueprint"
 ---
 
 Turn a one-line objective into a complete construction blueprint.

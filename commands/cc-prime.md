@@ -1,5 +1,6 @@
 ---
 description: "One-click project assessment — runs all scouts in parallel, generates comprehensive report. TRIGGER: 'project assessment', 'full scan', 'prime', '全面检查', '项目评估'. Use on new projects or before major changes."
+team: "audit"
 ---
 
 Run a comprehensive project assessment using **parallel scout dispatch**.
