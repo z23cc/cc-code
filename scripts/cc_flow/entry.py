@@ -49,8 +49,10 @@ _COMMANDS = {
     "apply": "morph_cmds:cmd_apply", "search": "morph_cmds:cmd_search",
     "embed": "morph_cmds:cmd_embed", "compact": "morph_cmds:cmd_compact",
     "github-search": "morph_cmds:cmd_github_search",
-    # perf + profile
+    # perf + profile + insights
     "perf": "perf:cmd_perf", "profile": "config:cmd_profile",
+    "forecast": "insights:cmd_forecast", "evolve": "insights:cmd_evolve",
+    "health": "insights:cmd_health",
 }
 
 # Subcommands: parent → (attr, {subcmd: "module:function"})
