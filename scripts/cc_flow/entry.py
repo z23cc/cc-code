@@ -96,6 +96,7 @@ _SUBCMD_MAP = {
     "eval": ("eval_cmd", {
         "run": "eval_harness:cmd_eval_run", "detail": "eval_harness:cmd_eval_detail",
         "history": "eval_harness:cmd_eval_history",
+        "cross": "cross_project_eval:cmd_cross_test",
     }),
 }
 

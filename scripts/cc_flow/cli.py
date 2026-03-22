@@ -295,6 +295,9 @@ def _add_eval_commands(sub):
     ev_detail = ev_sub.add_parser("detail", help="Detailed results for one dimension")
     ev_detail.add_argument("dimension")
     ev_sub.add_parser("history", help="Score history and trends")
+    ev_cross = ev_sub.add_parser("cross", help="Test cc-flow across multiple real projects")
+    ev_cross.add_argument("--dir", default="", help="Directory containing projects")
+    ev_cross.add_argument("--limit", type=int, default=5)
 
 
 def _add_misc_commands(sub):

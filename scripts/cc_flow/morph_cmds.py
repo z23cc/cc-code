@@ -125,10 +125,11 @@ def cmd_search(args):
     # Fallback to grep
     try:
         result = _sp.run(
-            ["grep", "-rn", "--include=*.py", "--include=*.ts", "--include=*.js",
+            ["grep", "-rn", "-m", "30", "--include=*.py", "--include=*.ts", "--include=*.js",
              "--include=*.go", "--include=*.rs", "--include=*.md",
+             "--exclude-dir=node_modules", "--exclude-dir=.git", "--exclude-dir=dist",
              "-i", query, search_dir],
-            check=False, capture_output=True, text=True, timeout=15,
+            check=False, capture_output=True, text=True, timeout=10,
         )
         lines = [ln for ln in result.stdout.strip().split("\n") if ln.strip()][:30]
 
