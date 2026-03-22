@@ -3,7 +3,6 @@
 import json
 from datetime import datetime
 
-from cc_flow import VERSION
 from cc_flow.core import (
     EPICS_DIR,
     LEARNINGS_DIR,
@@ -145,15 +144,44 @@ def cmd_dashboard(args):
     if getattr(args, "json", False):
         cmd_status(args)
         return
+
+    from cc_flow import skin
+
     tasks = all_tasks()
-    print("╔══════════════════════════════════════════╗")
-    print(f"║  cc-flow Dashboard  (v{VERSION})          ║")
-    print("╠══════════════════════════════════════════╣")
-    _print_dashboard_progress(tasks)
-    _print_dashboard_velocity(tasks)
-    print("╠══════════════════════════════════════════╣")
-    _print_dashboard_epics(tasks)
-    print("╠══════════════════════════════════════════╣")
-    _print_dashboard_learning()
-    print("╚══════════════════════════════════════════╝")
+    counts = _task_counts(list(tasks.values()))
+
+    skin.banner()
+    skin.progress_bar(counts["done"], counts["total"], "tasks completed")
+    skin.info(
+        f"{counts['done']} done  {counts['in_progress']} active  "
+        f"{counts['todo']} todo  {counts['blocked']} blocked",
+    )
+
+    # Velocity
+    done_tasks = [t for t in tasks.values() if t.get("completed")]
+    if len(done_tasks) >= 2:
+        times = sorted(t["completed"] for t in done_tasks)
+        first = datetime.fromisoformat(times[0].replace("Z", "+00:00"))
+        last = datetime.fromisoformat(times[-1].replace("Z", "+00:00"))
+        hours = max((last - first).total_seconds() / 3600, 0.1)
+        skin.dim(f"Velocity: {len(done_tasks) / hours:.1f} tasks/hour")
+
+    # Epics
+    epic_files = sorted(EPICS_DIR.glob("*.md")) if EPICS_DIR.exists() else []
+    if epic_files:
+        skin.heading("Epics")
+        rows = []
+        for f in epic_files[:5]:
+            epic_tasks = [t for t in tasks.values() if t.get("epic") == f.stem]
+            ec = _task_counts(epic_tasks)
+            title = f.read_text().split("\n", 1)[0].lstrip("# ").replace("Epic:", "").strip()[:30]
+            rows.append([f.stem, f"{ec['done']}/{ec['total']}", f"{ec['pct']}%", title])
+        skin.table(["Epic", "Done", "Pct", "Title"], rows)
+
+    # Learning + Autoimmune
+    learn_count = len(list(LEARNINGS_DIR.glob("*.json"))) if LEARNINGS_DIR.exists() else 0
+    if learn_count > 0:
+        skin.dim(f"Learnings: {learn_count}")
+
+    # Hint
     _print_dashboard_hint(tasks)

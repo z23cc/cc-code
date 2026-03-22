@@ -449,7 +449,7 @@ class TestDashboard:
     def test_dashboard_empty(self, workspace):
         out, _, code = run(["dashboard"], cwd=workspace)
         assert code == 0
-        assert "Dashboard" in out
+        assert "cc-flow" in out
         assert "epic create" in out  # Suggests getting started
 
     def test_dashboard_with_tasks(self, workspace):
