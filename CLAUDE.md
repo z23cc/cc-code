@@ -4,7 +4,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 ## Architecture
 
-- `scripts/cc_flow/` — Task & workflow CLI package (38 subcommands, entry: `cc_flow.entry:main`)
+- `scripts/cc_flow/` — Task & workflow CLI package (41 subcommands, entry: `cc_flow.entry:main`)
 - `scripts/morph_client.py` — Pure Python Morph API client (Apply, WarpGrep, Embed, Rerank)
 - `agents/` — 11 general agents + 12 scout agents (read-only specialists), all `model: inherit`
 - `skills/` — 47 skills (all prefixed `cc-`):
@@ -12,7 +12,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
   - **Python pack (12):** python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, scaffold, deploy, task-queues
   - **Scouts (12):** scout-practices, scout-repo, scout-docs, scout-docs-gap, scout-security, scout-testing, scout-tooling, scout-build, scout-env, scout-observability, scout-gaps, scout-context
 - `commands/` — 24 slash commands (all prefixed `/cc-`)
-- `tests/` — 152 tests (99 cc-flow integration + 38 unit + 15 morph)
+- `tests/` — 155 tests (99 cc-flow integration + 41 unit + 15 morph)
 - `rules/` — 9 always-on rules: python-style, testing, security, git, docs-sync, agent-orchestration, workflow, performance, tool-priority
 - `hooks/` — 5 hooks: SessionStart, PreToolUse, PostToolUse, PreCompact, Stop
 
@@ -57,4 +57,8 @@ cc-flow session save --notes "context"         # persist session
 cc-flow session restore                        # resume
 cc-flow graph --format ascii                   # dependency tree
 cc-flow doctor                                 # health check
+cc-flow verify                                 # lint + test (auto-detect language)
+cc-flow verify --fix                           # auto-fix lint, then test
+cc-flow export epic-1-xxx                      # export epic as markdown
+cc-flow clean --dry-run                        # preview old data cleanup
 ```

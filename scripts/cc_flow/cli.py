@@ -69,6 +69,9 @@ def _add_view_commands(sub):
     graph_p.add_argument("--format", choices=["mermaid", "ascii", "dot"], default="mermaid")
     graph_p.add_argument("--json", action="store_true", default=False)
     sub.add_parser("history", help="Task completion timeline with velocity trends")
+    export_p = sub.add_parser("export", help="Export epic as markdown report")
+    export_p.add_argument("id")
+    export_p.add_argument("--output", default="", help="Output file path (default: stdout)")
 
 
 def _add_work_commands(sub):
@@ -87,10 +90,12 @@ def _add_work_commands(sub):
 
 
 def _add_quality_commands(sub):
-    """Add quality/auto subcommands: validate, scan, doctor, auto."""
+    """Add quality/auto subcommands: validate, scan, verify, doctor, auto."""
     sub.add_parser("validate", help="Check structure, deps, cycles")
     scan_p = sub.add_parser("scan", help="Auto-detect issues via ruff/mypy/bandit")
     scan_p.add_argument("--create-tasks", action="store_true", default=False)
+    verify_p = sub.add_parser("verify", help="Run lint + test (auto-detects language)")
+    verify_p.add_argument("--fix", action="store_true", default=False, help="Auto-fix lint issues first")
     doctor_p = sub.add_parser("doctor", help="Health check — environment, tools, tasks")
     doctor_p.add_argument("--format", choices=["text", "json"], default="text")
 
@@ -184,6 +189,9 @@ def _add_misc_commands(sub):
     config_p = sub.add_parser("config", help="View/set cc-flow configuration")
     config_p.add_argument("key", nargs="?", default="")
     config_p.add_argument("value", nargs="?", default="")
+    clean_p = sub.add_parser("clean", help="Remove old sessions and archived data")
+    clean_p.add_argument("--days", type=int, default=30, help="Max age in days (default: 30)")
+    clean_p.add_argument("--dry-run", action="store_true", default=False, help="Preview without deleting")
 
 
 def build_parser():

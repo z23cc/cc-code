@@ -1,13 +1,14 @@
-"""cc-flow config commands — version, config, history."""
+"""cc-flow config commands — version, config, history, clean."""
 
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 
 from cc_flow import VERSION
 from cc_flow.core import (
     COMPLETED_DIR,
     CONFIG_FILE,
     DEFAULT_CONFIG,
+    TASKS_DIR,
     all_tasks,
     safe_json_load,
 )
@@ -86,3 +87,43 @@ def cmd_config(args):
         print(json.dumps({"success": True, "key": args.key, "value": config.get(args.key)}))
     else:
         print(json.dumps({"success": True, "config": config}))
+
+
+def _age_days(path):
+    """Get file age in days from modification time."""
+    mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
+    return (datetime.now(timezone.utc) - mtime).days
+
+
+def cmd_clean(args):
+    """Remove old sessions and archived data. Default: older than 30 days."""
+    max_age = getattr(args, "days", 30) or 30
+    dry_run = getattr(args, "dry_run", False)
+    removed = {"sessions": 0, "archived": 0}
+
+    # Clean old sessions
+    sessions_dir = TASKS_DIR / "sessions"
+    if sessions_dir.exists():
+        for f in sessions_dir.glob("*.json"):
+            if _age_days(f) > max_age:
+                if not dry_run:
+                    f.unlink()
+                removed["sessions"] += 1
+
+    # Clean old archived tasks/epics
+    if COMPLETED_DIR.exists():
+        for f in COMPLETED_DIR.iterdir():
+            if _age_days(f) > max_age:
+                if not dry_run:
+                    f.unlink()
+                removed["archived"] += 1
+
+    total = removed["sessions"] + removed["archived"]
+    print(json.dumps({
+        "success": True,
+        "dry_run": dry_run,
+        "removed": removed,
+        "total": total,
+        "max_age_days": max_age,
+        "message": f"{'Would remove' if dry_run else 'Removed'} {total} files older than {max_age} days",
+    }))
