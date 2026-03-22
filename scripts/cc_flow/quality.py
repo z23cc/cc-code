@@ -16,39 +16,46 @@ from cc_flow.core import (
 from cc_flow.epic_task import cmd_init
 
 
-def cmd_validate(args):
-    """Validate epic/task structure — specs exist, deps valid, no cycles."""
-    tasks = all_tasks()
-    errors = []
+def _check_empty_epics(tasks):
+    """Return warnings for epics with no tasks."""
     warnings = []
-
     for f in sorted(EPICS_DIR.glob("*.md")):
         epic_id = f.stem
-        epic_tasks = [t for t in tasks.values() if t.get("epic") == epic_id]
-        if not epic_tasks:
+        if not any(t.get("epic") == epic_id for t in tasks.values()):
             warnings.append(f"Epic {epic_id} has no tasks")
+    return warnings
 
+
+def _check_task_integrity(tasks):
+    """Validate task fields: epic spec, task spec, status, dependencies."""
+    errors = []
+    warnings = []
+    valid_statuses = ("todo", "in_progress", "done", "blocked")
     for tid, t in tasks.items():
-        epic_path = EPICS_DIR / f"{t.get('epic', '')}.md"
-        if not epic_path.exists():
+        if not (EPICS_DIR / f"{t.get('epic', '')}.md").exists():
             errors.append(f"Task {tid}: epic {t.get('epic', '')} spec missing")
-        spec_path = TASKS_SUBDIR / f"{tid}.md"
-        if not spec_path.exists():
+        if not (TASKS_SUBDIR / f"{tid}.md").exists():
             warnings.append(f"Task {tid}: spec file missing")
-        if t.get("status") not in ("todo", "in_progress", "done", "blocked"):
+        if t.get("status") not in valid_statuses:
             errors.append(f"Task {tid}: invalid status '{t.get('status')}'")
         errors.extend(
             f"Task {tid}: dependency {dep} not found"
             for dep in t.get("depends_on", [])
             if dep not in tasks
         )
+    return errors, warnings
 
-    def has_cycle(task_id, visited, rec_stack):
+
+def _detect_cycles(tasks):
+    """Detect dependency cycles via DFS. Returns list of cycle error strings."""
+    errors = []
+
+    def _dfs(task_id, visited, rec_stack):
         visited.add(task_id)
         rec_stack.add(task_id)
         for dep in tasks.get(task_id, {}).get("depends_on", []):
             if dep not in visited:
-                if has_cycle(dep, visited, rec_stack):
+                if _dfs(dep, visited, rec_stack):
                     return True
             elif dep in rec_stack:
                 errors.append(f"Dependency cycle: {task_id} → {dep}")
@@ -59,9 +66,22 @@ def cmd_validate(args):
     visited, rec_stack = set(), set()
     for tid in tasks:
         if tid not in visited:
-            has_cycle(tid, visited, rec_stack)
+            _dfs(tid, visited, rec_stack)
+    return errors
 
+
+def cmd_validate(args):
+    """Validate epic/task structure — specs exist, deps valid, no cycles."""
+    tasks = all_tasks()
+
+    epic_warnings = _check_empty_epics(tasks)
+    task_errors, task_warnings = _check_task_integrity(tasks)
+    cycle_errors = _detect_cycles(tasks)
+
+    errors = task_errors + cycle_errors
+    warnings = epic_warnings + task_warnings
     valid = len(errors) == 0
+
     print(json.dumps({"success": valid, "valid": valid, "errors": errors,
                        "warnings": warnings, "task_count": len(tasks)}))
     if not valid:
