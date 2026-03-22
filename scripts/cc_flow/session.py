@@ -118,12 +118,16 @@ def _session_list():
     print(json.dumps({"success": True, "sessions": sessions, "count": len(sessions)}))
 
 
+def _git_run(*cmd):
+    """Run a git command and return stripped stdout."""
+    return _sp.run(
+        ["git", *cmd], check=False, capture_output=True, text=True, timeout=5,
+    ).stdout.strip()
+
+
 def _git_state():
     """Get current git SHA, branch, and dirty status."""
     try:
-        sha = _sp.run(["git", "rev-parse", "HEAD"], check=False, capture_output=True, text=True, timeout=5).stdout.strip()
-        branch = _sp.run(["git", "branch", "--show-current"], check=False, capture_output=True, text=True, timeout=5).stdout.strip()
-        dirty = _sp.run(["git", "status", "--porcelain"], check=False, capture_output=True, text=True, timeout=5).stdout.strip()
-        return sha, branch, dirty
+        return _git_run("rev-parse", "HEAD"), _git_run("branch", "--show-current"), _git_run("status", "--porcelain")
     except (OSError, _sp.TimeoutExpired):
         return "", "", ""
