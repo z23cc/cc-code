@@ -143,12 +143,12 @@ class MorphClient:
             {"type": "function", "function": {"name": "grep_search", "parameters": {
                 "type": "object", "properties": {
                     "pattern": {"type": "string"}, "path": {"type": "string"},
-                    "include": {"type": "string"}
+                    "include": {"type": "string"},
                 }, "required": ["pattern"]}}},
             {"type": "function", "function": {"name": "read", "parameters": {
                 "type": "object", "properties": {
                     "path": {"type": "string"}, "start_line": {"type": "integer"},
-                    "end_line": {"type": "integer"}
+                    "end_line": {"type": "integer"},
                 }, "required": ["path"]}}},
             {"type": "function", "function": {"name": "list_directory", "parameters": {
                 "type": "object", "properties": {"path": {"type": "string"}},

@@ -91,7 +91,7 @@ def cmd_epic_create(args):
         f"# Epic: {args.title}\n\n"
         f"## Goal\n\n[Describe the goal]\n\n"
         f"## Requirements\n\n- [ ] [Requirement 1]\n\n"
-        f"## Acceptance Criteria\n\n- [Criterion 1]\n"
+        f"## Acceptance Criteria\n\n- [Criterion 1]\n",
     )
     print(json.dumps({"success": True, "id": epic_id, "spec": str(spec_path)}))
 
