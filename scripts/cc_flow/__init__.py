@@ -33,4 +33,4 @@ Package structure (23 modules, 76+ subcommands):
   cc-flow.py         → backward-compatible shim
 """
 
-VERSION = "4.2.0"
+VERSION = "4.3.0"

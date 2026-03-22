@@ -1,20 +1,20 @@
-"""cc-flow views commands."""
+"""cc-flow views — core query commands.
+
+Split into 3 modules:
+  views.py           — list, epics, tasks, show, ready, next, status (this file)
+  views_dashboard.py — progress, dashboard visualization
+  views_search.py    — find, similar, export, priority, index, dedupe, suggest
+"""
 
 import json
-from datetime import datetime
 
-from cc_flow import VERSION
 from cc_flow.core import (
     EPICS_DIR,
-    LEARNINGS_DIR,
-    LOG_FILE,
-    TASKS_DIR,
     TASKS_SUBDIR,
     all_tasks,
     error,
     safe_json_load,
 )
-from cc_flow.route_learn import _load_route_stats
 
 
 def cmd_list(args):
@@ -37,7 +37,6 @@ def cmd_list(args):
     for epic_id, epic in epics.items():
         done = sum(1 for t in epic["tasks"] if t["status"] == "done")
         total = len(epic["tasks"])
-        # Extract title from epic spec first line
         epic_spec = EPICS_DIR / f"{epic_id}.md"
         epic_title = ""
         if epic_spec.exists():
@@ -87,7 +86,6 @@ def cmd_tasks(args):
 def cmd_show(args):
     """Show detail for an epic or task by ID."""
     task_id = args.id
-    # Try task first
     task_path = TASKS_SUBDIR / f"{task_id}.json"
     if task_path.exists():
         data = safe_json_load(task_path)
@@ -98,7 +96,6 @@ def cmd_show(args):
             print(f"\n{spec}")
         return
 
-    # Try epic
     epic_path = EPICS_DIR / f"{task_id}.md"
     if epic_path.exists():
         print(epic_path.read_text())
@@ -157,7 +154,6 @@ def cmd_next(args):
             ready.append(t)
 
     if not ready:
-        # Check if there's in-progress work to resume
         in_prog = [t for t in tasks.values() if t["status"] == "in_progress"]
         if in_prog:
             t = in_prog[0]
@@ -166,11 +162,12 @@ def cmd_next(args):
             print(json.dumps({"success": True, "action": "none", "reason": "all done or blocked"}))
         return
 
-    # Sort by priority field (lower = higher priority), then by id
     ready.sort(key=lambda t: (t.get("priority", 999), t["id"]))
     t = ready[0]
     print(json.dumps({"success": True, "action": "start", "id": t["id"], "title": t["title"]}))
 
+
+# ── Shared helpers (used by views_dashboard.py and views_search.py) ──
 
 def _task_counts(task_list):
     """Count tasks by status, return dict with total/done/in_progress/blocked/todo/pct."""
@@ -195,45 +192,6 @@ def _epic_label(epic_id):
     return epic_id
 
 
-def _print_epic_progress(epic_id, counts):
-    """Print a progress bar for an epic."""
-    label = _epic_label(epic_id)
-    if counts["total"] == 0:
-        print(f"{label}: no tasks")
-        return
-    filled = int(20 * counts["done"] / counts["total"])
-    bar = "█" * filled + "░" * (20 - filled)
-    print(f"{label}: {bar} {counts['pct']}% ({counts['done']}/{counts['total']})")
-    if counts["in_progress"]:
-        print(f"  ◐ {counts['in_progress']} in progress")
-    if counts["blocked"]:
-        print(f"  ✗ {counts['blocked']} blocked")
-    if counts["todo"]:
-        print(f"  ○ {counts['todo']} todo")
-
-
-def cmd_progress(args):
-    """Show progress bars per epic with task status breakdown."""
-    tasks = all_tasks()
-    epics = {f.stem: [] for f in sorted(EPICS_DIR.glob("*.md"))}
-    for t in tasks.values():
-        epic = t.get("epic", "")
-        if epic in epics:
-            epics[epic].append(t)
-
-    json_output = []
-    for epic_id, epic_tasks in epics.items():
-        if args.epic and epic_id != args.epic:
-            continue
-        counts = _task_counts(epic_tasks)
-        json_output.append({"epic": epic_id, **counts})
-        if not getattr(args, "json", False):
-            _print_epic_progress(epic_id, counts)
-
-    if getattr(args, "json", False):
-        print(json.dumps({"success": True, "epics": json_output}))
-
-
 def cmd_status(_args):
     """Global overview — epic counts, task counts, health."""
     tasks = all_tasks()
@@ -254,375 +212,14 @@ def cmd_status(_args):
     }))
 
 
-def _print_dashboard_progress(tasks):
-    """Print progress bar and status counts."""
-    counts = _task_counts(list(tasks.values()))
-    filled = int(20 * counts["done"] / counts["total"]) if counts["total"] > 0 else 0
-    bar = "█" * filled + "░" * (20 - filled)
-    print(f"║  Progress: {bar} {counts['pct']:>3}%  ║")
-    print(f"║  ● {counts['done']} done  ◐ {counts['in_progress']} active"
-          f"  ○ {counts['todo']} todo  ✗ {counts['blocked']} blocked ║")
-
-
-def _print_dashboard_velocity(tasks):
-    """Print velocity stat from completed tasks."""
-    done_tasks = [t for t in tasks.values() if t.get("completed")]
-    if len(done_tasks) >= 2:
-        times = sorted(t["completed"] for t in done_tasks)
-        first = datetime.fromisoformat(times[0].replace("Z", "+00:00"))
-        last = datetime.fromisoformat(times[-1].replace("Z", "+00:00"))
-        hours = max((last - first).total_seconds() / 3600, 0.1)
-        print(f"║  Velocity: {len(done_tasks) / hours:.1f} tasks/hour                  ║")
-    else:
-        print("║  Velocity: —                              ║")
-
-
-def _print_dashboard_epics(tasks):
-    """Print epic summary section."""
-    epic_files = sorted(EPICS_DIR.glob("*.md")) if EPICS_DIR.exists() else []
-    if not epic_files:
-        print("║  No epics yet. Run: cc-flow epic create   ║")
-        return
-    print("║  Epics:                                   ║")
-    for f in epic_files[:5]:
-        epic_tasks = [t for t in tasks.values() if t.get("epic") == f.stem]
-        e_counts = _task_counts(epic_tasks)
-        title = f.read_text().split("\n", 1)[0].lstrip("# ").replace("Epic:", "").strip()[:25]
-        mini_bar = "█" * (e_counts["pct"] // 10) + "░" * (10 - e_counts["pct"] // 10)
-        print(f"║    {mini_bar} {e_counts['pct']:>3}% {title:<25} ║")
-    if len(epic_files) > 5:
-        print(f"║    ... +{len(epic_files) - 5} more                          ║")
-
-
-def _print_dashboard_learning():
-    """Print learning, routing, and autoimmune stats."""
-    learn_count = len(list(LEARNINGS_DIR.glob("*.json"))) if LEARNINGS_DIR.exists() else 0
-    patterns_dir = TASKS_DIR / "patterns"
-    pattern_count = len(list(patterns_dir.glob("*.json"))) if patterns_dir.exists() else 0
-    print(f"║  Learning: {learn_count} entries, {pattern_count} patterns         ║")
-
-    route_stats = _load_route_stats()
-    cmd_stats = route_stats.get("commands", {})
-    total_routes = sum(v.get("success", 0) + v.get("failure", 0) for v in cmd_stats.values())
-    if total_routes > 0:
-        total_success = sum(v.get("success", 0) for v in cmd_stats.values())
-        print(f"║  Routing:  {total_routes} routes, {int(total_success / total_routes * 100)}% success rate      ║")
-    else:
-        print("║  Routing:  no data yet                    ║")
-
-    if LOG_FILE.exists():
-        lines = LOG_FILE.read_text().strip().split("\n")[1:]
-        kept = sum(1 for row in lines if "KEPT" in row)
-        disc = sum(1 for row in lines if "DISCARDED" in row)
-        ai_total = kept + disc
-        if ai_total > 0:
-            print(f"║  Autoimmune: {ai_total} runs, {int(kept / ai_total * 100)}% success         ║")
-
-
-def _print_dashboard_hint(tasks):
-    """Print next-action suggestion based on task state."""
-    counts = _task_counts(list(tasks.values()))
-    if counts["blocked"] > 0:
-        print(f"\n  ⚠ {counts['blocked']} blocked task(s). Run: cc-flow tasks --status blocked")
-    elif counts["in_progress"] > 0:
-        ip = next(t for t in tasks.values() if t["status"] == "in_progress")
-        print(f"\n  → Resume: {ip['id']} — {ip['title']}")
-    elif counts["todo"] > 0:
-        for t in tasks.values():
-            if t["status"] == "todo":
-                deps_done = all(tasks.get(d, {}).get("status") == "done" for d in t.get("depends_on", []))
-                if deps_done:
-                    print(f"\n  → Next: cc-flow start {t['id']} — {t['title']}")
-                    break
-    elif counts["total"] > 0:
-        print("\n  ✅ All tasks done!")
-    else:
-        print("\n  → Get started: cc-flow epic create --title 'My Feature'")
-
-
-def cmd_dashboard(args):
-    """One-screen overview: epics, velocity, health, learnings. Use --json for machine-readable."""
-    if getattr(args, "json", False):
-        cmd_status(args)
-        return
-    tasks = all_tasks()
-    print("╔══════════════════════════════════════════╗")
-    print(f"║  cc-flow Dashboard  (v{VERSION})          ║")
-    print("╠══════════════════════════════════════════╣")
-    _print_dashboard_progress(tasks)
-    _print_dashboard_velocity(tasks)
-    print("╠══════════════════════════════════════════╣")
-    _print_dashboard_epics(tasks)
-    print("╠══════════════════════════════════════════╣")
-    _print_dashboard_learning()
-    print("╚══════════════════════════════════════════╝")
-    _print_dashboard_hint(tasks)
-
-
-def cmd_export(args):
-    """Export an epic and its tasks as a self-contained markdown report."""
-    epic_id = args.id
-    epic_path = EPICS_DIR / f"{epic_id}.md"
-    if not epic_path.exists():
-        error(f"Epic not found: {epic_id}")
-
-    tasks = all_tasks()
-    epic_tasks = sorted(
-        [t for t in tasks.values() if t.get("epic") == epic_id],
-        key=lambda t: t["id"],
-    )
-    counts = _task_counts(epic_tasks)
-
-    lines = [
-        f"# {epic_id}",
-        "",
-        f"**Progress:** {counts['done']}/{counts['total']} ({counts['pct']}%)",
-        f"**Status:** {counts['done']} done, {counts['in_progress']} in progress, "
-        f"{counts['blocked']} blocked, {counts['todo']} todo",
-        "",
-        "## Spec",
-        "",
-        epic_path.read_text().strip(),
-        "",
-        "## Tasks",
-        "",
-    ]
-
-    status_icon = {"todo": "[ ]", "in_progress": "[~]", "done": "[x]", "blocked": "[!]"}
-    for t in epic_tasks:
-        icon = status_icon.get(t["status"], "[ ]")
-        line = f"- {icon} **{t['id']}**: {t.get('title', '')}"
-        if t.get("summary"):
-            line += f" — {t['summary']}"
-        lines.append(line)
-
-    output = "\n".join(lines) + "\n"
-
-    out_file = getattr(args, "output", "") or ""
-    if out_file:
-        from pathlib import Path
-        Path(out_file).write_text(output)
-        print(json.dumps({"success": True, "epic": epic_id, "file": out_file,
-                          "tasks": len(epic_tasks)}))
-    else:
-        print(output)
-
-
-def _score_task(tid, task, query):
-    """Score a task's relevance to query. Returns 0 if no match."""
-    score = 0
-    title = task.get("title", "").lower()
-    if query in title:
-        score += 3
-    elif any(w in title for w in query.split()):
-        score += 1
-    spec_path = TASKS_SUBDIR / f"{tid}.md"
-    if spec_path.exists() and query in spec_path.read_text().lower():
-        score += 2
-    return score
-
-
-def _find_matching_epics(query):
-    """Find epics whose spec contains the query."""
-    if not EPICS_DIR.exists():
-        return []
-    return [f.stem for f in EPICS_DIR.glob("*.md") if query in f.read_text().lower()]
-
-
-def _semantic_find(query, tasks):
-    """Use Morph embeddings for semantic search. Returns results or None."""
-    from cc_flow.embeddings import semantic_search
-    documents = [
-        {"id": tid, "text": f"{t.get('title', '')} {t.get('summary', '')}",
-         "title": t.get("title", ""), "status": t["status"], "epic": t.get("epic", "")}
-        for tid, t in tasks.items()
-    ]
-    return semantic_search(query, documents, top_n=20)
-
-
-def cmd_find(args):
-    """Search across task titles, specs, and epic specs."""
-    query = " ".join(args.query).lower() if args.query else ""
-    if not query:
-        error("Provide a search query")
-
-    tasks = all_tasks()
-    use_semantic = getattr(args, "semantic", False)
-
-    if use_semantic:
-        results = _semantic_find(query, tasks)
-        if results is not None:
-            print(json.dumps({
-                "success": True, "query": query, "engine": "embedding",
-                "tasks": results, "total": len(results),
-            }))
-            return
-        # Fall through to keyword if embedding unavailable
-
-    matches = [
-        {"id": tid, "title": t.get("title", ""), "status": t["status"],
-         "epic": t.get("epic", ""), "score": score}
-        for tid, t in tasks.items()
-        if (score := _score_task(tid, t, query)) > 0
-    ]
-    matches.sort(key=lambda m: -m["score"])
-
-    print(json.dumps({
-        "success": True,
-        "query": query,
-        "engine": "keyword",
-        "tasks": matches[:20],
-        "epics": _find_matching_epics(query),
-        "total": len(matches),
-    }))
-
-
-def cmd_similar(args):
-    """Find tasks similar to a given task using embeddings."""
-    from cc_flow.embeddings import semantic_search
-
-    task_id = args.id
-    tasks = all_tasks()
-    if task_id not in tasks:
-        error(f"Task not found: {task_id}")
-
-    source = tasks[task_id]
-    query_text = f"{source.get('title', '')} {source.get('summary', '')}"
-
-    # Build document list excluding the source task
-    documents = [
-        {"id": tid, "text": f"{t.get('title', '')} {t.get('summary', '')}",
-         "title": t.get("title", ""), "status": t["status"], "epic": t.get("epic", "")}
-        for tid, t in tasks.items()
-        if tid != task_id
-    ]
-
-    results = semantic_search(query_text, documents, top_n=getattr(args, "top", 5) or 5)
-    if results is None:
-        error("Embedding unavailable. Set MORPH_API_KEY to enable semantic search.")
-
-    print(json.dumps({
-        "success": True,
-        "source": {"id": task_id, "title": source.get("title", "")},
-        "similar": results,
-        "total": len(results),
-    }))
-
-
-def cmd_priority(args):
-    """Show all non-done tasks sorted by priority across all epics."""
-    tasks = all_tasks()
-    status_filter = getattr(args, "status", "") or ""
-
-    active = []
-    for tid, t in tasks.items():
-        if t["status"] == "done":
-            continue
-        if status_filter and t["status"] != status_filter:
-            continue
-        # Check if deps are satisfied
-        deps_met = all(tasks.get(d, {}).get("status") == "done" for d in t.get("depends_on", []))
-        active.append({
-            "id": tid,
-            "title": t.get("title", ""),
-            "status": t["status"],
-            "priority": t.get("priority", 999),
-            "epic": t.get("epic", ""),
-            "size": t.get("size", "M"),
-            "ready": deps_met,
-        })
-
-    active.sort(key=lambda t: (0 if t["ready"] else 1, t["priority"], t["id"]))
-
-    print(json.dumps({
-        "success": True,
-        "tasks": active,
-        "total": len(active),
-        "ready_count": sum(1 for t in active if t["ready"]),
-    }))
-
-
-def _task_documents(tasks):
-    """Build document list from tasks for embedding operations."""
-    return [
-        {"id": tid, "text": f"{t.get('title', '')} {t.get('summary', '')}".strip()}
-        for tid, t in tasks.items()
-    ]
-
-
-def cmd_index(_args):
-    """Pre-build embedding index for all tasks."""
-    from cc_flow.embeddings import build_index
-
-    tasks = all_tasks()
-    documents = _task_documents(tasks)
-    result = build_index(documents)
-    if result is None:
-        error("Embedding unavailable. Set MORPH_API_KEY.")
-
-    print(json.dumps({"success": True, **result}))
-
-
-def cmd_dedupe(args):
-    """Detect near-duplicate tasks using embedding similarity."""
-    from cc_flow.embeddings import find_duplicates
-
-    tasks = all_tasks()
-    documents = _task_documents(tasks)
-    threshold = getattr(args, "threshold", 0.85) or 0.85
-
-    duplicates = find_duplicates(documents, threshold=threshold)
-    if duplicates is None:
-        error("Embedding unavailable. Set MORPH_API_KEY.")
-
-    print(json.dumps({
-        "success": True,
-        "duplicates": duplicates,
-        "count": len(duplicates),
-        "threshold": threshold,
-        "total_tasks": len(tasks),
-    }))
-
-
-def cmd_suggest(args):
-    """Suggest approach for a task based on similar completed tasks."""
-    from cc_flow.embeddings import semantic_search
-
-    task_id = args.id
-    tasks = all_tasks()
-    if task_id not in tasks:
-        error(f"Task not found: {task_id}")
-
-    source = tasks[task_id]
-    query_text = f"{source.get('title', '')} {source.get('summary', '')}"
-
-    # Search only completed tasks that have summaries
-    completed = [
-        {"id": tid, "text": f"{t.get('title', '')} {t.get('summary', '')}",
-         "title": t.get("title", ""), "summary": t.get("summary", ""),
-         "approach": t.get("approach", ""), "duration_sec": t.get("duration_sec")}
-        for tid, t in tasks.items()
-        if t["status"] == "done" and tid != task_id
-    ]
-
-    if not completed:
-        print(json.dumps({"success": True, "id": task_id, "suggestions": [],
-                          "reason": "No completed tasks to learn from"}))
-        return
-
-    results = semantic_search(query_text, completed, top_n=3)
-    if results is None:
-        error("Embedding unavailable. Set MORPH_API_KEY.")
-
-    suggestions = [
-        {"based_on": r["id"], "title": r.get("title", ""),
-         "summary": r.get("summary", ""), "similarity": r["score"]}
-        for r in results if r["score"] > 0.2
-    ]
-
-    print(json.dumps({
-        "success": True,
-        "id": task_id,
-        "title": source.get("title", ""),
-        "suggestions": suggestions,
-    }))
+# Re-export split modules for backward compatibility with entry.py lazy refs
+from cc_flow.views_dashboard import cmd_dashboard, cmd_progress  # noqa: E402, F401
+from cc_flow.views_search import (  # noqa: E402, F401
+    cmd_dedupe,
+    cmd_export,
+    cmd_find,
+    cmd_index,
+    cmd_priority,
+    cmd_similar,
+    cmd_suggest,
+)
