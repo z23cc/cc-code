@@ -33,15 +33,17 @@ def cmd_doctor(args):
             "summary": {"pass": passed, "warn": warned, "fail": failed},
         }))
     else:
-        icons = {"pass": "✓", "warn": "⚠", "fail": "✗"}
-        print("## cc-flow Doctor\n")
+        from cc_flow import skin
+        skin.heading("cc-flow Doctor")
+        dispatch = {"pass": skin.success, "warn": skin.warning, "fail": skin.error}
         for c in checks:
-            icon = icons.get(c["status"], "?")
-            print(f"  {icon} {c['name']}: {c['message']}")
+            fn = dispatch.get(c["status"], skin.info)
+            fn(f"{c['name']}: {c['message']}")
             if c.get("fix"):
-                print(f"    → fix: {c['fix']}")
+                skin.dim(f"    fix: {c['fix']}")
         passed = sum(1 for c in checks if c["status"] == "pass")
-        print(f"\n  {passed}/{len(checks)} checks passed")
+        print()
+        skin.info(f"{passed}/{len(checks)} checks passed")
 
     if any(c["status"] == "fail" for c in checks):
         sys.exit(1)
