@@ -33,9 +33,11 @@ from cc_flow.route_learn import (
 from cc_flow.session import cmd_session
 from cc_flow.views import (
     cmd_dashboard,
+    cmd_dedupe,
     cmd_epics,
     cmd_export,
     cmd_find,
+    cmd_index,
     cmd_list,
     cmd_next,
     cmd_priority,
@@ -44,6 +46,7 @@ from cc_flow.views import (
     cmd_show,
     cmd_similar,
     cmd_status,
+    cmd_suggest,
     cmd_tasks,
 )
 from cc_flow.work import cmd_block, cmd_diff, cmd_done, cmd_reopen, cmd_rollback, cmd_start
@@ -59,7 +62,9 @@ _COMMANDS = {
     "archive": cmd_archive, "stats": cmd_stats, "consolidate": cmd_consolidate,
     "history": cmd_history, "config": cmd_config, "graph": cmd_graph,
     "verify": cmd_verify, "clean": cmd_clean, "export": cmd_export,
-    "find": cmd_find, "similar": cmd_similar, "reopen": cmd_reopen, "diff": cmd_diff,
+    "find": cmd_find, "similar": cmd_similar, "index": cmd_index,
+    "dedupe": cmd_dedupe, "suggest": cmd_suggest,
+    "reopen": cmd_reopen, "diff": cmd_diff,
     "doctor": cmd_doctor, "dashboard": cmd_dashboard, "rollback": cmd_rollback,
     "apply": cmd_apply, "search": cmd_search, "embed": cmd_embed,
     "compact": cmd_compact, "github-search": cmd_github_search,

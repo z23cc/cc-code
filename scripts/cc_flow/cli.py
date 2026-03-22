@@ -91,6 +91,11 @@ def _add_view_commands(sub):
     similar_p = sub.add_parser("similar", help="Find tasks similar to a given task (embedding)")
     similar_p.add_argument("id")
     similar_p.add_argument("--top", type=int, default=5)
+    sub.add_parser("index", help="Pre-build embedding index for all tasks")
+    dedupe_p = sub.add_parser("dedupe", help="Detect near-duplicate tasks (embedding)")
+    dedupe_p.add_argument("--threshold", type=float, default=0.85, help="Similarity threshold (default: 0.85)")
+    suggest_p = sub.add_parser("suggest", help="Suggest approach based on similar completed tasks")
+    suggest_p.add_argument("id")
 
 
 def _add_work_commands(sub):
