@@ -4,7 +4,7 @@ import sys
 
 from cc_flow.auto import cmd_auto
 from cc_flow.cli import build_parser
-from cc_flow.config import cmd_config, cmd_history, cmd_version
+from cc_flow.config import cmd_clean, cmd_config, cmd_history, cmd_version
 from cc_flow.doctor import cmd_doctor
 from cc_flow.epic_task import (
     cmd_dep_add,
@@ -20,7 +20,7 @@ from cc_flow.epic_task import (
 from cc_flow.graph import cmd_graph
 from cc_flow.log_cmds import cmd_archive, cmd_log, cmd_stats, cmd_summary
 from cc_flow.morph_cmds import cmd_apply, cmd_compact, cmd_embed, cmd_github_search, cmd_search
-from cc_flow.quality import cmd_scan, cmd_validate
+from cc_flow.quality import cmd_scan, cmd_validate, cmd_verify
 from cc_flow.route_learn import (
     cmd_consolidate,
     cmd_learn,
@@ -31,6 +31,7 @@ from cc_flow.session import cmd_session
 from cc_flow.views import (
     cmd_dashboard,
     cmd_epics,
+    cmd_export,
     cmd_list,
     cmd_next,
     cmd_progress,
@@ -50,6 +51,7 @@ _COMMANDS = {
     "learnings": cmd_learnings, "log": cmd_log, "summary": cmd_summary,
     "archive": cmd_archive, "stats": cmd_stats, "consolidate": cmd_consolidate,
     "history": cmd_history, "config": cmd_config, "graph": cmd_graph,
+    "verify": cmd_verify, "clean": cmd_clean, "export": cmd_export,
     "doctor": cmd_doctor, "dashboard": cmd_dashboard, "rollback": cmd_rollback,
     "apply": cmd_apply, "search": cmd_search, "embed": cmd_embed,
     "compact": cmd_compact, "github-search": cmd_github_search,

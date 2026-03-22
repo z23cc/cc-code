@@ -354,3 +354,52 @@ def cmd_dashboard(args):
     _print_dashboard_learning()
     print("╚══════════════════════════════════════════╝")
     _print_dashboard_hint(tasks)
+
+
+def cmd_export(args):
+    """Export an epic and its tasks as a self-contained markdown report."""
+    epic_id = args.id
+    epic_path = EPICS_DIR / f"{epic_id}.md"
+    if not epic_path.exists():
+        error(f"Epic not found: {epic_id}")
+
+    tasks = all_tasks()
+    epic_tasks = sorted(
+        [t for t in tasks.values() if t.get("epic") == epic_id],
+        key=lambda t: t["id"],
+    )
+    counts = _task_counts(epic_tasks)
+
+    lines = [
+        f"# {epic_id}",
+        "",
+        f"**Progress:** {counts['done']}/{counts['total']} ({counts['pct']}%)",
+        f"**Status:** {counts['done']} done, {counts['in_progress']} in progress, "
+        f"{counts['blocked']} blocked, {counts['todo']} todo",
+        "",
+        "## Spec",
+        "",
+        epic_path.read_text().strip(),
+        "",
+        "## Tasks",
+        "",
+    ]
+
+    status_icon = {"todo": "[ ]", "in_progress": "[~]", "done": "[x]", "blocked": "[!]"}
+    for t in epic_tasks:
+        icon = status_icon.get(t["status"], "[ ]")
+        line = f"- {icon} **{t['id']}**: {t.get('title', '')}"
+        if t.get("summary"):
+            line += f" — {t['summary']}"
+        lines.append(line)
+
+    output = "\n".join(lines) + "\n"
+
+    out_file = getattr(args, "output", "") or ""
+    if out_file:
+        from pathlib import Path
+        Path(out_file).write_text(output)
+        print(json.dumps({"success": True, "epic": epic_id, "file": out_file,
+                          "tasks": len(epic_tasks)}))
+    else:
+        print(output)

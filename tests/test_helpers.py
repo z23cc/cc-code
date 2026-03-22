@@ -6,11 +6,11 @@ from pathlib import Path
 # Ensure cc_flow package is importable
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
-from cc_flow.config import _safe_load_json
+from cc_flow.config import _age_days, _safe_load_json
 from cc_flow.core import now_iso, safe_json_load, slugify
 from cc_flow.doctor import _check_python, _chk
 from cc_flow.graph import STATUS_STYLE, _mermaid
-from cc_flow.quality import _check_task_integrity, _detect_cycles
+from cc_flow.quality import _check_task_integrity, _detect_cycles, _detect_language
 from cc_flow.route_learn import _calc_confidence, _keyword_route, _keyword_search, _make_result
 from cc_flow.session import _git_state
 from cc_flow.views import _task_counts
@@ -262,3 +262,24 @@ class TestConsolidationHint:
         import cc_flow.work as work_mod
         monkeypatch.setattr(work_mod, "LEARNINGS_DIR", tmp_path / "nope")
         assert _consolidation_hint() is None
+
+
+class TestDetectLanguage:
+    def test_detects_python(self):
+        # We have pyproject.toml in this project
+        result = _detect_language()
+        assert result == "python"
+
+
+class TestAgeDays:
+    def test_recent_file(self, tmp_path):
+        f = tmp_path / "new.txt"
+        f.write_text("hi")
+        assert _age_days(f) == 0
+
+    def test_returns_int(self, tmp_path):
+        f = tmp_path / "test.txt"
+        f.write_text("hi")
+        result = _age_days(f)
+        assert isinstance(result, int)
+        assert result >= 0

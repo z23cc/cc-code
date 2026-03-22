@@ -1,7 +1,8 @@
-"""cc-flow quality commands — validate, scan."""
+"""cc-flow quality commands — validate, scan, verify."""
 
 import argparse
 import json
+import subprocess
 import sys
 from datetime import datetime, timezone
 
@@ -9,6 +10,7 @@ from cc_flow.core import (
     EPICS_DIR,
     TASKS_SUBDIR,
     all_tasks,
+    error,
     locked_meta_update,
     now_iso,
     save_task,
@@ -90,7 +92,6 @@ def cmd_validate(args):
 
 def _scan_ruff():
     """Run ruff and return P3 findings grouped by rule."""
-    import subprocess
     findings = []
     try:
         result = subprocess.run(["ruff", "check", ".", "--output-format", "json"],
@@ -109,7 +110,6 @@ def _scan_ruff():
 
 def _scan_mypy():
     """Run mypy and return P2 findings."""
-    import subprocess
     try:
         result = subprocess.run(["mypy", ".", "--no-error-summary"],
                                 check=False, capture_output=True, text=True, timeout=60)
@@ -124,7 +124,6 @@ def _scan_mypy():
 
 def _scan_bandit():
     """Run bandit and return findings keyed by priority (P1 or P3)."""
-    import subprocess
     findings = {"P1": [], "P3": []}
     try:
         result = subprocess.run(["bandit", "-r", ".", "-f", "json", "-q"],
@@ -196,3 +195,84 @@ def cmd_scan(args):
             p: findings[p] for p in ("P1", "P2", "P3", "P4") if findings[p]
         }}
         print(json.dumps(output))
+
+
+# ── Verify ──
+
+_VERIFY_PROFILES = {
+    "python": {
+        "detect": ["pyproject.toml", "setup.py", "setup.cfg"],
+        "steps": [
+            (["ruff", "check", "."], "ruff"),
+            (["python3", "-m", "pytest", "--tb=short", "-q"], "pytest"),
+        ],
+    },
+    "node": {
+        "detect": ["package.json"],
+        "steps": [
+            (["npm", "run", "lint"], "lint"),
+            (["npm", "test"], "test"),
+        ],
+    },
+    "go": {
+        "detect": ["go.mod"],
+        "steps": [
+            (["go", "vet", "./..."], "go vet"),
+            (["go", "test", "./..."], "go test"),
+        ],
+    },
+    "rust": {
+        "detect": ["Cargo.toml"],
+        "steps": [
+            (["cargo", "check"], "cargo check"),
+            (["cargo", "test"], "cargo test"),
+        ],
+    },
+}
+
+
+def _detect_language():
+    """Auto-detect project language from marker files."""
+    from pathlib import Path
+    for lang, profile in _VERIFY_PROFILES.items():
+        for marker in profile["detect"]:
+            if Path(marker).exists():
+                return lang
+    return None
+
+
+def cmd_verify(args):
+    """Run lint + test verification, auto-detecting project language."""
+    lang = _detect_language()
+    if not lang:
+        error("Cannot detect project language. No pyproject.toml, package.json, go.mod, or Cargo.toml found.")
+
+    profile = _VERIFY_PROFILES[lang]
+    fix_mode = getattr(args, "fix", False)
+
+    # If --fix and Python, run ruff --fix first
+    if fix_mode and lang == "python":
+        subprocess.run(["ruff", "check", ".", "--fix"], check=False, capture_output=True, text=True)
+
+    results = []
+    all_passed = True
+    for cmd, label in profile["steps"]:
+        result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=120)
+        passed = result.returncode == 0
+        if not passed:
+            all_passed = False
+        results.append({
+            "step": label,
+            "passed": passed,
+            "output": result.stdout[-500:] if not passed else "",
+            "error": result.stderr[-200:] if not passed else "",
+        })
+
+    print(json.dumps({
+        "success": all_passed,
+        "language": lang,
+        "steps": results,
+        "summary": f"{'All passed' if all_passed else 'FAILED'} ({lang}: {len(results)} steps)",
+    }))
+    if not all_passed:
+        sys.exit(1)
