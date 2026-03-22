@@ -249,112 +249,106 @@ def cmd_status(_args):
     }))
 
 
-def cmd_dashboard(args):
-    """One-screen overview: epics, velocity, health, learnings. Use --json for machine-readable."""
-    if getattr(args, "json", False):
-        cmd_status(args)
-        return
-    tasks = all_tasks()
-    total = len(tasks)
-    done = sum(1 for t in tasks.values() if t["status"] == "done")
-    in_prog = sum(1 for t in tasks.values() if t["status"] == "in_progress")
-    blocked = sum(1 for t in tasks.values() if t["status"] == "blocked")
-    todo = total - done - in_prog - blocked
+def _print_dashboard_progress(tasks):
+    """Print progress bar and status counts."""
+    counts = _task_counts(list(tasks.values()))
+    filled = int(20 * counts["done"] / counts["total"]) if counts["total"] > 0 else 0
+    bar = "█" * filled + "░" * (20 - filled)
+    print(f"║  Progress: {bar} {counts['pct']:>3}%  ║")
+    print(f"║  ● {counts['done']} done  ◐ {counts['in_progress']} active"
+          f"  ○ {counts['todo']} todo  ✗ {counts['blocked']} blocked ║")
 
-    # Header
-    print("╔══════════════════════════════════════════╗")
-    print(f"║  cc-flow Dashboard  (v{VERSION})          ║")
-    print("╠══════════════════════════════════════════╣")
 
-    # Global stats
-    pct = int(done / total * 100) if total > 0 else 0
-    bar_len = 20
-    filled = int(bar_len * done / total) if total > 0 else 0
-    bar = "█" * filled + "░" * (bar_len - filled)
-    print(f"║  Progress: {bar} {pct:>3}%  ║")
-    print(f"║  ● {done} done  ◐ {in_prog} active  ○ {todo} todo  ✗ {blocked} blocked ║")
-
-    # Velocity
+def _print_dashboard_velocity(tasks):
+    """Print velocity stat from completed tasks."""
     done_tasks = [t for t in tasks.values() if t.get("completed")]
     if len(done_tasks) >= 2:
         times = sorted(t["completed"] for t in done_tasks)
         first = datetime.fromisoformat(times[0].replace("Z", "+00:00"))
         last = datetime.fromisoformat(times[-1].replace("Z", "+00:00"))
         hours = max((last - first).total_seconds() / 3600, 0.1)
-        velocity = len(done_tasks) / hours
-        print(f"║  Velocity: {velocity:.1f} tasks/hour                  ║")
+        print(f"║  Velocity: {len(done_tasks) / hours:.1f} tasks/hour                  ║")
     else:
         print("║  Velocity: —                              ║")
 
-    print("╠══════════════════════════════════════════╣")
 
-    # Epic summary
+def _print_dashboard_epics(tasks):
+    """Print epic summary section."""
     epic_files = sorted(EPICS_DIR.glob("*.md")) if EPICS_DIR.exists() else []
-    if epic_files:
-        print("║  Epics:                                   ║")
-        for f in epic_files[:5]:
-            epic_id = f.stem
-            epic_tasks = [t for t in tasks.values() if t.get("epic") == epic_id]
-            e_done = sum(1 for t in epic_tasks if t["status"] == "done")
-            e_total = len(epic_tasks)
-            # Title
-            first_line = f.read_text().split("\n", 1)[0]
-            title = first_line.lstrip("# ").replace("Epic:", "").strip()[:25]
-            e_pct = int(e_done / e_total * 100) if e_total > 0 else 0
-            mini_bar = "█" * (e_pct // 10) + "░" * (10 - e_pct // 10)
-            print(f"║    {mini_bar} {e_pct:>3}% {title:<25} ║")
-        if len(epic_files) > 5:
-            print(f"║    ... +{len(epic_files) - 5} more                          ║")
-    else:
+    if not epic_files:
         print("║  No epics yet. Run: cc-flow epic create   ║")
+        return
+    print("║  Epics:                                   ║")
+    for f in epic_files[:5]:
+        epic_tasks = [t for t in tasks.values() if t.get("epic") == f.stem]
+        e_counts = _task_counts(epic_tasks)
+        title = f.read_text().split("\n", 1)[0].lstrip("# ").replace("Epic:", "").strip()[:25]
+        mini_bar = "█" * (e_counts["pct"] // 10) + "░" * (10 - e_counts["pct"] // 10)
+        print(f"║    {mini_bar} {e_counts['pct']:>3}% {title:<25} ║")
+    if len(epic_files) > 5:
+        print(f"║    ... +{len(epic_files) - 5} more                          ║")
 
-    print("╠══════════════════════════════════════════╣")
 
-    # Learnings & patterns
+def _print_dashboard_learning():
+    """Print learning, routing, and autoimmune stats."""
     learn_count = len(list(LEARNINGS_DIR.glob("*.json"))) if LEARNINGS_DIR.exists() else 0
     patterns_dir = TASKS_DIR / "patterns"
     pattern_count = len(list(patterns_dir.glob("*.json"))) if patterns_dir.exists() else 0
-    route_stats = _load_route_stats()
-    total_routes = sum(
-        v.get("success", 0) + v.get("failure", 0)
-        for v in route_stats.get("commands", {}).values()
-    )
-
     print(f"║  Learning: {learn_count} entries, {pattern_count} patterns         ║")
+
+    route_stats = _load_route_stats()
+    cmd_stats = route_stats.get("commands", {})
+    total_routes = sum(v.get("success", 0) + v.get("failure", 0) for v in cmd_stats.values())
     if total_routes > 0:
-        total_success = sum(v.get("success", 0) for v in route_stats.get("commands", {}).values())
-        rate = int(total_success / total_routes * 100) if total_routes > 0 else 0
-        print(f"║  Routing:  {total_routes} routes, {rate}% success rate      ║")
+        total_success = sum(v.get("success", 0) for v in cmd_stats.values())
+        print(f"║  Routing:  {total_routes} routes, {int(total_success / total_routes * 100)}% success rate      ║")
     else:
         print("║  Routing:  no data yet                    ║")
 
-    # Autoimmune log
     if LOG_FILE.exists():
         lines = LOG_FILE.read_text().strip().split("\n")[1:]
         kept = sum(1 for row in lines if "KEPT" in row)
         disc = sum(1 for row in lines if "DISCARDED" in row)
         ai_total = kept + disc
         if ai_total > 0:
-            ai_rate = int(kept / ai_total * 100)
-            print(f"║  Autoimmune: {ai_total} runs, {ai_rate}% success         ║")
+            print(f"║  Autoimmune: {ai_total} runs, {int(kept / ai_total * 100)}% success         ║")
 
-    print("╚══════════════════════════════════════════╝")
 
-    # Next action suggestion
-    if blocked > 0:
-        print(f"\n  ⚠ {blocked} blocked task(s). Run: cc-flow tasks --status blocked")
-    elif in_prog > 0:
+def _print_dashboard_hint(tasks):
+    """Print next-action suggestion based on task state."""
+    counts = _task_counts(list(tasks.values()))
+    if counts["blocked"] > 0:
+        print(f"\n  ⚠ {counts['blocked']} blocked task(s). Run: cc-flow tasks --status blocked")
+    elif counts["in_progress"] > 0:
         ip = next(t for t in tasks.values() if t["status"] == "in_progress")
         print(f"\n  → Resume: {ip['id']} — {ip['title']}")
-    elif todo > 0:
-        # Find next ready
+    elif counts["todo"] > 0:
         for t in tasks.values():
             if t["status"] == "todo":
                 deps_done = all(tasks.get(d, {}).get("status") == "done" for d in t.get("depends_on", []))
                 if deps_done:
                     print(f"\n  → Next: cc-flow start {t['id']} — {t['title']}")
                     break
-    elif total > 0:
+    elif counts["total"] > 0:
         print("\n  ✅ All tasks done!")
     else:
         print("\n  → Get started: cc-flow epic create --title 'My Feature'")
+
+
+def cmd_dashboard(args):
+    """One-screen overview: epics, velocity, health, learnings. Use --json for machine-readable."""
+    if getattr(args, "json", False):
+        cmd_status(args)
+        return
+    tasks = all_tasks()
+    print("╔══════════════════════════════════════════╗")
+    print(f"║  cc-flow Dashboard  (v{VERSION})          ║")
+    print("╠══════════════════════════════════════════╣")
+    _print_dashboard_progress(tasks)
+    _print_dashboard_velocity(tasks)
+    print("╠══════════════════════════════════════════╣")
+    _print_dashboard_epics(tasks)
+    print("╠══════════════════════════════════════════╣")
+    _print_dashboard_learning()
+    print("╚══════════════════════════════════════════╝")
+    _print_dashboard_hint(tasks)
