@@ -14,7 +14,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 - `commands/` — 24 slash commands (all prefixed `/cc-`)
 - `tests/` — 196 tests (125 cc-flow integration + 56 unit + 15 morph)
 - `rules/` — 9 always-on rules: python-style, testing, security, git, docs-sync, agent-orchestration, workflow, performance, tool-priority
-- `hooks/` — 5 hooks: SessionStart, PreToolUse, PostToolUse, PreCompact, Stop
+- `hooks/` — 5 hooks: SessionStart (context-aware), PreToolUse, PostToolUse, PreCompact, Stop
 
 ## Quick Decision Tree
 
