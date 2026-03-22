@@ -16,19 +16,19 @@ from cc_flow.views import _epic_label, _task_counts, cmd_status
 
 def _print_epic_progress(epic_id, counts):
     """Print a progress bar for an epic."""
+    from cc_flow import skin
+
     label = _epic_label(epic_id)
     if counts["total"] == 0:
-        print(f"{label}: no tasks")
+        skin.dim(f"{label}: no tasks")
         return
-    filled = int(20 * counts["done"] / counts["total"])
-    bar = "█" * filled + "░" * (20 - filled)
-    print(f"{label}: {bar} {counts['pct']}% ({counts['done']}/{counts['total']})")
+    skin.progress_bar(counts["done"], counts["total"], f"{label} ({counts['done']}/{counts['total']})")
     if counts["in_progress"]:
-        print(f"  ◐ {counts['in_progress']} in progress")
+        skin.dim(f"  {counts['in_progress']} in progress")
     if counts["blocked"]:
-        print(f"  ✗ {counts['blocked']} blocked")
+        skin.warning(f"{counts['blocked']} blocked")
     if counts["todo"]:
-        print(f"  ○ {counts['todo']} todo")
+        skin.dim(f"  {counts['todo']} todo")
 
 
 def cmd_progress(args):
@@ -120,23 +120,26 @@ def _print_dashboard_learning():
 
 def _print_dashboard_hint(tasks):
     """Print next-action suggestion based on task state."""
+    from cc_flow import skin
+
     counts = _task_counts(list(tasks.values()))
+    print()
     if counts["blocked"] > 0:
-        print(f"\n  ⚠ {counts['blocked']} blocked task(s). Run: cc-flow tasks --status blocked")
+        skin.warning(f"{counts['blocked']} blocked task(s). Run: cc-flow tasks --status blocked")
     elif counts["in_progress"] > 0:
         ip = next(t for t in tasks.values() if t["status"] == "in_progress")
-        print(f"\n  → Resume: {ip['id']} — {ip['title']}")
+        skin.info(f"Resume: {ip['id']} -- {ip['title']}")
     elif counts["todo"] > 0:
         for t in tasks.values():
             if t["status"] == "todo":
                 deps_done = all(tasks.get(d, {}).get("status") == "done" for d in t.get("depends_on", []))
                 if deps_done:
-                    print(f"\n  → Next: cc-flow start {t['id']} — {t['title']}")
+                    skin.info(f"Next: cc-flow start {t['id']} -- {t['title']}")
                     break
     elif counts["total"] > 0:
-        print("\n  ✅ All tasks done!")
+        skin.success("All tasks done!")
     else:
-        print("\n  → Get started: cc-flow epic create --title 'My Feature'")
+        skin.dim("Get started: cc-flow epic create --title 'My Feature'")
 
 
 def cmd_dashboard(args):
