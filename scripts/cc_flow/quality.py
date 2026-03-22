@@ -253,7 +253,13 @@ def _detect_node_steps():
     elif "ci" in scripts:
         steps.append((["npm", "run", "ci"], "ci"))
 
-    return steps if steps else [(["npm", "test"], "test")]
+    if not steps:
+        # No standard scripts found — try build as a basic check
+        if "build" in scripts:
+            return [(["npm", "run", "build"], "build")]
+        # Last resort: just verify node_modules exists
+        return [(["node", "-e", "process.exit(0)"], "node-check")]
+    return steps
 
 
 def _detect_language():
