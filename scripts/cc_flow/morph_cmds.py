@@ -70,6 +70,33 @@ def cmd_embed(args):
         error(f"embed failed: {exc}")
 
 
+def _print_search_results(query, results, engine, fmt):
+    """Format and print search results in json or text."""
+    if fmt == "json":
+        payload = {"success": True, "engine": engine, "query": query, "results": results}
+        if isinstance(results, list):
+            payload["count"] = len(results)
+        print(json.dumps(payload))
+    else:
+        print(f"## Search: {query} ({engine})\n")
+        if isinstance(results, list):
+            for line in results:
+                print(f"  {line}")
+        else:
+            print(results if isinstance(results, str) else json.dumps(results, indent=2))
+
+
+def _rerank_lines(client, query, lines):
+    """Rerank search results via Morph, returning (lines, engine)."""
+    if not client:
+        return lines, "grep (rerank skipped: MORPH_API_KEY not set)"
+    try:
+        ranked = client.rerank(query, lines, top_n=min(10, len(lines)))
+        return [r["document"] for r in ranked], "grep+rerank"
+    except Exception:
+        return lines, "grep (rerank failed)"
+
+
 def cmd_search(args):
     """Semantic code search via Morph WarpGrep, with grep+rerank fallback."""
     query = " ".join(args.query) if args.query else ""
@@ -87,11 +114,7 @@ def cmd_search(args):
         try:
             result = client.search(query, search_dir)
             if result:
-                if fmt == "json":
-                    print(json.dumps({"success": True, "engine": "morph-warpgrep", "query": query, "results": result}))
-                else:
-                    print(f"## Search: {query} (morph warpgrep)\n")
-                    print(result if isinstance(result, str) else json.dumps(result, indent=2))
+                _print_search_results(query, result, "morph-warpgrep", fmt)
                 return
         except Exception:
             pass
@@ -106,26 +129,11 @@ def cmd_search(args):
         )
         lines = [ln for ln in result.stdout.strip().split("\n") if ln.strip()][:30]
 
-        # Rerank with Morph if requested
         engine = "grep"
         if do_rerank and lines:
-            if client:
-                try:
-                    ranked = client.rerank(query, lines, top_n=min(10, len(lines)))
-                    lines = [r["document"] for r in ranked]
-                    engine = "grep+rerank"
-                except Exception:
-                    engine = "grep (rerank failed)"
-            else:
-                engine = "grep (rerank skipped: MORPH_API_KEY not set)"
+            lines, engine = _rerank_lines(client, query, lines)
 
-        if fmt == "json":
-            print(json.dumps({"success": True, "engine": engine, "query": query,
-                              "results": lines, "count": len(lines)}))
-        else:
-            print(f"## Search: {query} ({engine})\n")
-            for line in lines:
-                print(f"  {line}")
+        _print_search_results(query, lines, engine, fmt)
     except (_sp.TimeoutExpired, OSError):
         error("Search failed")
 
