@@ -110,9 +110,86 @@ def scan_docstrings():
 
 
 def scan_duplication():
-    """Find potential code duplication using simple line-hash analysis."""
+    """Find code duplication using embedding similarity (Morph) or line-hash fallback."""
+    # Try embedding-based detection first
+    semantic = _scan_duplication_semantic()
+    if semantic is not None:
+        return semantic
+
+    # Fallback: line-hash
+    return _scan_duplication_linehash()
+
+
+def _extract_functions():
+    """Extract function bodies from cc_flow modules for duplication analysis."""
+    functions = []
+    for py in sorted(Path("scripts/cc_flow").glob("*.py")):
+        if py.name.startswith("_"):
+            continue
+        try:
+            content = py.read_text()
+            tree = ast.parse(content)
+        except (SyntaxError, OSError):
+            continue
+        source_lines = content.split("\n")
+        for node in ast.walk(tree):
+            if isinstance(node, ast.FunctionDef) and len(source_lines) > node.end_lineno:
+                body = "\n".join(source_lines[node.lineno - 1:node.end_lineno])
+                if len(body) > 50:
+                    functions.append({"file": py.name, "name": node.name,
+                                      "text": body[:200], "lineno": node.lineno})
+    return functions
+
+
+def _find_similar_pairs(functions, embedded):
+    """Find cross-file function pairs with high embedding similarity."""
+    from cc_flow.embeddings import cosine_similarity
+
     findings = []
-    line_hashes = {}  # hash → [(file, lineno)]
+    seen = set()
+    for i in range(len(functions)):
+        for j in range(i + 1, len(functions)):
+            if functions[i]["file"] == functions[j]["file"]:
+                continue
+            score = cosine_similarity(embedded[i][1], embedded[j][1])
+            pair_key = f"{functions[i]['name']}:{functions[j]['name']}"
+            if score > 0.85 and pair_key not in seen:
+                seen.add(pair_key)
+                findings.append({
+                    "type": "semantic_duplication", "severity": "P3",
+                    "message": (f"{functions[i]['file']}:{functions[i]['name']} ~ "
+                                f"{functions[j]['file']}:{functions[j]['name']} "
+                                f"(similarity: {score:.2f})"),
+                    "files": [functions[i]["file"], functions[j]["file"]],
+                    "score": round(score, 3),
+                })
+                if len(findings) >= 5:
+                    return findings
+    return findings
+
+
+def _scan_duplication_semantic():
+    """Use Morph embeddings to find semantically similar functions across files."""
+    try:
+        from cc_flow.embeddings import embed_texts
+    except ImportError:
+        return None
+
+    functions = _extract_functions()
+    if len(functions) < 2:
+        return []
+
+    embedded = embed_texts([f["text"] for f in functions])
+    if not embedded:
+        return None
+
+    return _find_similar_pairs(functions, embedded)
+
+
+def _scan_duplication_linehash():
+    """Fallback: line-hash based duplication detection."""
+    findings = []
+    line_hashes = {}
 
     for py in sorted(Path("scripts/cc_flow").glob("*.py")):
         try:
@@ -120,7 +197,6 @@ def scan_duplication():
         except OSError:
             continue
         for i in range(len(lines) - 3):
-            # 4-line window
             block = "\n".join(lines[i:i + 4]).strip()
             if len(block) < 40:
                 continue
@@ -132,7 +208,7 @@ def scan_duplication():
     for locations in line_hashes.values():
         if len(locations) >= 2:
             files = list({loc[0] for loc in locations})
-            if len(files) >= 2:  # Cross-file duplication only
+            if len(files) >= 2:
                 findings.append({
                     "type": "duplication", "severity": "P4",
                     "message": f"Similar code in {files[0].split('/')[-1]} and {files[1].split('/')[-1]}",
