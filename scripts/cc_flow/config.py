@@ -89,6 +89,61 @@ def cmd_config(args):
         print(json.dumps({"success": True, "config": config}))
 
 
+PROFILES = {
+    "default": {},
+    "fast": {
+        "max_iterations": 10,
+        "default_size": "S",
+        "routing_confidence_threshold": 20,
+    },
+    "strict": {
+        "max_iterations": 30,
+        "auto_consolidate": True,
+        "auto_learn_on_done": True,
+        "routing_confidence_threshold": 50,
+        "scan_tools": ["ruff", "mypy", "bandit"],
+    },
+    "minimal": {
+        "max_iterations": 5,
+        "auto_consolidate": False,
+        "auto_learn_on_done": False,
+        "scan_tools": ["ruff"],
+    },
+}
+
+
+def cmd_profile(args):
+    """Apply a configuration profile or list available profiles."""
+    action = getattr(args, "action", "list")
+
+    if action == "list":
+        result = {name: {"keys": len(overrides), "description": _profile_desc(name)}
+                  for name, overrides in PROFILES.items()}
+        print(json.dumps({"success": True, "profiles": result}))
+        return
+
+    name = getattr(args, "name", "")
+    if name not in PROFILES:
+        from cc_flow.core import error
+        error(f"Unknown profile: {name}. Available: {', '.join(PROFILES.keys())}")
+
+    config = DEFAULT_CONFIG.copy()
+    config.update(PROFILES[name])
+    CONFIG_FILE.write_text(json.dumps(config, indent=2) + "\n")
+    print(json.dumps({"success": True, "profile": name, "config": config}))
+
+
+def _profile_desc(name):
+    """Brief description of a profile."""
+    descs = {
+        "default": "Standard settings",
+        "fast": "Quick iterations, lower thresholds",
+        "strict": "Thorough checks, higher confidence requirements",
+        "minimal": "Lightweight, fewer tools, no auto-learning",
+    }
+    return descs.get(name, "")
+
+
 def _age_days(path):
     """Get file age in days from modification time."""
     mtime = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)

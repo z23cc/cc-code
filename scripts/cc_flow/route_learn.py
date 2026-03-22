@@ -112,6 +112,13 @@ def cmd_route(args):
     if not query:
         error("Provide a task description")
 
+    # Q-Learning route (highest priority if available)
+    try:
+        from cc_flow.qrouter import q_route
+        q_cmd, q_conf, q_cat = q_route(query)
+    except ImportError:
+        q_cmd, q_conf, q_cat = None, 0, "general"
+
     past_match = _search_learnings(query)
     pattern_match = _find_pattern_match(query)
     matches = _keyword_route(query)
@@ -119,6 +126,11 @@ def cmd_route(args):
 
     route_stats = _load_route_stats()
     suggested_cmd = best["command"] if best else "/brainstorm"
+
+    # Q-learning override if high confidence
+    if q_cmd and q_conf > 60:
+        suggested_cmd = q_cmd
+
     cmd_stats = route_stats.get("commands", {}).get(suggested_cmd, {})
 
     result = {
@@ -139,6 +151,8 @@ def cmd_route(args):
         s = cmd_stats.get("success", 0)
         f = cmd_stats.get("failure", 0)
         result["route_history"] = {"uses": s + f, "success_rate": int(s / (s + f) * 100) if (s + f) > 0 else 0}
+    if q_cmd:
+        result["q_learning"] = {"command": q_cmd, "confidence": q_conf, "category": q_cat}
     if len(matches) > 1:
         result["alternatives"] = [
             {"command": m["command"], "reason": m["description"]}
@@ -184,6 +198,14 @@ def cmd_learn(args):
         else:  # partial
             stats["commands"][cmd]["success"] += 0.5
         _save_route_stats(stats)
+
+    # Q-Learning update
+    if learning.get("command"):
+        try:
+            from cc_flow.qrouter import q_update
+            q_update(args.task, learning["command"], args.outcome)
+        except ImportError:
+            pass
 
     print(json.dumps({"success": True, "saved": str(path)}))
 

@@ -250,7 +250,9 @@ def _add_morph_commands(sub):
 
 
 def _add_misc_commands(sub):
-    """Add misc subcommands: log, summary, archive, stats, version, config."""
+    """Add misc subcommands: log, summary, archive, stats, perf, version, config."""
+    perf_p = sub.add_parser("perf", help="Command performance analytics")
+    perf_p.add_argument("--top", type=int, default=10)
     log_p = sub.add_parser("log")
     log_p.add_argument("--show", type=int, default=0)
     log_p.add_argument("--iteration", type=int, default=None)
@@ -283,6 +285,9 @@ def _add_misc_commands(sub):
     clean_p = sub.add_parser("clean", help="Remove old sessions and archived data")
     clean_p.add_argument("--days", type=int, default=30, help="Max age in days (default: 30)")
     clean_p.add_argument("--dry-run", action="store_true", default=False, help="Preview without deleting")
+    profile_p = sub.add_parser("profile", help="Apply a configuration profile")
+    profile_p.add_argument("action", nargs="?", default="list", choices=["list", "apply"])
+    profile_p.add_argument("name", nargs="?", default="")
 
 
 _HELP_CATEGORIES = """
