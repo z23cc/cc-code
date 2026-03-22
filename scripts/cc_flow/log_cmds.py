@@ -1,7 +1,7 @@
-"""cc-flow logging commands — log, summary, archive, stats."""
+"""cc-flow logging commands — log, summary, archive, stats, standup."""
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 from cc_flow.core import COMPLETED_DIR, LOG_FILE, all_tasks, error, now_iso, safe_json_load
 
@@ -131,3 +131,56 @@ def cmd_stats(_args):
         }
 
     print(json.dumps(result))
+
+
+def cmd_standup(args):
+    """Daily standup report: done recently, in progress, blocked, next up."""
+    hours = getattr(args, "hours", 24) or 24
+    cutoff = (datetime.now(timezone.utc) - timedelta(hours=hours)).isoformat()
+
+    tasks = all_tasks()
+
+    recently_done = [
+        {"id": t["id"], "title": t.get("title", ""), "completed": t.get("completed", "")}
+        for t in tasks.values()
+        if t["status"] == "done" and t.get("completed", "") >= cutoff
+    ]
+    recently_done.sort(key=lambda t: t["completed"], reverse=True)
+
+    in_progress = [
+        {"id": t["id"], "title": t.get("title", ""), "started": t.get("started", "")}
+        for t in tasks.values()
+        if t["status"] == "in_progress"
+    ]
+
+    blocked = [
+        {"id": t["id"], "title": t.get("title", ""), "reason": t.get("blocked_reason", "")}
+        for t in tasks.values()
+        if t["status"] == "blocked"
+    ]
+
+    # Next ready tasks (deps satisfied)
+    next_up = []
+    for t in tasks.values():
+        if t["status"] != "todo":
+            continue
+        deps_done = all(tasks.get(d, {}).get("status") == "done" for d in t.get("depends_on", []))
+        if deps_done:
+            next_up.append({"id": t["id"], "title": t.get("title", ""),
+                            "priority": t.get("priority", 999)})
+    next_up.sort(key=lambda t: t["priority"])
+
+    print(json.dumps({
+        "success": True,
+        "period_hours": hours,
+        "done": recently_done,
+        "in_progress": in_progress,
+        "blocked": blocked,
+        "next_up": next_up[:5],
+        "summary": {
+            "done_count": len(recently_done),
+            "active_count": len(in_progress),
+            "blocked_count": len(blocked),
+            "ready_count": len(next_up),
+        },
+    }))
