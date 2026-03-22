@@ -191,62 +191,70 @@ class MorphClient:
 
         return "Search reached max turns without finishing"
 
+    @staticmethod
+    def _safe_path(p, base_dir):
+        """Validate path is within base_dir to prevent traversal."""
+        resolved = Path(p).resolve()
+        if not str(resolved).startswith(str(base_dir.resolve())):
+            return None
+        return resolved
+
+    @staticmethod
+    def _tool_grep(args, base_dir):
+        import subprocess as sp
+        pattern = args.get("pattern", "")
+        path = args.get("path", str(base_dir))
+        include = args.get("include", "")
+        cmd = ["grep", "-rn", pattern, path]
+        if include:
+            cmd.insert(2, f"--include={include}")
+        try:
+            result = sp.run(cmd, check=False, capture_output=True, text=True, timeout=10)
+            lines = result.stdout.strip().split("\n")[:30]
+            return "\n".join(lines) if lines[0] else "No matches"
+        except (sp.TimeoutExpired, OSError):
+            return "grep failed"
+
+    def _tool_read(self, args, base_dir):
+        path = self._safe_path(args["path"], base_dir)
+        if not path:
+            return "Access denied: path outside project directory"
+        if not path.exists():
+            return f"File not found: {path}"
+        content = path.read_text()
+        start = args.get("start_line", 1) - 1
+        end = args.get("end_line")
+        lines = content.split("\n")
+        lines = lines[start:end] if end else lines[start:start + 100]
+        return "\n".join(f"{i + start + 1}: {line}" for i, line in enumerate(lines))
+
+    def _tool_list_dir(self, args, base_dir):
+        path = self._safe_path(args["path"], base_dir)
+        if not path:
+            return "Access denied: path outside project directory"
+        if not path.exists():
+            return f"Directory not found: {path}"
+        entries = sorted(path.iterdir())[:50]
+        return "\n".join(("d " if e.is_dir() else "f ") + e.name for e in entries)
+
+    @staticmethod
+    def _tool_glob(args, _base_dir):
+        import glob as glob_mod
+        matches = sorted(glob_mod.glob(args["pattern"], recursive=True))[:30]
+        return "\n".join(matches) if matches else "No matches"
+
     def _execute_tool(self, name, args, base_dir):
         """Execute a WarpGrep tool locally (paths validated against base_dir)."""
-        import subprocess as sp
-
-        def _safe_path(p):
-            """Validate path is within base_dir to prevent traversal."""
-            resolved = Path(p).resolve()
-            if not str(resolved).startswith(str(base_dir.resolve())):
-                return None
-            return resolved
-
-        if name == "grep_search":
-            pattern = args.get("pattern", "")
-            path = args.get("path", str(base_dir))
-            include = args.get("include", "")
-            cmd = ["grep", "-rn", pattern, path]
-            if include:
-                cmd.insert(2, f"--include={include}")
-            try:
-                result = sp.run(cmd, check=False, capture_output=True, text=True, timeout=10)
-                lines = result.stdout.strip().split("\n")[:30]
-                return "\n".join(lines) if lines[0] else "No matches"
-            except (sp.TimeoutExpired, OSError):
-                return "grep failed"
-
-        elif name == "read":
-            path = _safe_path(args["path"])
-            if not path:
-                return "Access denied: path outside project directory"
-            if not path.exists():
-                return f"File not found: {path}"
-            content = path.read_text()
-            start = args.get("start_line", 1) - 1
-            end = args.get("end_line")
-            lines = content.split("\n")
-            lines = lines[start:end] if end else lines[start:start + 100]
-            return "\n".join(f"{i + start + 1}: {line}" for i, line in enumerate(lines))
-
-        elif name == "list_directory":
-            path = _safe_path(args["path"])
-            if not path:
-                return "Access denied: path outside project directory"
-            if not path.exists():
-                return f"Directory not found: {path}"
-            entries = sorted(path.iterdir())[:50]
-            return "\n".join(("d " if e.is_dir() else "f ") + e.name for e in entries)
-
-        elif name == "glob":
-            import glob as glob_mod
-            pattern = args["pattern"]
-            matches = sorted(glob_mod.glob(pattern, recursive=True))[:30]
-            return "\n".join(matches) if matches else "No matches"
-
-        elif name == "finish":
-            return args.get("result", "")
-
+        dispatch = {
+            "grep_search": self._tool_grep,
+            "read": self._tool_read,
+            "list_directory": self._tool_list_dir,
+            "glob": self._tool_glob,
+            "finish": lambda a, _: a.get("result", ""),
+        }
+        handler = dispatch.get(name)
+        if handler:
+            return handler(args, base_dir)
         return f"Unknown tool: {name}"
 
     # ── Embedding ──
