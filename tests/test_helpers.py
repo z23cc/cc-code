@@ -6,12 +6,15 @@ from pathlib import Path
 # Ensure cc_flow package is importable
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
+from cc_flow.config import _safe_load_json
 from cc_flow.core import now_iso, safe_json_load, slugify
 from cc_flow.doctor import _check_python, _chk
+from cc_flow.graph import STATUS_STYLE, _mermaid
 from cc_flow.quality import _check_task_integrity, _detect_cycles
 from cc_flow.route_learn import _calc_confidence, _keyword_route, _keyword_search, _make_result
+from cc_flow.session import _git_state
 from cc_flow.views import _task_counts
-from cc_flow.work import _calc_duration, _format_duration
+from cc_flow.work import _calc_duration, _consolidation_hint, _format_duration
 
 
 class TestTaskCounts:
@@ -202,3 +205,60 @@ class TestCalcConfidence:
         past = {"confidence": 100}
         result = _calc_confidence(None, past, None, {})
         assert result == 99
+
+    def test_history_blend(self):
+        best = {"score": 2, "command": "/tdd", "team": "dev", "description": "tdd"}
+        cmd_stats = {"success": 8, "failure": 2}  # 80% success
+        result = _calc_confidence(best, None, None, cmd_stats)
+        # 50 * 0.7 + 80 * 0.3 = 35 + 24 = 59
+        assert result == 59
+
+
+class TestGraphHelpers:
+    def test_status_style_keys(self):
+        assert set(STATUS_STYLE.keys()) == {"todo", "in_progress", "done", "blocked"}
+        for style in STATUS_STYLE.values():
+            assert "icon" in style
+            assert "mermaid" in style
+
+    def test_mermaid_output(self, capsys):
+        tasks = {
+            "t1": {"title": "Task 1", "status": "done", "depends_on": []},
+            "t2": {"title": "Task 2", "status": "todo", "depends_on": ["t1"]},
+        }
+        edges = [("t1", "t2")]
+        _mermaid(tasks, edges)
+        output = capsys.readouterr().out
+        assert "graph TD" in output
+        assert "t1" in output
+        assert "t2" in output
+        assert "-->" in output
+
+
+class TestConfigHelpers:
+    def test_safe_load_json_valid(self, tmp_path):
+        f = tmp_path / "test.json"
+        f.write_text('{"key": "value"}')
+        result = _safe_load_json(f)
+        assert result == {"key": "value"}
+
+    def test_safe_load_json_corrupt(self, tmp_path):
+        f = tmp_path / "bad.json"
+        f.write_text("not json")
+        assert _safe_load_json(f) is None
+
+
+class TestSessionHelpers:
+    def test_git_state_returns_triple(self):
+        sha, branch, dirty = _git_state()
+        # In a git repo, sha should be non-empty
+        assert isinstance(sha, str)
+        assert isinstance(branch, str)
+        assert isinstance(dirty, str)
+
+
+class TestConsolidationHint:
+    def test_no_hint_when_no_learnings(self, tmp_path, monkeypatch):
+        import cc_flow.work as work_mod
+        monkeypatch.setattr(work_mod, "LEARNINGS_DIR", tmp_path / "nope")
+        assert _consolidation_hint() is None

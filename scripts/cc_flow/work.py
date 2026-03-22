@@ -1,7 +1,6 @@
 """cc-flow work commands."""
 
 import json
-import sys
 from datetime import datetime, timezone
 
 from cc_flow.core import (
@@ -21,21 +20,18 @@ def cmd_start(args):
     """Start a task — check deps, record git SHA, set status to in_progress."""
     path = TASKS_SUBDIR / f"{args.id}.json"
     if not path.exists():
-        print(json.dumps({"success": False, "error": f"Task not found: {args.id}"}))
-        sys.exit(1)
+        error(f"Task not found: {args.id}")
 
     data = safe_json_load(path)
     if data["status"] not in ("todo", "blocked"):
-        print(json.dumps({"success": False, "error": f"Cannot start task with status: {data['status']}"}))
-        sys.exit(1)
+        error(f"Cannot start task with status: {data['status']}")
 
     # Check dependencies
     tasks = all_tasks()
     for dep in data.get("depends_on", []):
         dep_task = tasks.get(dep)
         if dep_task and dep_task["status"] != "done":
-            print(json.dumps({"success": False, "error": f"Dependency not done: {dep}"}))
-            sys.exit(1)
+            error(f"Dependency not done: {dep}")
 
     data["status"] = "in_progress"
     data["started"] = now_iso()
@@ -89,8 +85,7 @@ def cmd_done(args):
     """Complete a task — record duration, diff stats, and optional summary."""
     path = TASKS_SUBDIR / f"{args.id}.json"
     if not path.exists():
-        print(json.dumps({"success": False, "error": f"Task not found: {args.id}"}))
-        sys.exit(1)
+        error(f"Task not found: {args.id}")
 
     data = safe_json_load(path)
     if data["status"] not in ("in_progress", "todo"):
@@ -125,8 +120,7 @@ def cmd_block(args):
     """Block a task with a reason."""
     path = TASKS_SUBDIR / f"{args.id}.json"
     if not path.exists():
-        print(json.dumps({"success": False, "error": f"Task not found: {args.id}"}))
-        sys.exit(1)
+        error(f"Task not found: {args.id}")
 
     data = safe_json_load(path)
     data["status"] = "blocked"
