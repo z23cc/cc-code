@@ -40,10 +40,8 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 ## Tool Priority
 
-1. MCP tools (`edit_file`, `codebase_search`) → fastest, use when available
-2. cc-flow morph commands (`search`, `apply`, `embed`, `compact`) → CLI fallback
-3. rp-cli (`context_builder`, `structure`, `review`) → deep cross-file analysis
-4. Built-in (Grep, Read, Edit) → last resort
+1. cc-flow CLI (`search`, `apply`, `embed`, `compact`) → semantic search, fast edits
+2. Built-in (Grep, Read, Edit) → exact patterns, targeted operations
 
 ## cc-flow Quick Reference
 
