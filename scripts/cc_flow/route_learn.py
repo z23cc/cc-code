@@ -285,25 +285,57 @@ def _search_learnings(query):
     return _try_morph_rerank(query, learnings) or _keyword_search(query, learnings)
 
 
-def cmd_consolidate(_args):
-    """Consolidate learnings: merge similar entries, promote high-score patterns."""
+def _load_learnings_with_paths():
+    """Load all learning JSON files, attaching their file path."""
     if not LEARNINGS_DIR.exists():
-        print(json.dumps({"success": True, "consolidated": 0, "promoted": 0}))
-        return
-
-    learnings = []
+        return []
+    entries = []
     for f in sorted(LEARNINGS_DIR.glob("*.json")):
         d = safe_json_load(f, default=None)
-        if not d:
-            continue
-        d["_path"] = str(f)
-        learnings.append(d)
+        if d:
+            d["_path"] = str(f)
+            entries.append(d)
+    return entries
 
+
+def _promote_pattern(key, group, promoted_dir):
+    """Promote a high-scoring learning group to a pattern file. Returns True if promoted."""
+    avg_score = sum(e.get("score", 3) for e in group) / len(group)
+    success_count = sum(1 for e in group if e.get("outcome") == "success")
+    if avg_score < 4 or success_count < 2:
+        return False
+    best = max(group, key=lambda e: e.get("score", 0))
+    pattern = {
+        "task_pattern": key,
+        "approach": best.get("approach"),
+        "lesson": best.get("lesson"),
+        "avg_score": round(avg_score, 1),
+        "success_rate": int(success_count / len(group) * 100),
+        "occurrences": len(group),
+        "promoted_at": now_iso(),
+    }
+    fname = key.replace(" ", "-")[:30] + ".json"
+    (promoted_dir / fname).write_text(json.dumps(pattern, indent=2) + "\n")
+    return True
+
+
+def _dedup_group(group):
+    """Keep top 3 entries in a group, remove the rest. Returns count removed."""
+    if len(group) <= 3:
+        return 0
+    group.sort(key=lambda e: -e.get("score", 0))
+    for entry in group[3:]:
+        Path(entry["_path"]).unlink(missing_ok=True)
+    return len(group) - 3
+
+
+def cmd_consolidate(_args):
+    """Consolidate learnings: merge similar entries, promote high-score patterns."""
+    learnings = _load_learnings_with_paths()
     if len(learnings) < 2:
         print(json.dumps({"success": True, "consolidated": 0, "promoted": 0}))
         return
 
-    # Group by task similarity
     groups = {}
     for entry in learnings:
         task_key = " ".join(sorted(entry.get("task", "").lower().split()[:3]))
@@ -317,34 +349,9 @@ def cmd_consolidate(_args):
     for key, group in groups.items():
         if len(group) < 2:
             continue
-
-        # Average score for this pattern
-        avg_score = sum(e.get("score", 3) for e in group) / len(group)
-        success_count = sum(1 for e in group if e.get("outcome") == "success")
-        success_rate = int(success_count / len(group) * 100)
-
-        # Promote patterns with high avg score and multiple successes
-        if avg_score >= 4 and success_count >= 2:
-            best = max(group, key=lambda e: e.get("score", 0))
-            pattern = {
-                "task_pattern": key,
-                "approach": best.get("approach"),
-                "lesson": best.get("lesson"),
-                "avg_score": round(avg_score, 1),
-                "success_rate": success_rate,
-                "occurrences": len(group),
-                "promoted_at": now_iso(),
-            }
-            fname = key.replace(" ", "-")[:30] + ".json"
-            (promoted_dir / fname).write_text(json.dumps(pattern, indent=2) + "\n")
+        if _promote_pattern(key, group, promoted_dir):
             promoted += 1
-
-        # Keep only the best entry per group, remove duplicates
-        if len(group) > 3:
-            group.sort(key=lambda e: -e.get("score", 0))
-            for entry in group[3:]:
-                Path(entry["_path"]).unlink(missing_ok=True)
-                consolidated += 1
+        consolidated += _dedup_group(group)
 
     print(json.dumps({
         "success": True,
