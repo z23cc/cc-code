@@ -85,6 +85,8 @@ def _add_view_commands(sub):
     export_p.add_argument("--output", default="", help="Output file path (default: stdout)")
     find_p = sub.add_parser("find", help="Search across task titles and specs")
     find_p.add_argument("query", nargs="*")
+    priority_p = sub.add_parser("priority", help="Tasks sorted by priority (ready first)")
+    priority_p.add_argument("--status", default="", help="Filter by status")
 
 
 def _add_work_commands(sub):
@@ -103,6 +105,10 @@ def _add_work_commands(sub):
     reopen_p = sub.add_parser("reopen", help="Reopen a done/blocked task")
     reopen_p.add_argument("id")
     reopen_p.add_argument("--reason", default="")
+    diff_p = sub.add_parser("diff", help="Show git changes since task started")
+    diff_p.add_argument("id")
+    diff_p.add_argument("--stat", action="store_true", default=False, help="Show stat only")
+    diff_p.add_argument("--json", action="store_true", default=False)
 
 
 def _add_quality_commands(sub):
@@ -203,6 +209,8 @@ def _add_misc_commands(sub):
     sub.add_parser("stats", help="Productivity metrics")
     standup_p = sub.add_parser("standup", help="Daily standup report (done/active/blocked/next)")
     standup_p.add_argument("--hours", type=int, default=24, help="Lookback period (default: 24h)")
+    changelog_p = sub.add_parser("changelog", help="Generate changelog from completed tasks")
+    changelog_p.add_argument("--json", action="store_true", default=False)
     sub.add_parser("version", help="Print cc-flow version")
     config_p = sub.add_parser("config", help="View/set cc-flow configuration")
     config_p.add_argument("key", nargs="?", default="")

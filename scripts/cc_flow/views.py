@@ -448,3 +448,36 @@ def cmd_find(args):
         "epics": _find_matching_epics(query),
         "total": len(matches),
     }))
+
+
+def cmd_priority(args):
+    """Show all non-done tasks sorted by priority across all epics."""
+    tasks = all_tasks()
+    status_filter = getattr(args, "status", "") or ""
+
+    active = []
+    for tid, t in tasks.items():
+        if t["status"] == "done":
+            continue
+        if status_filter and t["status"] != status_filter:
+            continue
+        # Check if deps are satisfied
+        deps_met = all(tasks.get(d, {}).get("status") == "done" for d in t.get("depends_on", []))
+        active.append({
+            "id": tid,
+            "title": t.get("title", ""),
+            "status": t["status"],
+            "priority": t.get("priority", 999),
+            "epic": t.get("epic", ""),
+            "size": t.get("size", "M"),
+            "ready": deps_met,
+        })
+
+    active.sort(key=lambda t: (0 if t["ready"] else 1, t["priority"], t["id"]))
+
+    print(json.dumps({
+        "success": True,
+        "tasks": active,
+        "total": len(active),
+        "ready_count": sum(1 for t in active if t["ready"]),
+    }))

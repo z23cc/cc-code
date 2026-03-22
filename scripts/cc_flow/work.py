@@ -151,6 +151,41 @@ def cmd_reopen(args):
     print(json.dumps({"success": True, "id": args.id, "previous": prev_status, "status": "todo"}))
 
 
+def cmd_diff(args):
+    """Show git changes since a task was started."""
+    import subprocess as _sp
+
+    path = TASKS_SUBDIR / f"{args.id}.json"
+    if not path.exists():
+        error(f"Task not found: {args.id}")
+
+    data = safe_json_load(path)
+    start_sha = data.get("git_sha_start")
+    if not start_sha:
+        error(f"Task {args.id} has no recorded start SHA (was it started with cc-flow start?)")
+
+    stat_only = getattr(args, "stat", False)
+    cmd = ["git", "diff", start_sha, "HEAD"]
+    if stat_only:
+        cmd.append("--stat")
+
+    try:
+        result = _sp.run(cmd, check=False, capture_output=True, text=True, timeout=30)
+        if result.returncode != 0:
+            error(f"git diff failed: {result.stderr[:200]}")
+
+        if getattr(args, "json", False):
+            diff_stats = _get_diff_stats(start_sha)
+            print(json.dumps({
+                "success": True, "id": args.id, "start_sha": start_sha,
+                "stats": diff_stats, "output_lines": len(result.stdout.split("\n")),
+            }))
+        else:
+            print(result.stdout)
+    except (_sp.TimeoutExpired, OSError) as exc:
+        error(f"git diff failed: {exc}")
+
+
 def _get_diff_stats(start_sha=None):
     """Get git diff stats since a commit SHA."""
     import subprocess as _sp

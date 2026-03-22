@@ -184,3 +184,37 @@ def cmd_standup(args):
             "ready_count": len(next_up),
         },
     }))
+
+
+def cmd_changelog(args):
+    """Generate changelog from completed tasks, grouped by epic."""
+    tasks = all_tasks()
+    done = [t for t in tasks.values() if t["status"] == "done" and t.get("completed")]
+    done.sort(key=lambda t: t.get("completed", ""), reverse=True)
+
+    # Group by epic
+    by_epic = {}
+    for t in done:
+        epic = t.get("epic", "ungrouped")
+        by_epic.setdefault(epic, []).append(t)
+
+    if getattr(args, "json", False):
+        print(json.dumps({"success": True, "epics": {
+            epic: [{"id": t["id"], "title": t.get("title", ""), "completed": t.get("completed", ""),
+                     "summary": t.get("summary", "")} for t in tasks_list]
+            for epic, tasks_list in by_epic.items()
+        }, "total": len(done)}))
+        return
+
+    lines = ["# Changelog", ""]
+    for epic, tasks_list in by_epic.items():
+        lines.append(f"## {epic}")
+        lines.append("")
+        for t in tasks_list:
+            date = t.get("completed", "")[:10]
+            title = t.get("title", "")
+            summary = f" — {t['summary']}" if t.get("summary") else ""
+            lines.append(f"- [{date}] {title}{summary}")
+        lines.append("")
+
+    print("\n".join(lines))
