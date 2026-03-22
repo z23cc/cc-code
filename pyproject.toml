@@ -20,9 +20,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/cc-code/cc-code"
-Repository = "https://github.com/cc-code/cc-code"
-Changelog = "https://github.com/cc-code/cc-code/blob/main/CHANGELOG.md"
+Homepage = "https://github.com/z23cc/cc-code"
+Repository = "https://github.com/z23cc/cc-code"
+Changelog = "https://github.com/z23cc/cc-code/blob/main/CHANGELOG.md"
 
 [project.scripts]
 cc-flow = "cc_flow.entry:main"
