@@ -42,6 +42,7 @@ def cmd_epic_create(args):
     slug = slugify(args.title)
 
     def allocate(meta):
+        """Allocate next epic number and increment counter."""
         epic_num = meta["next_epic"]
         meta["next_epic"] = epic_num + 1
         return epic_num
@@ -77,6 +78,7 @@ def cmd_epic_import(args):
     slug = slugify(title)
 
     def allocate(meta):
+        """Allocate next epic number and increment counter."""
         n = meta["next_epic"]
         meta["next_epic"] = n + 1
         return n

@@ -69,6 +69,7 @@ def _ascii(filtered, edges):
     printed = set()
 
     def print_tree(tid, prefix="", is_last=True):
+        """Recursively print a task and its dependents as ASCII tree."""
         icon = STATUS_STYLE.get(filtered[tid]["status"], {}).get("icon", "?")
         connector = "└── " if is_last else "├── "
         if tid in printed:

@@ -180,6 +180,7 @@ def cmd_scan(args):
         date_slug = datetime.now(timezone.utc).strftime("%Y%m%d")
 
         def allocate(meta):
+            """Allocate next epic number and increment counter."""
             n = meta["next_epic"]
             meta["next_epic"] = n + 1
             return n
