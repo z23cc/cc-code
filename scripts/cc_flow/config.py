@@ -18,16 +18,25 @@ def cmd_version(_args):
     print(json.dumps({"success": True, "version": VERSION}))
 
 
+def _safe_load_json(path):
+    """Load JSON file, return None on decode error."""
+    try:
+        return json.loads(path.read_text())
+    except json.JSONDecodeError:
+        return None
+
+
+def _load_archived_tasks():
+    """Load archived task JSON files, skipping corrupt ones."""
+    if not COMPLETED_DIR.exists():
+        return []
+    return [t for f in COMPLETED_DIR.glob("*.json") if (t := _safe_load_json(f)) is not None]
+
+
 def cmd_history(_args):
     """Task completion timeline with velocity trends."""
     tasks = all_tasks()
-    archived = []
-    if COMPLETED_DIR.exists():
-        for f in COMPLETED_DIR.glob("*.json"):
-            try:
-                archived.append(json.loads(f.read_text()))
-            except json.JSONDecodeError:
-                continue
+    archived = _load_archived_tasks()
 
     all_done = [t for t in list(tasks.values()) + archived if t.get("completed")]
     all_done.sort(key=lambda t: t.get("completed", ""))

@@ -74,7 +74,7 @@ class TestToolExecution:
 
 morph = pytest.mark.skipif(
     not os.environ.get("MORPH_API_KEY"),
-    reason="MORPH_API_KEY not set"
+    reason="MORPH_API_KEY not set",
 )
 
 

@@ -66,13 +66,13 @@ def _run_checks():
     # Git
     if shutil.which("git"):
         try:
-            ver = sp.run(["git", "--version"], capture_output=True, text=True, timeout=5).stdout.strip()
+            ver = sp.run(["git", "--version"], check=False, capture_output=True, text=True, timeout=5).stdout.strip()
             chk("Git", "pass", ver)
             result = sp.run(["git", "rev-parse", "--is-inside-work-tree"],
-                            capture_output=True, text=True, timeout=5)
+                            check=False, capture_output=True, text=True, timeout=5)
             if result.returncode == 0:
                 branch = sp.run(["git", "branch", "--show-current"],
-                                capture_output=True, text=True, timeout=5).stdout.strip()
+                                check=False, capture_output=True, text=True, timeout=5).stdout.strip()
                 chk("Git repo", "pass", f"branch: {branch}" if branch else "detached HEAD")
             else:
                 chk("Git repo", "warn", "not a git repo", "git init")

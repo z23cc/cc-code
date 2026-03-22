@@ -11,7 +11,7 @@ CC_FLOW = [sys.executable, str(Path(__file__).parent.parent / "scripts" / "cc-fl
 
 
 def run(args, cwd=None):
-    result = subprocess.run(CC_FLOW + args, capture_output=True, text=True, cwd=cwd)
+    result = subprocess.run(CC_FLOW + args, check=False, capture_output=True, text=True, cwd=cwd)
     return result.stdout.strip(), result.stderr.strip(), result.returncode
 
 
@@ -31,7 +31,7 @@ class TestInit:
         assert (tmp_path / ".tasks" / "meta.json").exists()
 
     def test_init_idempotent(self, workspace):
-        out, _, code = run(["init"], cwd=workspace)
+        _, _, code = run(["init"], cwd=workspace)
         assert code == 0
 
 
@@ -441,7 +441,7 @@ class TestSession:
 
     def test_session_restore_latest(self, workspace):
         run(["session", "save", "--name", "s1"], cwd=workspace)
-        out, _, code = run(["session", "restore"], cwd=workspace)
+        _, _, code = run(["session", "restore"], cwd=workspace)
         assert code == 0
 
 
@@ -549,7 +549,7 @@ class TestErrorHandling:
         meta = workspace / ".tasks" / "meta.json"
         meta.write_text("not json")
         # epic create should still work via locked update
-        out, _, code = run(["epic", "create", "--title", "Recovery"], cwd=workspace)
+        _, _, code = run(["epic", "create", "--title", "Recovery"], cwd=workspace)
         assert code == 0
 
     def test_start_already_done(self, workspace):
@@ -569,16 +569,16 @@ class TestErrorHandling:
         assert code == 1
 
     def test_task_reset_nonexistent(self, workspace):
-        out, _, code = run(["task", "reset", "nonexistent"], cwd=workspace)
+        _, _, code = run(["task", "reset", "nonexistent"], cwd=workspace)
         assert code == 1
 
     def test_empty_workspace_commands(self, workspace):
         """Commands should work gracefully on empty workspace."""
-        out, _, code = run(["status"], cwd=workspace)
+        _, _, code = run(["status"], cwd=workspace)
         assert code == 0
-        out, _, code = run(["ready"], cwd=workspace)
+        _, _, code = run(["ready"], cwd=workspace)
         assert code == 0
-        out, _, code = run(["next"], cwd=workspace)
+        _, _, code = run(["next"], cwd=workspace)
         assert code == 0
 
 
@@ -660,9 +660,9 @@ class TestRollback:
         assert code == 1  # No SHA recorded
 
     def test_rollback_preview(self, workspace):
-        subprocess.run(["git", "init", "-q"], cwd=workspace)
-        subprocess.run(["git", "add", "."], cwd=workspace)
-        subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=workspace)
+        subprocess.run(["git", "init", "-q"], check=False, cwd=workspace)
+        subprocess.run(["git", "add", "."], check=False, cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "init"], check=False, cwd=workspace)
         run(["epic", "create", "--title", "Test"], cwd=workspace)
         run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
         run(["start", "epic-1-test.1"], cwd=workspace)
@@ -673,18 +673,18 @@ class TestRollback:
 
 
     def test_rollback_confirm(self, workspace):
-        subprocess.run(["git", "init", "-q"], cwd=workspace)
-        subprocess.run(["git", "add", "."], cwd=workspace)
-        subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=workspace)
+        subprocess.run(["git", "init", "-q"], check=False, cwd=workspace)
+        subprocess.run(["git", "add", "."], check=False, cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "init"], check=False, cwd=workspace)
         run(["epic", "create", "--title", "Test"], cwd=workspace)
         run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
-        subprocess.run(["git", "add", "."], cwd=workspace)
-        subprocess.run(["git", "commit", "-q", "-m", "add tasks"], cwd=workspace)
+        subprocess.run(["git", "add", "."], check=False, cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "add tasks"], check=False, cwd=workspace)
         run(["start", "epic-1-test.1"], cwd=workspace)
         # Make a change
         (workspace / "extra.txt").write_text("will be rolled back\n")
-        subprocess.run(["git", "add", "extra.txt"], cwd=workspace)
-        subprocess.run(["git", "commit", "-q", "-m", "add extra"], cwd=workspace)
+        subprocess.run(["git", "add", "extra.txt"], check=False, cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "add extra"], check=False, cwd=workspace)
         out, _, code = run(["rollback", "epic-1-test.1", "--confirm"], cwd=workspace)
         assert code == 0
         data = json.loads(out)
@@ -756,16 +756,16 @@ class TestGithubSearch:
 
 class TestDiffTracking:
     def test_done_records_diff(self, workspace):
-        subprocess.run(["git", "init", "-q"], cwd=workspace)
-        subprocess.run(["git", "add", "."], cwd=workspace)
-        subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=workspace)
+        subprocess.run(["git", "init", "-q"], check=False, cwd=workspace)
+        subprocess.run(["git", "add", "."], check=False, cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "init"], check=False, cwd=workspace)
         run(["epic", "create", "--title", "Test"], cwd=workspace)
         run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
         run(["start", "epic-1-test.1"], cwd=workspace)
         # Make a change and commit
         (workspace / "newfile.txt").write_text("hello\n")
-        subprocess.run(["git", "add", "newfile.txt"], cwd=workspace)
-        subprocess.run(["git", "commit", "-q", "-m", "add file"], cwd=workspace)
+        subprocess.run(["git", "add", "newfile.txt"], check=False, cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "add file"], check=False, cwd=workspace)
         out, _, _ = run(["done", "epic-1-test.1", "--summary", "added file"], cwd=workspace)
         data = json.loads(out)
         assert "diff" in data
@@ -841,7 +841,7 @@ class TestMissingCommands:
         run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
         spec = workspace / "my-spec.md"
         spec.write_text("# Custom Spec\nDo this thing.")
-        out, _, code = run(["task", "set-spec", "epic-1-test.1", "--file", str(spec)], cwd=workspace)
+        _, _, code = run(["task", "set-spec", "epic-1-test.1", "--file", str(spec)], cwd=workspace)
         assert code == 0
         actual = (workspace / ".tasks" / "tasks" / "epic-1-test.1.md").read_text()
         assert "Custom Spec" in actual

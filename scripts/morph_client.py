@@ -44,13 +44,13 @@ class MorphClient:
         data = json.dumps(payload).encode("utf-8")
 
         for attempt in range(retries + 1):
-            req = Request(url, data=data, method="POST")  # noqa: S310
+            req = Request(url, data=data, method="POST")
             req.add_header("Authorization", f"Bearer {self.api_key}")
             req.add_header("Content-Type", "application/json")
             req.add_header("User-Agent", "cc-code-morph/1.0")
             req.add_header("Accept", "application/json")
             try:
-                with urlopen(req, timeout=timeout) as resp:  # noqa: S310
+                with urlopen(req, timeout=timeout) as resp:
                     return json.loads(resp.read().decode("utf-8"))
             except HTTPError as exc:
                 body = exc.read().decode("utf-8", errors="replace")[:500]
@@ -115,10 +115,10 @@ class MorphClient:
             List of search results
         """
         # Build repo structure — skip hidden dirs and common noise
-        SKIP_DIRS = {".git", "__pycache__", "node_modules", ".venv", "venv",
+        skip_dirs = {".git", "__pycache__", "node_modules", ".venv", "venv",
                      "dist", "build", ".next", ".ruff_cache", ".pytest_cache",
                      ".mypy_cache", ".tox", "target", "coverage"}
-        CODE_EXTS = {".py", ".ts", ".js", ".tsx", ".jsx", ".go", ".rs", ".java",
+        code_exts = {".py", ".ts", ".js", ".tsx", ".jsx", ".go", ".rs", ".java",
                      ".md", ".yaml", ".yml", ".toml", ".json", ".sh"}
 
         repo_files = []
@@ -127,9 +127,9 @@ class MorphClient:
             if not f.is_file():
                 continue
             parts = f.relative_to(dir_path).parts
-            if any(p in SKIP_DIRS or p.startswith(".") for p in parts):
+            if any(p in skip_dirs or p.startswith(".") for p in parts):
                 continue
-            if f.suffix not in CODE_EXTS:
+            if f.suffix not in code_exts:
                 continue
             repo_files.append(str(f))
             if len(repo_files) >= 500:
@@ -143,12 +143,12 @@ class MorphClient:
             {"type": "function", "function": {"name": "grep_search", "parameters": {
                 "type": "object", "properties": {
                     "pattern": {"type": "string"}, "path": {"type": "string"},
-                    "include": {"type": "string"}
+                    "include": {"type": "string"},
                 }, "required": ["pattern"]}}},
             {"type": "function", "function": {"name": "read", "parameters": {
                 "type": "object", "properties": {
                     "path": {"type": "string"}, "start_line": {"type": "integer"},
-                    "end_line": {"type": "integer"}
+                    "end_line": {"type": "integer"},
                 }, "required": ["path"]}}},
             {"type": "function", "function": {"name": "list_directory", "parameters": {
                 "type": "object", "properties": {"path": {"type": "string"}},
@@ -210,7 +210,7 @@ class MorphClient:
             if include:
                 cmd.insert(2, f"--include={include}")
             try:
-                result = sp.run(cmd, capture_output=True, text=True, timeout=10)
+                result = sp.run(cmd, check=False, capture_output=True, text=True, timeout=10)
                 lines = result.stdout.strip().split("\n")[:30]
                 return "\n".join(lines) if lines[0] else "No matches"
             except (sp.TimeoutExpired, OSError):
@@ -226,10 +226,7 @@ class MorphClient:
             start = args.get("start_line", 1) - 1
             end = args.get("end_line")
             lines = content.split("\n")
-            if end:
-                lines = lines[start:end]
-            else:
-                lines = lines[start:start + 100]
+            lines = lines[start:end] if end else lines[start:start + 100]
             return "\n".join(f"{i + start + 1}: {line}" for i, line in enumerate(lines))
 
         elif name == "list_directory":
@@ -399,10 +396,7 @@ def main():
         print(json.dumps({"success": True, "results": results}))
 
     elif args.command == "compact":
-        if args.file:
-            text = Path(args.file).read_text()
-        else:
-            text = sys.stdin.read()
+        text = Path(args.file).read_text() if args.file else sys.stdin.read()
         result = client.compact(text, args.ratio)
         original = len(text)
         compressed = len(result)
