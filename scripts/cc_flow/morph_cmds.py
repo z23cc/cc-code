@@ -112,10 +112,10 @@ def cmd_search(args):
 
     client = get_morph_client()
 
-    # Try Morph WarpGrep first
+    # Try Morph WarpGrep first (5s timeout to avoid blocking)
     if client:
         try:
-            result = client.search(query, search_dir)
+            result = client.search(query, search_dir, max_turns=3)
             if result:
                 _print_search_results(query, result, "morph-warpgrep", fmt)
                 return
@@ -128,6 +128,8 @@ def cmd_search(args):
             ["grep", "-rn", "-m", "30", "--include=*.py", "--include=*.ts", "--include=*.js",
              "--include=*.go", "--include=*.rs", "--include=*.md",
              "--exclude-dir=node_modules", "--exclude-dir=.git", "--exclude-dir=dist",
+             "--exclude-dir=build", "--exclude-dir=.next", "--exclude-dir=coverage",
+             "--exclude-dir=__pycache__", "--exclude-dir=.venv",
              "-i", query, search_dir],
             check=False, capture_output=True, text=True, timeout=10,
         )
