@@ -29,18 +29,23 @@ class PerfTimer:
         _append_entry(self.command, elapsed_ms)
 
 
+MAX_FILE_BYTES = 50_000  # 50KB max
+
+
 def _append_entry(command, elapsed_ms):
-    """Append a timing entry to perf.jsonl."""
+    """Append a timing entry to perf.jsonl with size guard."""
     PERF_FILE.parent.mkdir(parents=True, exist_ok=True)
     entry = json.dumps({"cmd": command, "ms": elapsed_ms, "ts": time.time()})
     with open(PERF_FILE, "a") as f:
         f.write(entry + "\n")
 
-    # Trim to MAX_ENTRIES
+    # Trim if too many entries or file too large
     if PERF_FILE.exists():
-        lines = PERF_FILE.read_text().strip().split("\n")
-        if len(lines) > MAX_ENTRIES:
-            PERF_FILE.write_text("\n".join(lines[-MAX_ENTRIES:]) + "\n")
+        size = PERF_FILE.stat().st_size
+        if size > MAX_FILE_BYTES:
+            lines = PERF_FILE.read_text().strip().split("\n")
+            trimmed = lines[-MAX_ENTRIES // 2:]  # Keep only recent half
+            PERF_FILE.write_text("\n".join(trimmed) + "\n")
 
 
 def load_perf_data():

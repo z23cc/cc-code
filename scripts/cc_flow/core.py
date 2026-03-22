@@ -1,7 +1,9 @@
 """Core utilities for cc-flow — shared across all command modules."""
 
 import json
+import os
 import sys
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -40,6 +42,56 @@ def error(msg, code=1):
     sys.exit(code)
 
 
+# ── Atomic file operations ──
+
+def atomic_write(path, content):
+    """Write content to file atomically via temp file + rename.
+
+    Prevents data corruption from partial writes or concurrent access.
+    Works on all platforms (Unix, macOS, Windows).
+    """
+    p = Path(path)
+    p.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=str(p.parent), suffix=".tmp")
+    try:
+        os.write(fd, content.encode("utf-8"))
+        os.close(fd)
+        os.replace(tmp, str(p))  # atomic on all platforms
+    except BaseException:
+        os.close(fd) if not os.get_inheritable(fd) else None
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+
+
+def _file_lock(f, exclusive=True):
+    """Cross-platform file locking (Unix fcntl / Windows msvcrt)."""
+    try:
+        import fcntl
+        fcntl.flock(f, fcntl.LOCK_EX if exclusive else fcntl.LOCK_SH)
+    except ImportError:
+        try:
+            import msvcrt
+            msvcrt.locking(f.fileno(), msvcrt.LK_LOCK if exclusive else msvcrt.LK_NBLCK, 1)
+        except ImportError:
+            pass  # No locking available — best effort
+
+
+def _file_unlock(f):
+    """Cross-platform file unlocking."""
+    try:
+        import fcntl
+        fcntl.flock(f, fcntl.LOCK_UN)
+    except ImportError:
+        try:
+            import msvcrt
+            msvcrt.locking(f.fileno(), msvcrt.LK_UNLCK, 1)
+        except ImportError:
+            pass
+
+
+# ── JSON operations ──
+
 def safe_json_load(path, default=_MISSING):
     """Safely load JSON from a file. Returns default on any failure."""
     p = Path(path)
@@ -57,15 +109,15 @@ def safe_json_load(path, default=_MISSING):
         if default is not _MISSING:
             return default
         error(f"Cannot read {path}: {exc}")
+    return default  # unreachable but satisfies type checker
 
 
 def locked_meta_update(fn):
-    """Read-modify-write meta.json with file locking."""
-    import fcntl
+    """Read-modify-write meta.json with cross-platform file locking."""
     META_FILE.parent.mkdir(parents=True, exist_ok=True)
     META_FILE.touch(exist_ok=True)
     with open(META_FILE, "r+") as f:
-        fcntl.flock(f, fcntl.LOCK_EX)
+        _file_lock(f)
         try:
             content = f.read().strip()
             try:
@@ -77,7 +129,7 @@ def locked_meta_update(fn):
             f.truncate()
             f.write(json.dumps(meta, indent=2) + "\n")
         finally:
-            fcntl.flock(f, fcntl.LOCK_UN)
+            _file_unlock(f)
     return result
 
 
@@ -87,23 +139,27 @@ def load_meta():
 
 
 def save_meta(meta):
-    """Write meta.json to disk."""
-    META_FILE.write_text(json.dumps(meta, indent=2) + "\n")
+    """Write meta.json atomically."""
+    atomic_write(META_FILE, json.dumps(meta, indent=2) + "\n")
 
 
 def slugify(title):
+    """Convert title to URL-safe slug."""
     return "-".join(title.lower().split()[:4]).replace("/", "-").replace(".", "")
 
 
 def load_task(path):
+    """Load a task JSON file."""
     return safe_json_load(path)
 
 
 def save_task(path, data):
-    Path(path).write_text(json.dumps(data, indent=2) + "\n")
+    """Write task JSON atomically (prevents corruption on concurrent access)."""
+    atomic_write(path, json.dumps(data, indent=2) + "\n")
 
 
 def all_tasks():
+    """Load all task JSON files from .tasks/tasks/."""
     tasks = {}
     if not TASKS_SUBDIR.exists():
         return tasks

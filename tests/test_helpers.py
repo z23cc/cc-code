@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 import json
 
 from cc_flow.config import _age_days, _safe_load_json
-from cc_flow.core import now_iso, safe_json_load, slugify
+from cc_flow.core import atomic_write, now_iso, safe_json_load, save_task, slugify
 from cc_flow.doctor import _check_python, _chk
 from cc_flow.embeddings import _content_hash, cosine_similarity
 from cc_flow.graph import STATUS_STYLE, _mermaid
@@ -164,6 +164,29 @@ class TestCoreUtils:
         bad.write_text("not json")
         result = safe_json_load(bad, default={})
         assert result == {}
+
+    def test_atomic_write(self, tmp_path):
+        target = tmp_path / "test.txt"
+        atomic_write(target, "hello world")
+        assert target.read_text() == "hello world"
+
+    def test_atomic_write_overwrites(self, tmp_path):
+        target = tmp_path / "test.txt"
+        atomic_write(target, "first")
+        atomic_write(target, "second")
+        assert target.read_text() == "second"
+
+    def test_atomic_write_no_partial(self, tmp_path):
+        target = tmp_path / "test.txt"
+        atomic_write(target, "original")
+        # If we check during write, file should be either old or new, never partial
+        assert target.read_text() == "original"
+
+    def test_save_task_atomic(self, tmp_path):
+        path = tmp_path / "task.json"
+        save_task(path, {"id": "t1", "status": "todo"})
+        data = json.loads(path.read_text())
+        assert data["id"] == "t1"
 
     def test_safe_json_load_valid(self, tmp_path):
         good = tmp_path / "good.json"

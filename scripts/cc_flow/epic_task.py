@@ -71,6 +71,7 @@ TASK_TEMPLATES = {
 
 
 def cmd_init(_args):
+    """Initialize .tasks/ directory structure."""
     for d in [TASKS_DIR, EPICS_DIR, TASKS_SUBDIR, COMPLETED_DIR]:
         d.mkdir(parents=True, exist_ok=True)
     if not META_FILE.exists():
@@ -79,6 +80,7 @@ def cmd_init(_args):
 
 
 def cmd_epic_create(args):
+    """Create a new epic with title, spec file, and metadata."""
     slug = slugify(args.title)
 
     def allocate(meta):
@@ -190,6 +192,7 @@ def _generate_spec(title, template_name=""):
 
 
 def cmd_task_create(args):
+    """Create a new task in an epic with title, size, deps, tags, and template."""
     epic_id = args.epic
     # Find next task number for this epic
     existing = list(TASKS_SUBDIR.glob(f"{epic_id}.*.json"))

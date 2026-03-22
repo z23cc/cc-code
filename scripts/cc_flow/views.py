@@ -85,6 +85,7 @@ def cmd_tasks(args):
 
 
 def cmd_show(args):
+    """Show detail for an epic or task by ID."""
     task_id = args.id
     # Try task first
     task_path = TASKS_SUBDIR / f"{task_id}.json"
@@ -112,6 +113,7 @@ def cmd_show(args):
 
 
 def cmd_ready(args):
+    """Show tasks with all dependencies satisfied (ready to start)."""
     tasks = all_tasks()
     ready, in_progress, blocked = [], [], []
 
@@ -211,6 +213,7 @@ def _print_epic_progress(epic_id, counts):
 
 
 def cmd_progress(args):
+    """Show progress bars per epic with task status breakdown."""
     tasks = all_tasks()
     epics = {f.stem: [] for f in sorted(EPICS_DIR.glob("*.md"))}
     for t in tasks.values():
