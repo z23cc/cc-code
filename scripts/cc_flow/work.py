@@ -18,6 +18,7 @@ from cc_flow.core import (
 
 
 def cmd_start(args):
+    """Start a task — check deps, record git SHA, set status to in_progress."""
     path = TASKS_SUBDIR / f"{args.id}.json"
     if not path.exists():
         print(json.dumps({"success": False, "error": f"Task not found: {args.id}"}))
@@ -85,6 +86,7 @@ def _consolidation_hint():
 
 
 def cmd_done(args):
+    """Complete a task — record duration, diff stats, and optional summary."""
     path = TASKS_SUBDIR / f"{args.id}.json"
     if not path.exists():
         print(json.dumps({"success": False, "error": f"Task not found: {args.id}"}))
@@ -120,6 +122,7 @@ def cmd_done(args):
 
 
 def cmd_block(args):
+    """Block a task with a reason."""
     path = TASKS_SUBDIR / f"{args.id}.json"
     if not path.exists():
         print(json.dumps({"success": False, "error": f"Task not found: {args.id}"}))

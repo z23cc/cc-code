@@ -242,7 +242,7 @@ def _try_morph_rerank(query, learnings):
             best = learnings[ranked[0]["index"]]
             confidence = min(int(ranked[0]["relevance_score"] * 100), 99)
             return _make_result(best, confidence, len(ranked) - 1, "morph-rerank")
-    except Exception:
+    except (RuntimeError, TimeoutError, OSError, json.JSONDecodeError, KeyError, ValueError):
         pass
     return None
 
