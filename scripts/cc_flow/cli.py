@@ -85,8 +85,12 @@ def _add_view_commands(sub):
     export_p.add_argument("--output", default="", help="Output file path (default: stdout)")
     find_p = sub.add_parser("find", help="Search across task titles and specs")
     find_p.add_argument("query", nargs="*")
+    find_p.add_argument("--semantic", action="store_true", default=False, help="Use embedding-based search")
     priority_p = sub.add_parser("priority", help="Tasks sorted by priority (ready first)")
     priority_p.add_argument("--status", default="", help="Filter by status")
+    similar_p = sub.add_parser("similar", help="Find tasks similar to a given task (embedding)")
+    similar_p.add_argument("id")
+    similar_p.add_argument("--top", type=int, default=5)
 
 
 def _add_work_commands(sub):

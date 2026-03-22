@@ -426,6 +426,17 @@ def _find_matching_epics(query):
     return [f.stem for f in EPICS_DIR.glob("*.md") if query in f.read_text().lower()]
 
 
+def _semantic_find(query, tasks):
+    """Use Morph embeddings for semantic search. Returns results or None."""
+    from cc_flow.embeddings import semantic_search
+    documents = [
+        {"id": tid, "text": f"{t.get('title', '')} {t.get('summary', '')}",
+         "title": t.get("title", ""), "status": t["status"], "epic": t.get("epic", "")}
+        for tid, t in tasks.items()
+    ]
+    return semantic_search(query, documents, top_n=20)
+
+
 def cmd_find(args):
     """Search across task titles, specs, and epic specs."""
     query = " ".join(args.query).lower() if args.query else ""
@@ -433,6 +444,18 @@ def cmd_find(args):
         error("Provide a search query")
 
     tasks = all_tasks()
+    use_semantic = getattr(args, "semantic", False)
+
+    if use_semantic:
+        results = _semantic_find(query, tasks)
+        if results is not None:
+            print(json.dumps({
+                "success": True, "query": query, "engine": "embedding",
+                "tasks": results, "total": len(results),
+            }))
+            return
+        # Fall through to keyword if embedding unavailable
+
     matches = [
         {"id": tid, "title": t.get("title", ""), "status": t["status"],
          "epic": t.get("epic", ""), "score": score}
@@ -444,9 +467,42 @@ def cmd_find(args):
     print(json.dumps({
         "success": True,
         "query": query,
+        "engine": "keyword",
         "tasks": matches[:20],
         "epics": _find_matching_epics(query),
         "total": len(matches),
+    }))
+
+
+def cmd_similar(args):
+    """Find tasks similar to a given task using embeddings."""
+    from cc_flow.embeddings import semantic_search
+
+    task_id = args.id
+    tasks = all_tasks()
+    if task_id not in tasks:
+        error(f"Task not found: {task_id}")
+
+    source = tasks[task_id]
+    query_text = f"{source.get('title', '')} {source.get('summary', '')}"
+
+    # Build document list excluding the source task
+    documents = [
+        {"id": tid, "text": f"{t.get('title', '')} {t.get('summary', '')}",
+         "title": t.get("title", ""), "status": t["status"], "epic": t.get("epic", "")}
+        for tid, t in tasks.items()
+        if tid != task_id
+    ]
+
+    results = semantic_search(query_text, documents, top_n=getattr(args, "top", 5) or 5)
+    if results is None:
+        error("Embedding unavailable. Set MORPH_API_KEY to enable semantic search.")
+
+    print(json.dumps({
+        "success": True,
+        "source": {"id": task_id, "title": source.get("title", "")},
+        "similar": results,
+        "total": len(results),
     }))
 
 

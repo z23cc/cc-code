@@ -42,6 +42,7 @@ from cc_flow.views import (
     cmd_progress,
     cmd_ready,
     cmd_show,
+    cmd_similar,
     cmd_status,
     cmd_tasks,
 )
@@ -58,7 +59,7 @@ _COMMANDS = {
     "archive": cmd_archive, "stats": cmd_stats, "consolidate": cmd_consolidate,
     "history": cmd_history, "config": cmd_config, "graph": cmd_graph,
     "verify": cmd_verify, "clean": cmd_clean, "export": cmd_export,
-    "find": cmd_find, "reopen": cmd_reopen, "diff": cmd_diff,
+    "find": cmd_find, "similar": cmd_similar, "reopen": cmd_reopen, "diff": cmd_diff,
     "doctor": cmd_doctor, "dashboard": cmd_dashboard, "rollback": cmd_rollback,
     "apply": cmd_apply, "search": cmd_search, "embed": cmd_embed,
     "compact": cmd_compact, "github-search": cmd_github_search,

@@ -270,8 +270,28 @@ def _keyword_search(query, learnings):
     return _make_result(best_d, min(int(best_weight * 20), 99), len(candidates) - 1, "keyword")
 
 
+def _try_embedding_search(query, learnings):
+    """Try embedding-based semantic search. Returns result dict or None."""
+    try:
+        from cc_flow.embeddings import semantic_search
+        documents = [
+            {"id": str(i), "text": f"{d.get('task', '')} | {d.get('lesson', '')} | {d.get('approach', '')}",
+             "index": i}
+            for i, d in enumerate(learnings)
+        ]
+        results = semantic_search(query, documents, top_n=3)
+        if results and results[0].get("score", 0) > 0.3:
+            best_idx = results[0]["index"]
+            best = learnings[best_idx]
+            confidence = min(int(results[0]["score"] * 100), 99)
+            return _make_result(best, confidence, len(results) - 1, "embedding")
+    except (ImportError, RuntimeError, TimeoutError, OSError, json.JSONDecodeError, KeyError, ValueError):
+        pass
+    return None
+
+
 def _search_learnings(query):
-    """Search learnings — uses Morph Rerank if available, falls back to keyword overlap."""
+    """Search learnings — tries rerank → embedding → keyword fallback."""
     if not LEARNINGS_DIR.exists():
         return None
 
@@ -282,7 +302,11 @@ def _search_learnings(query):
     if not learnings:
         return None
 
-    return _try_morph_rerank(query, learnings) or _keyword_search(query, learnings)
+    return (
+        _try_morph_rerank(query, learnings)
+        or _try_embedding_search(query, learnings)
+        or _keyword_search(query, learnings)
+    )
 
 
 def _load_learnings_with_paths():
