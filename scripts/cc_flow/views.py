@@ -403,3 +403,48 @@ def cmd_export(args):
                           "tasks": len(epic_tasks)}))
     else:
         print(output)
+
+
+def _score_task(tid, task, query):
+    """Score a task's relevance to query. Returns 0 if no match."""
+    score = 0
+    title = task.get("title", "").lower()
+    if query in title:
+        score += 3
+    elif any(w in title for w in query.split()):
+        score += 1
+    spec_path = TASKS_SUBDIR / f"{tid}.md"
+    if spec_path.exists() and query in spec_path.read_text().lower():
+        score += 2
+    return score
+
+
+def _find_matching_epics(query):
+    """Find epics whose spec contains the query."""
+    if not EPICS_DIR.exists():
+        return []
+    return [f.stem for f in EPICS_DIR.glob("*.md") if query in f.read_text().lower()]
+
+
+def cmd_find(args):
+    """Search across task titles, specs, and epic specs."""
+    query = " ".join(args.query).lower() if args.query else ""
+    if not query:
+        error("Provide a search query")
+
+    tasks = all_tasks()
+    matches = [
+        {"id": tid, "title": t.get("title", ""), "status": t["status"],
+         "epic": t.get("epic", ""), "score": score}
+        for tid, t in tasks.items()
+        if (score := _score_task(tid, t, query)) > 0
+    ]
+    matches.sort(key=lambda m: -m["score"])
+
+    print(json.dumps({
+        "success": True,
+        "query": query,
+        "tasks": matches[:20],
+        "epics": _find_matching_epics(query),
+        "total": len(matches),
+    }))

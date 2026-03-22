@@ -28,4 +28,4 @@ Package structure:
   cc-flow.py         → backward-compatible shim
 """
 
-VERSION = "3.10.0"
+VERSION = "3.11.0"

@@ -244,7 +244,7 @@ class TestStats:
         run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
         out, _, code = run(["stats"], cwd=workspace)
         assert code == 0
-        assert "Productivity" in out
+        assert "success" in out
 
 
 class TestVersionFlag:

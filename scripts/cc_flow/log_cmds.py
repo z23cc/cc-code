@@ -87,47 +87,47 @@ def cmd_archive(_args):
         print(json.dumps({"success": True, "archived": archived_epics, "count": len(archived_epics)}))
 
 
+def _calc_velocity(tasks):
+    """Calculate task velocity from completed timestamps."""
+    done_tasks = [t for t in tasks.values() if t.get("completed")]
+    if len(done_tasks) < 2:
+        return None
+    times = sorted(t["completed"] for t in done_tasks)
+    first = datetime.fromisoformat(times[0].replace("Z", "+00:00"))
+    last = datetime.fromisoformat(times[-1].replace("Z", "+00:00"))
+    hours = max((last - first).total_seconds() / 3600, 0.1)
+    return round(len(done_tasks) / hours, 1)
+
+
 def cmd_stats(_args):
-    """Productivity stats."""
-    stats = {"totals": {"kept": 0, "discarded": 0, "skipped": 0}}
+    """Productivity stats (JSON output)."""
+    log_totals = {"kept": 0, "discarded": 0, "skipped": 0}
     if LOG_FILE.exists():
         for line in LOG_FILE.read_text().strip().split("\n")[1:]:
             parts = line.split("\t")
-            if len(parts) >= 7:
-                s = parts[6]
-                if s in stats["totals"]:
-                    stats["totals"][s] += 1
+            if len(parts) >= 7 and parts[6] in log_totals:
+                log_totals[parts[6]] += 1
 
     tasks = all_tasks()
-    epic_stats = {}
+    by_status = {"todo": 0, "in_progress": 0, "done": 0, "blocked": 0}
     for t in tasks.values():
-        epic = t.get("epic", "unknown")
-        if epic not in epic_stats:
-            epic_stats[epic] = {"total": 0, "done": 0}
-        epic_stats[epic]["total"] += 1
-        if t["status"] == "done":
-            epic_stats[epic]["done"] += 1
+        by_status[t.get("status", "todo")] = by_status.get(t.get("status", "todo"), 0) + 1
 
-    done_tasks = [t for t in tasks.values() if t.get("completed")]
-    if len(done_tasks) >= 2:
-        times = sorted(t["completed"] for t in done_tasks)
-        first = datetime.fromisoformat(times[0].replace("Z", "+00:00"))
-        last = datetime.fromisoformat(times[-1].replace("Z", "+00:00"))
-        hours = max((last - first).total_seconds() / 3600, 0.1)
-        velocity = f"{len(done_tasks) / hours:.1f} tasks/hour"
-    else:
-        velocity = "insufficient data"
+    epic_count = len({t.get("epic") for t in tasks.values()})
+    velocity = _calc_velocity(tasks)
 
-    total_attempts = stats["totals"]["kept"] + stats["totals"]["discarded"]
-    success_rate = int(stats["totals"]["kept"] / total_attempts * 100) if total_attempts > 0 else 0
-
-    print("## Productivity Stats")
-    print("| Metric | Value |")
-    print("|--------|-------|")
-    print(f"| Active epics | {len(epic_stats)} |")
-    print(f"| Total tasks | {len(tasks)} |")
-    print(f"| Done | {sum(e['done'] for e in epic_stats.values())} |")
-    print(f"| Velocity | {velocity} |")
+    total_attempts = log_totals["kept"] + log_totals["discarded"]
+    result = {
+        "success": True,
+        "epics": epic_count,
+        "tasks": len(tasks),
+        "by_status": by_status,
+        "velocity": f"{velocity} tasks/hour" if velocity else "insufficient data",
+    }
     if total_attempts > 0:
-        print(f"| Autoimmune kept | {stats['totals']['kept']} |")
-        print(f"| Success rate | {success_rate}% |")
+        result["autoimmune"] = {
+            **log_totals,
+            "success_rate": int(log_totals["kept"] / total_attempts * 100),
+        }
+
+    print(json.dumps(result))

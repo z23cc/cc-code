@@ -16,6 +16,7 @@ from cc_flow.epic_task import (
     cmd_task_create,
     cmd_task_reset,
     cmd_task_set_spec,
+    cmd_task_update,
 )
 from cc_flow.graph import cmd_graph
 from cc_flow.log_cmds import cmd_archive, cmd_log, cmd_stats, cmd_summary
@@ -32,6 +33,7 @@ from cc_flow.views import (
     cmd_dashboard,
     cmd_epics,
     cmd_export,
+    cmd_find,
     cmd_list,
     cmd_next,
     cmd_progress,
@@ -40,7 +42,7 @@ from cc_flow.views import (
     cmd_status,
     cmd_tasks,
 )
-from cc_flow.work import cmd_block, cmd_done, cmd_rollback, cmd_start
+from cc_flow.work import cmd_block, cmd_done, cmd_reopen, cmd_rollback, cmd_start
 
 _COMMANDS = {
     "init": cmd_init, "list": cmd_list, "epics": cmd_epics, "tasks": cmd_tasks,
@@ -52,6 +54,7 @@ _COMMANDS = {
     "archive": cmd_archive, "stats": cmd_stats, "consolidate": cmd_consolidate,
     "history": cmd_history, "config": cmd_config, "graph": cmd_graph,
     "verify": cmd_verify, "clean": cmd_clean, "export": cmd_export,
+    "find": cmd_find, "reopen": cmd_reopen,
     "doctor": cmd_doctor, "dashboard": cmd_dashboard, "rollback": cmd_rollback,
     "apply": cmd_apply, "search": cmd_search, "embed": cmd_embed,
     "compact": cmd_compact, "github-search": cmd_github_search,
@@ -61,7 +64,7 @@ _SUBCMD_MAP = {
     "epic": {"epic_cmd": {"create": cmd_epic_create, "close": cmd_epic_close,
                            "import": cmd_epic_import, "reset": cmd_epic_reset}},
     "task": {"task_cmd": {"create": cmd_task_create, "reset": cmd_task_reset,
-                           "set-spec": cmd_task_set_spec}},
+                           "set-spec": cmd_task_set_spec, "update": cmd_task_update}},
 }
 
 

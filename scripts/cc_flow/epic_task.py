@@ -259,6 +259,34 @@ def cmd_task_reset(args):
     print(json.dumps({"success": True, "id": args.id, "status": "todo"}))
 
 
+def cmd_task_update(args):
+    """Update task attributes (title, priority, size, tags)."""
+    path = TASKS_SUBDIR / f"{args.id}.json"
+    if not path.exists():
+        error(f"Task not found: {args.id}")
+
+    data = safe_json_load(path)
+    updated = []
+    if args.title:
+        data["title"] = args.title
+        updated.append("title")
+    if args.priority is not None:
+        data["priority"] = args.priority
+        updated.append("priority")
+    if args.size:
+        data["size"] = args.size
+        updated.append("size")
+    if args.tags:
+        data["tags"] = [t.strip() for t in args.tags.split(",")]
+        updated.append("tags")
+
+    if not updated:
+        error("Nothing to update. Use --title, --priority, --size, or --tags.")
+
+    save_task(path, data)
+    print(json.dumps({"success": True, "id": args.id, "updated": updated}))
+
+
 def cmd_task_set_spec(args):
     """Update task spec from file."""
     task_id = args.id
