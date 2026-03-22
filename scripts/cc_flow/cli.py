@@ -53,6 +53,21 @@ def _add_project_commands(sub):
     dep_show = dep_sub.add_parser("show", help="Show dependency chain for a task")
     dep_show.add_argument("id")
 
+    _add_template_commands(sub)
+
+
+def _add_template_commands(sub):
+    """Add template management subcommands."""
+    tmpl_p = sub.add_parser("template", help="Task template management")
+    tmpl_sub = tmpl_p.add_subparsers(dest="template_cmd")
+    tmpl_sub.add_parser("list", help="List available templates")
+    tmpl_show = tmpl_sub.add_parser("show", help="Show template details")
+    tmpl_show.add_argument("name")
+    tmpl_create = tmpl_sub.add_parser("create", help="Create custom template")
+    tmpl_create.add_argument("name")
+    tmpl_create.add_argument("--steps", required=True, help="Comma-separated step names")
+    tmpl_create.add_argument("--spec", default="", help="Spec content (or auto-generated)")
+
 
 def _add_view_commands(sub):
     """Add view/query subcommands: list, epics, tasks, show, ready, next, progress, etc."""
@@ -80,6 +95,8 @@ def _add_view_commands(sub):
     graph_p.add_argument("--format", choices=["mermaid", "ascii", "dot"], default="mermaid")
     graph_p.add_argument("--json", action="store_true", default=False)
     sub.add_parser("history", help="Task completion timeline with velocity trends")
+    cp_p = sub.add_parser("critical-path", help="Find longest dependency chain")
+    cp_p.add_argument("--epic", default="")
     export_p = sub.add_parser("export", help="Export epic as markdown report")
     export_p.add_argument("id")
     export_p.add_argument("--output", default="", help="Output file path (default: stdout)")
@@ -228,6 +245,8 @@ def _add_misc_commands(sub):
     burndown_p.add_argument("--epic", required=True)
     report_p = sub.add_parser("report", help="Comprehensive project report (markdown)")
     report_p.add_argument("--output", default="", help="Save to file")
+    time_p = sub.add_parser("time", help="Time tracking report (duration per task, averages)")
+    time_p.add_argument("--epic", default="")
     sub.add_parser("version", help="Print cc-flow version")
     config_p = sub.add_parser("config", help="View/set cc-flow configuration")
     config_p.add_argument("key", nargs="?", default="")

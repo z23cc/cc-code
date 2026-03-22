@@ -22,6 +22,8 @@ from cc_flow.core import (
     slugify,
 )
 
+TEMPLATES_DIR = TASKS_DIR / "templates"
+
 TASK_TEMPLATES = {
     "feature": {
         "steps": ["Research", "Design", "Implement", "Test", "Review"],
@@ -399,3 +401,55 @@ def cmd_dep_show(args):
             if u["status"] != "done" and u["id"] in task.get("depends_on", [])
         ],
     }))
+
+
+# ── Templates ──
+
+def cmd_template_list(_args):
+    """List all available task templates (built-in + custom)."""
+    templates = {}
+    # Built-in
+    for name, tmpl in TASK_TEMPLATES.items():
+        templates[name] = {"source": "built-in", "steps": tmpl["steps"]}
+    # Custom from .tasks/templates/
+    if TEMPLATES_DIR.exists():
+        for f in sorted(TEMPLATES_DIR.glob("*.json")):
+            data = safe_json_load(f, default=None)
+            if data:
+                templates[f.stem] = {"source": "custom", "steps": data.get("steps", [])}
+
+    print(json.dumps({"success": True, "templates": templates, "count": len(templates)}))
+
+
+def cmd_template_show(args):
+    """Show a template's full spec content."""
+    name = args.name
+    if name in TASK_TEMPLATES:
+        tmpl = TASK_TEMPLATES[name]
+        print(json.dumps({"success": True, "name": name, "source": "built-in",
+                          "steps": tmpl["steps"], "spec": tmpl["spec"]}))
+        return
+
+    custom_path = TEMPLATES_DIR / f"{name}.json"
+    if custom_path.exists():
+        data = safe_json_load(custom_path, default={})
+        print(json.dumps({"success": True, "name": name, "source": "custom", **data}))
+        return
+
+    error(f"Template not found: {name}. Run 'cc-flow template list' to see available templates.")
+
+
+def cmd_template_create(args):
+    """Create a custom task template."""
+    name = args.name
+    TEMPLATES_DIR.mkdir(parents=True, exist_ok=True)
+
+    steps = [s.strip() for s in args.steps.split(",")]
+    spec = args.spec if args.spec else f"## {name.title()} Task\n\n## Steps\n\n" + "".join(
+        f"{i + 1}. {s}\n" for i, s in enumerate(steps)
+    ) + "\n## Acceptance Criteria\n\n- [ ] All steps completed\n"
+
+    data = {"steps": steps, "spec": spec}
+    (TEMPLATES_DIR / f"{name}.json").write_text(json.dumps(data, indent=2) + "\n")
+
+    print(json.dumps({"success": True, "name": name, "steps": steps}))
