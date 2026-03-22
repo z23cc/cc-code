@@ -214,78 +214,75 @@ def cmd_learnings(args):
     print(json.dumps({"success": True, "learnings": recent, "count": len(learnings)}))
 
 
-def _search_learnings(query):
-    """Search learnings — uses Morph Rerank if available, falls back to keyword overlap."""
-    if not LEARNINGS_DIR.exists():
-        return None
+def _make_result(learning, confidence, alternatives, engine):
+    """Build a standardized search result dict from a learning entry."""
+    return {
+        "task": learning.get("task"),
+        "approach": learning.get("approach"),
+        "lesson": learning.get("lesson"),
+        "score": learning.get("score"),
+        "confidence": confidence,
+        "alternatives": alternatives,
+        "engine": engine,
+    }
 
-    # Collect all learnings
-    learnings = []
-    for f in LEARNINGS_DIR.glob("*.json"):
-        d = safe_json_load(f, default=None)
-        if d and d.get("score", 0) >= 2:
-            learnings.append(d)
 
-    if not learnings:
-        return None
-
-    # Try Morph Rerank for semantic matching
+def _try_morph_rerank(query, learnings):
+    """Try semantic reranking via Morph. Returns result dict or None."""
     morph_client = get_morph_client()
-    if morph_client and len(learnings) >= 2:
-        try:
-            documents = [
-                f"{d.get('task', '')} | {d.get('lesson', '')} | {d.get('approach', '')}"
-                for d in learnings
-            ]
-            ranked = morph_client.rerank(query, documents, top_n=3)
-            if ranked and ranked[0].get("relevance_score", 0) > 0.1:
-                best = learnings[ranked[0]["index"]]
-                confidence = min(int(ranked[0]["relevance_score"] * 100), 99)
-                return {
-                    "task": best.get("task"),
-                    "approach": best.get("approach"),
-                    "lesson": best.get("lesson"),
-                    "score": best.get("score"),
-                    "confidence": confidence,
-                    "alternatives": len(ranked) - 1,
-                    "engine": "morph-rerank",
-                }
-        except Exception:
-            pass  # Fall through to keyword matching
+    if not morph_client or len(learnings) < 2:
+        return None
+    try:
+        documents = [
+            f"{d.get('task', '')} | {d.get('lesson', '')} | {d.get('approach', '')}"
+            for d in learnings
+        ]
+        ranked = morph_client.rerank(query, documents, top_n=3)
+        if ranked and ranked[0].get("relevance_score", 0) > 0.1:
+            best = learnings[ranked[0]["index"]]
+            confidence = min(int(ranked[0]["relevance_score"] * 100), 99)
+            return _make_result(best, confidence, len(ranked) - 1, "morph-rerank")
+    except Exception:
+        pass
+    return None
 
-    # Fallback: keyword overlap scoring
-    query_lower = query.lower()
+
+def _keyword_search(query, learnings):
+    """Score learnings by keyword overlap. Returns result dict or None."""
+    words = set(query.lower().split())
     candidates = []
     for d in learnings:
-        task = d.get("task", "").lower()
-        lesson = d.get("lesson", "").lower()
-        approach = d.get("approach", "").lower()
-        words = set(query_lower.split())
-        total_score = (len(words & set(task.split())) * 3
-                       + len(words & set(lesson.split())) * 2
-                       + len(words & set(approach.split())))
+        total_score = (
+            len(words & set(d.get("task", "").lower().split())) * 3
+            + len(words & set(d.get("lesson", "").lower().split())) * 2
+            + len(words & set(d.get("approach", "").lower().split()))
+        )
         weighted = total_score * (d.get("score", 3) / 5.0)
         if weighted > 0:
             candidates.append((weighted, d))
 
     if not candidates:
         return None
-
     candidates.sort(key=lambda x: -x[0])
     best_weight, best_d = candidates[0]
-
     if best_weight < 2:
         return None
+    return _make_result(best_d, min(int(best_weight * 20), 99), len(candidates) - 1, "keyword")
 
-    return {
-        "task": best_d.get("task"),
-        "approach": best_d.get("approach"),
-        "lesson": best_d.get("lesson"),
-        "score": best_d.get("score"),
-        "confidence": min(int(best_weight * 20), 99),
-        "alternatives": len(candidates) - 1,
-        "engine": "keyword",
-    }
+
+def _search_learnings(query):
+    """Search learnings — uses Morph Rerank if available, falls back to keyword overlap."""
+    if not LEARNINGS_DIR.exists():
+        return None
+
+    learnings = [
+        d for f in LEARNINGS_DIR.glob("*.json")
+        if (d := safe_json_load(f, default=None)) and d.get("score", 0) >= 2
+    ]
+    if not learnings:
+        return None
+
+    return _try_morph_rerank(query, learnings) or _keyword_search(query, learnings)
 
 
 def cmd_consolidate(_args):
