@@ -168,12 +168,49 @@ def cmd_next(args):
     print(json.dumps({"success": True, "action": "start", "id": t["id"], "title": t["title"]}))
 
 
+def _task_counts(task_list):
+    """Count tasks by status, return dict with total/done/in_progress/blocked/todo/pct."""
+    total = len(task_list)
+    done = sum(1 for t in task_list if t["status"] == "done")
+    in_prog = sum(1 for t in task_list if t["status"] == "in_progress")
+    blocked = sum(1 for t in task_list if t["status"] == "blocked")
+    return {
+        "total": total, "done": done, "in_progress": in_prog,
+        "blocked": blocked, "todo": total - done - in_prog - blocked,
+        "pct": int(done / total * 100) if total > 0 else 0,
+    }
+
+
+def _epic_label(epic_id):
+    """Get epic display label from spec file, falling back to epic_id."""
+    epic_spec = EPICS_DIR / f"{epic_id}.md"
+    if epic_spec.exists():
+        title = epic_spec.read_text().split("\n", 1)[0].lstrip("# ").replace("Epic:", "").strip()
+        if title:
+            return title
+    return epic_id
+
+
+def _print_epic_progress(epic_id, counts):
+    """Print a progress bar for an epic."""
+    label = _epic_label(epic_id)
+    if counts["total"] == 0:
+        print(f"{label}: no tasks")
+        return
+    filled = int(20 * counts["done"] / counts["total"])
+    bar = "█" * filled + "░" * (20 - filled)
+    print(f"{label}: {bar} {counts['pct']}% ({counts['done']}/{counts['total']})")
+    if counts["in_progress"]:
+        print(f"  ◐ {counts['in_progress']} in progress")
+    if counts["blocked"]:
+        print(f"  ✗ {counts['blocked']} blocked")
+    if counts["todo"]:
+        print(f"  ○ {counts['todo']} todo")
+
+
 def cmd_progress(args):
     tasks = all_tasks()
-    epics = {}
-    for f in sorted(EPICS_DIR.glob("*.md")):
-        epics[f.stem] = []
-
+    epics = {f.stem: [] for f in sorted(EPICS_DIR.glob("*.md"))}
     for t in tasks.values():
         epic = t.get("epic", "")
         if epic in epics:
@@ -183,37 +220,10 @@ def cmd_progress(args):
     for epic_id, epic_tasks in epics.items():
         if args.epic and epic_id != args.epic:
             continue
-        total = len(epic_tasks)
-        done = sum(1 for t in epic_tasks if t["status"] == "done")
-        in_prog = sum(1 for t in epic_tasks if t["status"] == "in_progress")
-        blocked = sum(1 for t in epic_tasks if t["status"] == "blocked")
-        todo = total - done - in_prog - blocked
-        pct = int(done / total * 100) if total > 0 else 0
-        entry = {"epic": epic_id, "total": total, "done": done,
-                 "in_progress": in_prog, "blocked": blocked, "todo": todo, "pct": pct}
-        json_output.append(entry)
-
+        counts = _task_counts(epic_tasks)
+        json_output.append({"epic": epic_id, **counts})
         if not getattr(args, "json", False):
-            # Extract title from epic spec
-            epic_spec = EPICS_DIR / f"{epic_id}.md"
-            epic_title = ""
-            if epic_spec.exists():
-                first_line = epic_spec.read_text().split("\n", 1)[0]
-                epic_title = first_line.lstrip("# ").replace("Epic:", "").strip()
-            label = f"{epic_title}" if epic_title else epic_id
-            if total == 0:
-                print(f"{label}: no tasks")
-            else:
-                bar_len = 20
-                filled = int(bar_len * done / total)
-                bar = "█" * filled + "░" * (bar_len - filled)
-                print(f"{label}: {bar} {pct}% ({done}/{total})")
-                if in_prog:
-                    print(f"  ◐ {in_prog} in progress")
-                if blocked:
-                    print(f"  ✗ {blocked} blocked")
-                if todo:
-                    print(f"  ○ {todo} todo")
+            _print_epic_progress(epic_id, counts)
 
     if getattr(args, "json", False):
         print(json.dumps({"success": True, "epics": json_output}))
