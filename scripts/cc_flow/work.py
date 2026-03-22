@@ -53,6 +53,37 @@ def cmd_start(args):
     print(json.dumps({"success": True, "id": args.id, "status": "in_progress"}))
 
 
+def _calc_duration(started_iso):
+    """Calculate seconds elapsed since an ISO timestamp. Returns None on failure."""
+    if not started_iso:
+        return None
+    try:
+        started = datetime.fromisoformat(started_iso.replace("Z", "+00:00"))
+        return int((datetime.now(timezone.utc) - started).total_seconds())
+    except (ValueError, TypeError):
+        return None
+
+
+def _format_duration(seconds):
+    """Format seconds as a human-readable string."""
+    mins = seconds // 60
+    return f"{mins}m" if mins > 0 else f"{seconds}s"
+
+
+def _consolidation_hint():
+    """Return a consolidation hint if learnings need attention, else None."""
+    config = DEFAULT_CONFIG.copy()
+    if CONFIG_FILE.exists():
+        try:
+            config.update(json.loads(CONFIG_FILE.read_text()))
+        except json.JSONDecodeError:
+            pass
+    if config.get("auto_consolidate") and LEARNINGS_DIR.exists():
+        if len(list(LEARNINGS_DIR.glob("*.json"))) >= 10:
+            return "Run 'cc-flow consolidate' to promote patterns"
+    return None
+
+
 def cmd_done(args):
     path = TASKS_SUBDIR / f"{args.id}.json"
     if not path.exists():
@@ -60,21 +91,10 @@ def cmd_done(args):
         sys.exit(1)
 
     data = safe_json_load(path)
-
     if data["status"] not in ("in_progress", "todo"):
         error(f"Cannot complete task with status: {data['status']}")
 
-    # Calculate duration if started
-    duration_sec = None
-    if data.get("started"):
-        try:
-            started = datetime.fromisoformat(data["started"].replace("Z", "+00:00"))
-            now = datetime.now(timezone.utc)
-            duration_sec = int((now - started).total_seconds())
-        except (ValueError, TypeError):
-            pass
-
-    # Track git diff since task start
+    duration_sec = _calc_duration(data.get("started"))
     diff_stats = _get_diff_stats(data.get("git_sha_start"))
 
     data["status"] = "done"
@@ -89,22 +109,12 @@ def cmd_done(args):
 
     result = {"success": True, "id": args.id, "status": "done"}
     if duration_sec is not None:
-        mins = duration_sec // 60
-        result["duration"] = f"{mins}m" if mins > 0 else f"{duration_sec}s"
+        result["duration"] = _format_duration(duration_sec)
     if diff_stats:
         result["diff"] = diff_stats
-
-    # Auto-consolidate learnings if config allows
-    config = DEFAULT_CONFIG.copy()
-    if CONFIG_FILE.exists():
-        try:
-            config.update(json.loads(CONFIG_FILE.read_text()))
-        except json.JSONDecodeError:
-            pass
-    if config.get("auto_consolidate") and LEARNINGS_DIR.exists():
-        learning_count = len(list(LEARNINGS_DIR.glob("*.json")))
-        if learning_count >= 10:
-            result["hint"] = "Run 'cc-flow consolidate' to promote patterns"
+    hint = _consolidation_hint()
+    if hint:
+        result["hint"] = hint
 
     print(json.dumps(result))
 
