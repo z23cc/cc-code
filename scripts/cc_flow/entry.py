@@ -81,6 +81,18 @@ _SUBCMD_MAP = {
         "list": "plugins:cmd_plugin_list", "enable": "plugins:cmd_plugin_enable",
         "disable": "plugins:cmd_plugin_disable", "create": "plugins:cmd_plugin_create",
     }),
+    "gh": ("gh_cmd", {
+        "import": "gh_sync:cmd_gh_import", "export": "gh_sync:cmd_gh_export",
+        "status": "gh_sync:cmd_gh_status",
+    }),
+    "context": ("context_cmd", {
+        "save": "context:cmd_context_save", "show": "context:cmd_context_show",
+        "brief": "context:cmd_context_brief",
+    }),
+    "alias": ("alias_cmd", {
+        "list": "aliases:cmd_alias_list", "set": "aliases:cmd_alias_set",
+        "remove": "aliases:cmd_alias_remove",
+    }),
 }
 
 # Special dispatchers (these modules handle their own subcommand parsing)
