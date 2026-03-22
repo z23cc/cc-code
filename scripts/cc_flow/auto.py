@@ -135,12 +135,12 @@ def _auto_scan(args):
 
 
 def _auto_deep_scan(args):
-    """OBSERVE+ORIENT: multi-dimensional scan with adaptive priority."""
+    """OBSERVE+ORIENT: multi-dimensional scan with Morph-enhanced analysis."""
     from cc_flow.scanner import get_scan_trend, record_scan_snapshot, run_smart_scan
 
     print("## OBSERVE: deep multi-dimensional scan...")
 
-    # Run all smart scanners
+    # Run all smart scanners (uses Morph embed for duplication if available)
     findings = run_smart_scan()
 
     # Also run standard lint scan
@@ -148,23 +148,82 @@ def _auto_deep_scan(args):
     scan_args = argparse.Namespace(create_tasks=False)
     cmd_scan(scan_args)
 
+    # Morph-enhanced: use Search to find code patterns worth improving
+    morph_insights = _morph_research_scan()
+    if morph_insights:
+        findings["morph_insights"] = morph_insights
+
     # Count total findings
     total = sum(len(v) for v in findings.values())
     record_scan_snapshot(total)
     trend = get_scan_trend()
 
-    # ORIENT: apply Q-learning priority adjustment
+    # ORIENT: apply Q-learning priority adjustment + Morph rerank
     prioritized = _orient_findings(findings)
+    prioritized = _morph_rerank_findings(prioritized)
 
     print(json.dumps({
         "success": True,
         "scan_type": "deep",
+        "morph_enhanced": morph_insights is not None,
         "findings": {k: len(v) for k, v in findings.items()},
         "total": total,
         "trend": trend,
         "prioritized": prioritized[:10],
         "instruction": "Run 'cc-flow auto run' to start fixing, or review findings first.",
     }))
+
+
+def _morph_search_query(client, query):
+    """Run a single Morph search query, return finding or None."""
+    try:
+        result = client.search(query, ".")
+        if result and isinstance(result, str) and len(result.strip()) > 10:
+            matches = [ln.strip() for ln in result.split("\n") if ln.strip()][:3]
+            if matches:
+                return {
+                    "type": "morph_search", "severity": "P4",
+                    "message": f"Morph found '{query}' patterns: {len(matches)} hits",
+                    "query": query, "sample": matches[0][:100],
+                }
+    except (RuntimeError, TimeoutError, OSError, KeyError, ValueError):
+        pass
+    return None
+
+
+def _morph_research_scan():
+    """Use Morph Search to find patterns worth improving."""
+    client = get_morph_client()
+    if not client:
+        return None
+
+    queries = ["TODO fixme hack", "error handling missing", "hardcoded config"]
+    insights = [r for q in queries if (r := _morph_search_query(client, q))]
+    return insights if insights else None
+
+
+def _morph_rerank_findings(prioritized):
+    """Use Morph Rerank to sort findings by relevance to project goals."""
+    client = get_morph_client()
+    if not client or len(prioritized) < 3:
+        return prioritized
+
+    try:
+        documents = [f["message"] for f in prioritized[:15]]
+        ranked = client.rerank("most impactful improvement for code quality", documents, top_n=10)
+        if ranked:
+            reordered = []
+            for r in ranked:
+                idx = r.get("index", 0)
+                if idx < len(prioritized):
+                    item = prioritized[idx].copy()
+                    item["rerank_score"] = round(r.get("relevance_score", 0), 3)
+                    reordered.append(item)
+            return reordered
+    except (RuntimeError, TimeoutError, OSError, KeyError, ValueError):
+        pass
+
+    return prioritized
 
 
 def _orient_findings(findings):
@@ -254,8 +313,22 @@ def _recommend_team(task):
     }
 
 
+def _morph_research_context(title):
+    """Use Morph Search to find related code for the task."""
+    client = get_morph_client()
+    if not client:
+        return None
+    try:
+        result = client.search(title, ".")
+        if result and isinstance(result, str):
+            lines = [ln.strip() for ln in result.split("\n") if ln.strip()][:5]
+            return "\n".join(lines) if lines else None
+    except (RuntimeError, TimeoutError, OSError, KeyError, ValueError):
+        return None
+
+
 def _emit_task_instruction(task):
-    """ACT: start task and emit structured instruction."""
+    """ACT: start task with Morph-enhanced context."""
     task_id = task["id"]
     task["status"] = "in_progress"
     task["started"] = now_iso()
@@ -265,7 +338,10 @@ def _emit_task_instruction(task):
     spec_path = TASKS_SUBDIR / f"{task_id}.md"
     spec_content = spec_path.read_text().strip() if spec_path.exists() else ""
 
-    print(json.dumps({
+    # Morph-enhanced: search for related code
+    research = _morph_research_context(task.get("title", ""))
+
+    output = {
         "action": "implement",
         "task_id": task_id,
         "title": task["title"],
@@ -281,7 +357,10 @@ def _emit_task_instruction(task):
             f"Max diff: {team_rec['max_diff']} lines. Verify before marking done."
         ),
         "morph_available": get_morph_client() is not None,
-    }))
+    }
+    if research:
+        output["morph_context"] = research
+    print(json.dumps(output))
 
 
 def _auto_run(args):
