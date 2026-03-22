@@ -44,15 +44,49 @@ def _show_context():
     print()
 
 
+_COMPLETIONS = [
+    # Top-level
+    "dashboard", "status", "doctor", "verify", "health", "version",
+    "init", "list", "epics", "tasks", "show", "ready", "next", "progress",
+    "start", "done", "block", "reopen", "rollback", "diff", "bulk",
+    "find", "search", "similar", "suggest", "dedupe", "index", "priority",
+    "route", "learn", "learnings", "consolidate",
+    "standup", "stats", "changelog", "burndown", "report", "time", "forecast",
+    "scan", "validate", "export", "clean", "perf", "health", "evolve",
+    # Subcommands
+    "epic create", "epic close", "epic import", "epic reset",
+    "task create", "task update", "task comment", "task reset",
+    "dep add", "dep show",
+    "auto scan", "auto run", "auto deep", "auto full", "auto status",
+    "session save", "session restore", "session list",
+    "workflow list", "workflow run", "workflow show", "workflow create",
+    "template list", "template show", "template create",
+    "plugin list", "plugin create", "plugin enable", "plugin disable",
+    "context save", "context show", "context brief",
+    "alias set", "alias list", "alias remove",
+    "eval run", "eval detail", "eval cross", "eval history",
+    "gh import", "gh export", "gh status",
+    "profile list", "profile apply",
+    # Flags
+    "--json", "--epic", "--fix", "--dry-run", "--semantic",
+    # REPL
+    "help", "quit",
+]
+
+
 def _create_input_fn():
-    """Create input function with optional prompt_toolkit support."""
+    """Create input function with tab completion + history."""
     try:
         from prompt_toolkit import PromptSession
         from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
+        from prompt_toolkit.completion import WordCompleter
         from prompt_toolkit.history import InMemoryHistory
+
+        completer = WordCompleter(_COMPLETIONS, ignore_case=True, sentence=True)
         session = PromptSession(
             history=InMemoryHistory(),
             auto_suggest=AutoSuggestFromHistory(),
+            completer=completer,
         )
 
         def get_input():

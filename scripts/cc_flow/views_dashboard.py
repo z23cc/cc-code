@@ -16,19 +16,19 @@ from cc_flow.views import _epic_label, _task_counts, cmd_status
 
 def _print_epic_progress(epic_id, counts):
     """Print a progress bar for an epic."""
+    from cc_flow import skin
+
     label = _epic_label(epic_id)
     if counts["total"] == 0:
-        print(f"{label}: no tasks")
+        skin.dim(f"{label}: no tasks")
         return
-    filled = int(20 * counts["done"] / counts["total"])
-    bar = "█" * filled + "░" * (20 - filled)
-    print(f"{label}: {bar} {counts['pct']}% ({counts['done']}/{counts['total']})")
+    skin.progress_bar(counts["done"], counts["total"], f"{label} ({counts['done']}/{counts['total']})")
     if counts["in_progress"]:
-        print(f"  ◐ {counts['in_progress']} in progress")
+        skin.dim(f"  {counts['in_progress']} in progress")
     if counts["blocked"]:
-        print(f"  ✗ {counts['blocked']} blocked")
+        skin.warning(f"{counts['blocked']} blocked")
     if counts["todo"]:
-        print(f"  ○ {counts['todo']} todo")
+        skin.dim(f"  {counts['todo']} todo")
 
 
 def cmd_progress(args):
