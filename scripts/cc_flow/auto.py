@@ -5,10 +5,15 @@ import json
 import sys
 
 from cc_flow.core import (
-    EPICS_DIR, LOG_FILE, TASKS_SUBDIR, all_tasks, get_morph_client, now_iso, save_task,
+    EPICS_DIR,
+    LOG_FILE,
+    TASKS_SUBDIR,
+    all_tasks,
+    get_morph_client,
+    now_iso,
+    save_task,
 )
 from cc_flow.quality import cmd_scan  # cross-module dependency
-
 
 TEAM_PATTERNS = [
     {

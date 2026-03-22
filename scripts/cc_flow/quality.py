@@ -6,8 +6,12 @@ import sys
 from datetime import datetime, timezone
 
 from cc_flow.core import (
-    EPICS_DIR, TASKS_SUBDIR,
-    all_tasks, locked_meta_update, now_iso, save_task,
+    EPICS_DIR,
+    TASKS_SUBDIR,
+    all_tasks,
+    locked_meta_update,
+    now_iso,
+    save_task,
 )
 from cc_flow.epic_task import cmd_init
 

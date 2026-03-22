@@ -7,10 +7,19 @@ import sys
 from pathlib import Path
 
 from cc_flow.core import (
-    COMPLETED_DIR, EPICS_DIR, META_FILE, TASKS_DIR, TASKS_SUBDIR,
-    all_tasks, locked_meta_update, now_iso, safe_json_load, save_meta, save_task, slugify,
+    COMPLETED_DIR,
+    EPICS_DIR,
+    META_FILE,
+    TASKS_DIR,
+    TASKS_SUBDIR,
+    all_tasks,
+    locked_meta_update,
+    now_iso,
+    safe_json_load,
+    save_meta,
+    save_task,
+    slugify,
 )
-
 
 TASK_TEMPLATES = {
     "feature": {

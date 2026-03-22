@@ -6,8 +6,13 @@ from datetime import datetime
 
 from cc_flow import VERSION
 from cc_flow.core import (
-    EPICS_DIR, LEARNINGS_DIR, LOG_FILE, TASKS_DIR, TASKS_SUBDIR,
-    all_tasks, safe_json_load,
+    EPICS_DIR,
+    LEARNINGS_DIR,
+    LOG_FILE,
+    TASKS_DIR,
+    TASKS_SUBDIR,
+    all_tasks,
+    safe_json_load,
 )
 from cc_flow.route_learn import _load_route_stats
 

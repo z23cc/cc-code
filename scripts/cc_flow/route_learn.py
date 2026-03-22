@@ -5,9 +5,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from cc_flow.core import (
-    LEARNINGS_DIR, ROUTE_STATS_FILE, TASKS_DIR, error, get_morph_client, now_iso, safe_json_load,
+    LEARNINGS_DIR,
+    ROUTE_STATS_FILE,
+    TASKS_DIR,
+    error,
+    get_morph_client,
+    now_iso,
+    safe_json_load,
 )
-
 
 ROUTE_TABLE = [
     # (keywords, command, team, description)
@@ -245,7 +250,7 @@ def _search_learnings(query):
                     "alternatives": len(ranked) - 1,
                     "engine": "morph-rerank",
                 }
-        except Exception:
+        except Exception:  # noqa: S110
             pass  # Fall through to keyword matching
 
     # Fallback: keyword overlap scoring

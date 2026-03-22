@@ -7,8 +7,14 @@ import subprocess as sp
 import sys
 
 from cc_flow.core import (
-    CONFIG_FILE, EPICS_DIR, LEARNINGS_DIR, META_FILE, TASKS_DIR,
-    all_tasks, load_meta, safe_json_load,
+    CONFIG_FILE,
+    EPICS_DIR,
+    LEARNINGS_DIR,
+    META_FILE,
+    TASKS_DIR,
+    all_tasks,
+    load_meta,
+    safe_json_load,
 )
 
 

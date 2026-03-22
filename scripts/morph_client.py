@@ -23,8 +23,8 @@ import json
 import os
 import sys
 from pathlib import Path
-from urllib.request import Request, urlopen
 from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 BASE_URL = "https://api.morphllm.com/v1"
 
@@ -44,13 +44,13 @@ class MorphClient:
         data = json.dumps(payload).encode("utf-8")
 
         for attempt in range(retries + 1):
-            req = Request(url, data=data, method="POST")
+            req = Request(url, data=data, method="POST")  # noqa: S310
             req.add_header("Authorization", f"Bearer {self.api_key}")
             req.add_header("Content-Type", "application/json")
             req.add_header("User-Agent", "cc-code-morph/1.0")
             req.add_header("Accept", "application/json")
             try:
-                with urlopen(req, timeout=timeout) as resp:
+                with urlopen(req, timeout=timeout) as resp:  # noqa: S310
                     return json.loads(resp.read().decode("utf-8"))
             except HTTPError as exc:
                 body = exc.read().decode("utf-8", errors="replace")[:500]

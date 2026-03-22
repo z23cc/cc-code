@@ -5,7 +5,12 @@ import subprocess as _sp
 from datetime import datetime, timezone
 
 from cc_flow.core import (
-    LEARNINGS_DIR, SESSION_DIR, all_tasks, now_iso, safe_json_load, error,
+    LEARNINGS_DIR,
+    SESSION_DIR,
+    all_tasks,
+    error,
+    now_iso,
+    safe_json_load,
 )
 
 

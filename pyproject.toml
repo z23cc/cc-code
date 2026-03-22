@@ -1,9 +1,22 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
 [project]
 name = "cc-code"
 version = "3.8.1"
 description = "Development workflow toolkit for Claude Code"
 requires-python = ">=3.9"
 license = "MIT"
+readme = "README.md"
+authors = [{name = "cc-code contributors"}]
+keywords = ["workflow", "tasks", "ai", "claude"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.14", "mypy>=1.10"]
@@ -13,7 +26,11 @@ line-length = 120
 target-version = "py39"
 
 [tool.ruff.lint]
-select = ["E", "F", "W"]
+select = ["E", "F", "W", "I", "S", "B"]
+ignore = ["S101", "S603", "S607"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["S"]
 
 [tool.mypy]
 python_version = "3.9"

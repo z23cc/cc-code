@@ -5,7 +5,11 @@ from datetime import datetime
 
 from cc_flow import VERSION
 from cc_flow.core import (
-    COMPLETED_DIR, CONFIG_FILE, DEFAULT_CONFIG, all_tasks, safe_json_load,
+    COMPLETED_DIR,
+    CONFIG_FILE,
+    DEFAULT_CONFIG,
+    all_tasks,
+    safe_json_load,
 )
 
 

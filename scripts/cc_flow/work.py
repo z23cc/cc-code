@@ -5,7 +5,15 @@ import sys
 from datetime import datetime, timezone
 
 from cc_flow.core import (
-    CONFIG_FILE, DEFAULT_CONFIG, LEARNINGS_DIR, TASKS_SUBDIR, all_tasks, error, now_iso, safe_json_load, save_task,
+    CONFIG_FILE,
+    DEFAULT_CONFIG,
+    LEARNINGS_DIR,
+    TASKS_SUBDIR,
+    all_tasks,
+    error,
+    now_iso,
+    safe_json_load,
+    save_task,
 )
 
 

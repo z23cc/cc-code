@@ -285,7 +285,7 @@ class TestConsolidate:
 
     def test_consolidate_with_learnings(self, workspace):
         # Add several similar learnings
-        for i in range(4):
+        for _i in range(4):
             run(["learn", "--task", "fix auth middleware", "--outcome", "success",
                  "--approach", "check token", "--lesson", "always check expiry",
                  "--score", "5"], cwd=workspace)

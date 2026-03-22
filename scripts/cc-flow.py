@@ -13,29 +13,46 @@ from pathlib import Path
 # Ensure cc_flow package is importable
 sys.path.insert(0, str(Path(__file__).parent))
 
+from cc_flow.auto import cmd_auto  # noqa: E402
 from cc_flow.cli import build_parser  # noqa: E402
+from cc_flow.config import cmd_config, cmd_history, cmd_version  # noqa: E402
+from cc_flow.doctor import cmd_doctor  # noqa: E402
 
 # Import all command functions from domain modules
 from cc_flow.epic_task import (  # noqa: E402
-    cmd_init, cmd_epic_create, cmd_epic_import, cmd_task_create,
-    cmd_epic_close, cmd_task_reset, cmd_task_set_spec, cmd_epic_reset, cmd_dep_add,
+    cmd_dep_add,
+    cmd_epic_close,
+    cmd_epic_create,
+    cmd_epic_import,
+    cmd_epic_reset,
+    cmd_init,
+    cmd_task_create,
+    cmd_task_reset,
+    cmd_task_set_spec,
 )
-from cc_flow.views import (  # noqa: E402
-    cmd_list, cmd_epics, cmd_tasks, cmd_show, cmd_ready, cmd_next,
-    cmd_progress, cmd_status, cmd_dashboard,
-)
-from cc_flow.work import cmd_start, cmd_done, cmd_block, cmd_rollback  # noqa: E402
-from cc_flow.route_learn import (  # noqa: E402
-    cmd_route, cmd_learn, cmd_learnings, cmd_consolidate,
-)
-from cc_flow.auto import cmd_auto  # noqa: E402
-from cc_flow.morph_cmds import cmd_apply, cmd_search, cmd_embed, cmd_compact, cmd_github_search  # noqa: E402
-from cc_flow.quality import cmd_validate, cmd_scan  # noqa: E402
-from cc_flow.log_cmds import cmd_log, cmd_summary, cmd_archive, cmd_stats  # noqa: E402
-from cc_flow.config import cmd_version, cmd_history, cmd_config  # noqa: E402
-from cc_flow.session import cmd_session  # noqa: E402
 from cc_flow.graph import cmd_graph  # noqa: E402
-from cc_flow.doctor import cmd_doctor  # noqa: E402
+from cc_flow.log_cmds import cmd_archive, cmd_log, cmd_stats, cmd_summary  # noqa: E402
+from cc_flow.morph_cmds import cmd_apply, cmd_compact, cmd_embed, cmd_github_search, cmd_search  # noqa: E402
+from cc_flow.quality import cmd_scan, cmd_validate  # noqa: E402
+from cc_flow.route_learn import (  # noqa: E402
+    cmd_consolidate,
+    cmd_learn,
+    cmd_learnings,
+    cmd_route,
+)
+from cc_flow.session import cmd_session  # noqa: E402
+from cc_flow.views import (  # noqa: E402
+    cmd_dashboard,
+    cmd_epics,
+    cmd_list,
+    cmd_next,
+    cmd_progress,
+    cmd_ready,
+    cmd_show,
+    cmd_status,
+    cmd_tasks,
+)
+from cc_flow.work import cmd_block, cmd_done, cmd_rollback, cmd_start  # noqa: E402
 
 
 def main():
