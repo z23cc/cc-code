@@ -15,9 +15,11 @@ from cc_flow.core import (
 
 ROUTE_TABLE = [
     # Columns: keywords, command, team, description
-    (["new feature", "add feature", "implement", "build", "新功能", "加功能"],
+    (["new feature", "add feature", "implement", "build", "create",
+      "新功能", "加功能", "新增", "添加", "实现", "创建"],
      "/brainstorm", "feature-dev", "New feature → brainstorm first"),
-    (["bug", "broken", "error", "fix", "crash", "报错", "故障", "修"],
+    (["bug", "broken", "error", "fix", "crash", "fail",
+      "报错", "故障", "修", "修复", "崩溃", "出错"],
      "/debug", "bug-fix", "Bug → systematic debugging"),
     (["review", "code review", "check code", "审查", "看看代码"],
      "/review", "review", "Code review"),

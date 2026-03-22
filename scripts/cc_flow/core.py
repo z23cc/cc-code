@@ -152,8 +152,10 @@ def save_meta(meta):
 
 
 def slugify(title):
-    """Convert title to URL-safe slug."""
-    return "-".join(title.lower().split()[:4]).replace("/", "-").replace(".", "")
+    """Convert title to URL-safe slug. Strips special characters."""
+    import re
+    clean = re.sub(r"[^a-z0-9\u4e00-\u9fff\s-]", "", title.lower())
+    return "-".join(clean.split()[:4])
 
 
 def allocate_epic_num(meta):
