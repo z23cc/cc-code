@@ -59,72 +59,72 @@ def _save_route_stats(stats):
     ROUTE_STATS_FILE.write_text(json.dumps(stats, indent=2) + "\n")
 
 
-def cmd_route(args):
-    """Analyze user intent and suggest the best command + team."""
-    query = " ".join(args.query).lower() if args.query else ""
-
-    if not query:
-        error("Provide a task description")
-
-    # Check learnings for past similar tasks
-    past_match = _search_learnings(query)
-
-    # Load route stats for adaptive confidence
-    route_stats = _load_route_stats()
-
-    # Check promoted patterns for high-confidence matches
+def _find_pattern_match(query):
+    """Search promoted patterns for a high-confidence match."""
     patterns_dir = TASKS_DIR / "patterns"
-    pattern_match = None
-    if patterns_dir.exists():
-        for f in patterns_dir.glob("*.json"):
-            try:
-                p = json.loads(f.read_text())
-                pattern_words = set(p.get("task_pattern", "").split())
-                query_words = set(query.split())
-                overlap = len(pattern_words & query_words)
-                if overlap >= 2 and p.get("success_rate", 0) >= 70:
-                    pattern_match = {
-                        "pattern": p.get("task_pattern"),
-                        "approach": p.get("approach"),
-                        "success_rate": p.get("success_rate"),
-                        "occurrences": p.get("occurrences"),
-                    }
-                    break
-            except (json.JSONDecodeError, KeyError):
-                continue
+    if not patterns_dir.exists():
+        return None
+    query_words = set(query.split())
+    for f in patterns_dir.glob("*.json"):
+        p = safe_json_load(f, default=None)
+        if not p:
+            continue
+        overlap = len(set(p.get("task_pattern", "").split()) & query_words)
+        if overlap >= 2 and p.get("success_rate", 0) >= 70:
+            return {
+                "pattern": p.get("task_pattern"),
+                "approach": p.get("approach"),
+                "success_rate": p.get("success_rate"),
+                "occurrences": p.get("occurrences"),
+            }
+    return None
 
+
+def _keyword_route(query):
+    """Match query against ROUTE_TABLE, return sorted matches."""
     matches = []
     for keywords, command, team, desc in ROUTE_TABLE:
         score = sum(1 for kw in keywords if kw in query)
         if score > 0:
             matches.append({"score": score, "command": command, "team": team, "description": desc})
-
     matches.sort(key=lambda x: -x["score"])
-    best = matches[0] if matches else None
+    return matches
 
-    # Calculate routing confidence — combines keyword match, learnings, patterns, and history
-    confidence = 0
-    if best:
-        confidence = min(best["score"] * 25, 80)
+
+def _calc_confidence(best, past_match, pattern_match, cmd_stats):
+    """Compute routing confidence from multiple signals."""
+    confidence = min(best["score"] * 25, 80) if best else 0
     if past_match and past_match.get("confidence", 0) > confidence:
         confidence = past_match["confidence"]
     if pattern_match and pattern_match.get("success_rate", 0) > confidence:
         confidence = pattern_match["success_rate"]
-
-    # Boost/penalize based on historical route success rates
-    suggested_cmd = best["command"] if best else "/brainstorm"
-    cmd_stats = route_stats.get("commands", {}).get(suggested_cmd, {})
     if cmd_stats:
         total = cmd_stats.get("success", 0) + cmd_stats.get("failure", 0)
         if total >= 3:
             hist_rate = int(cmd_stats["success"] / total * 100)
-            # Blend: 70% current confidence + 30% historical success rate
             confidence = int(confidence * 0.7 + hist_rate * 0.3)
+    return min(confidence, 99)
+
+
+def cmd_route(args):
+    """Analyze user intent and suggest the best command + team."""
+    query = " ".join(args.query).lower() if args.query else ""
+    if not query:
+        error("Provide a task description")
+
+    past_match = _search_learnings(query)
+    pattern_match = _find_pattern_match(query)
+    matches = _keyword_route(query)
+    best = matches[0] if matches else None
+
+    route_stats = _load_route_stats()
+    suggested_cmd = best["command"] if best else "/brainstorm"
+    cmd_stats = route_stats.get("commands", {}).get(suggested_cmd, {})
 
     result = {
         "success": True,
         "query": query,
-        "confidence": min(confidence, 99),
+        "confidence": _calc_confidence(best, past_match, pattern_match, cmd_stats),
         "suggestion": {
             "command": suggested_cmd,
             "team": best.get("team") if best else None,
@@ -139,7 +139,7 @@ def cmd_route(args):
         s = cmd_stats.get("success", 0)
         f = cmd_stats.get("failure", 0)
         result["route_history"] = {"uses": s + f, "success_rate": int(s / (s + f) * 100) if (s + f) > 0 else 0}
-    if matches and len(matches) > 1:
+    if len(matches) > 1:
         result["alternatives"] = [
             {"command": m["command"], "reason": m["description"]}
             for m in matches[1:3]
