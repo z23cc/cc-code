@@ -4,7 +4,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 ## Architecture
 
-- `scripts/cc-flow.py` — Task & workflow CLI (38 subcommands)
+- `scripts/cc_flow/` — Task & workflow CLI package (38 subcommands, entry: `cc_flow.entry:main`)
 - `scripts/morph_client.py` — Pure Python Morph API client (Apply, WarpGrep, Embed, Rerank)
 - `agents/` — 23 agents (11 core + 12 cc-scout-* scouts, all `model: inherit`)
 - `skills/` — 47 skills (all prefixed `cc-`):
@@ -43,12 +43,15 @@ Alternative entries: `/cc-blueprint`, `/cc-interview`, `/cc-prime`, `/cc-debug`,
 ## cc-flow Quick Reference
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
-$CCFLOW dashboard                              # one-screen overview
-$CCFLOW search "auth flow" --rerank            # semantic search + rerank
-$CCFLOW route "fix login bug"                  # smart routing
-$CCFLOW session save --notes "context"         # persist session
-$CCFLOW session restore                        # resume
-$CCFLOW graph --format ascii                   # dependency tree
-$CCFLOW doctor                                 # health check
+# After: pip install -e .  →  cc-flow <command>
+# Or:    python -m cc_flow <command>  (from scripts/)
+# Or:    CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py" (legacy shim)
+
+cc-flow dashboard                              # one-screen overview
+cc-flow search "auth flow" --rerank            # semantic search + rerank
+cc-flow route "fix login bug"                  # smart routing
+cc-flow session save --notes "context"         # persist session
+cc-flow session restore                        # resume
+cc-flow graph --format ascii                   # dependency tree
+cc-flow doctor                                 # health check
 ```

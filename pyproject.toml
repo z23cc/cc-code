@@ -18,8 +18,14 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
 ]
 
+[project.scripts]
+cc-flow = "cc_flow.entry:main"
+
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "ruff>=0.14", "mypy>=1.10"]
+
+[tool.setuptools.packages.find]
+where = ["scripts"]
 
 [tool.ruff]
 line-length = 120

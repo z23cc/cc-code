@@ -1,9 +1,15 @@
 """cc-flow — task & workflow manager for cc-code plugin.
 
+Usage:
+    cc-flow <command>          (after pip install -e .)
+    python -m cc_flow <command>
+    python scripts/cc-flow.py <command>  (legacy shim)
+
 Package structure:
-  cc-flow.py         → thin shim (90 lines, imports + dispatch)
   cc_flow/
     __init__.py      → VERSION
+    __main__.py      → python -m cc_flow support
+    entry.py         → CLI entry point (main function)
     cli.py           → argparse (39 subcommands)
     core.py          → shared constants + utilities
     epic_task.py     → epic/task CRUD, templates
@@ -19,6 +25,7 @@ Package structure:
     graph.py         → mermaid, ascii, dot dependency graphs
     doctor.py        → 10 health checks
   morph_client.py    → pure Python Morph API client (5 APIs)
+  cc-flow.py         → backward-compatible shim
 """
 
 VERSION = "3.8.1"
