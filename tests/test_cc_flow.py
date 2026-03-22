@@ -68,7 +68,11 @@ class TestTask:
     def test_create_task_with_deps(self, workspace):
         run(["epic", "create", "--title", "Test"], cwd=workspace)
         run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
-        out, _, _ = run(["task", "create", "--epic", "epic-1-test", "--title", "T2", "--deps", "epic-1-test.1"], cwd=workspace)
+        out, _, _ = run(
+            ["task", "create", "--epic", "epic-1-test",
+             "--title", "T2", "--deps", "epic-1-test.1"],
+            cwd=workspace,
+        )
         data = json.loads(out)
         task_json = json.loads((workspace / ".tasks" / "tasks" / f"{data['id']}.json").read_text())
         assert "epic-1-test.1" in task_json["depends_on"]

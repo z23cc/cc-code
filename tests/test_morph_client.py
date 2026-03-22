@@ -5,16 +5,15 @@ Tests are split into:
 - Integration tests (need MORPH_API_KEY, marked with @pytest.mark.morph)
 """
 
-import json
 import os
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
-from morph_client import MorphClient, BASE_URL
+from morph_client import MorphClient
 
 
 # ── Unit Tests (no API needed) ──
@@ -46,7 +45,11 @@ class TestToolExecution:
     def test_execute_read(self, tmp_path):
         (tmp_path / "test.py").write_text("line1\nline2\nline3\n")
         client = MorphClient(api_key="fake")
-        result = client._execute_tool("read", {"path": str(tmp_path / "test.py"), "start_line": 2, "end_line": 3}, tmp_path)
+        result = client._execute_tool(
+            "read",
+            {"path": str(tmp_path / "test.py"), "start_line": 2, "end_line": 3},
+            tmp_path,
+        )
         assert "line2" in result
 
     def test_execute_list_directory(self, tmp_path):
@@ -88,7 +91,7 @@ class TestMorphApply:
         f = tmp_path / "test.py"
         f.write_text("x = 1\n")
         client = MorphClient()
-        result = client.apply_file(str(f), "change to 99", "x = 99")
+        _ = client.apply_file(str(f), "change to 99", "x = 99")
         assert "99" in f.read_text()
 
 
