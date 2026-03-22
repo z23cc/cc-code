@@ -56,6 +56,22 @@ def _add_project_commands(sub):
     _add_template_commands(sub)
 
 
+def _add_workflow_commands(sub):
+    """Add workflow subcommands."""
+    wf_p = sub.add_parser("workflow", help="Multi-step workflow pipelines")
+    wf_sub = wf_p.add_subparsers(dest="workflow_cmd")
+    wf_sub.add_parser("list", help="List available workflows")
+    wf_show = wf_sub.add_parser("show", help="Show workflow details")
+    wf_show.add_argument("name")
+    wf_run = wf_sub.add_parser("run", help="Execute a workflow")
+    wf_run.add_argument("name")
+    wf_run.add_argument("--dry-run", action="store_true", default=False)
+    wf_create = wf_sub.add_parser("create", help="Create custom workflow")
+    wf_create.add_argument("name")
+    wf_create.add_argument("--steps", required=True, help="Comma-separated commands")
+    wf_create.add_argument("--description", default="")
+
+
 def _add_template_commands(sub):
     """Add template management subcommands."""
     tmpl_p = sub.add_parser("template", help="Task template management")
@@ -256,9 +272,30 @@ def _add_misc_commands(sub):
     clean_p.add_argument("--dry-run", action="store_true", default=False, help="Preview without deleting")
 
 
+_HELP_CATEGORIES = """
+Command categories:
+  Project:    init, epic, task, dep, template
+  Views:      list, epics, tasks, show, ready, next, progress, status,
+              dashboard, graph, export, find, similar, priority, critical-path
+  Work:       start, done, block, rollback, reopen, diff, bulk
+  Quality:    validate, scan, verify, doctor, auto
+  Search:     search, find --semantic, similar, index, dedupe, suggest
+  Analytics:  stats, standup, changelog, burndown, report, time, history
+  Routing:    route, learn, learnings, consolidate
+  Session:    session save/restore/list
+  Morph API:  apply, search, embed, compact, github-search
+  Config:     config, clean, version
+"""
+
+
 def build_parser():
     """Build the complete argparse parser."""
-    parser = argparse.ArgumentParser(prog="cc-flow", description="cc-code task & workflow manager")
+    parser = argparse.ArgumentParser(
+        prog="cc-flow",
+        description="cc-code task & workflow manager",
+        epilog=_HELP_CATEGORIES,
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
     parser.add_argument("-V", "--version", action="version", version=f"cc-flow {VERSION}")
     sub = parser.add_subparsers(dest="command")
 
@@ -269,6 +306,7 @@ def build_parser():
     _add_route_learn_commands(sub)
     _add_session_commands(sub)
     _add_morph_commands(sub)
+    _add_workflow_commands(sub)
     _add_misc_commands(sub)
 
     return parser
