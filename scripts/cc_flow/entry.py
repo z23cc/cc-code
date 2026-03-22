@@ -68,8 +68,8 @@ _SUBCMD_MAP = {
         "add": "epic_task:cmd_dep_add", "show": "epic_task:cmd_dep_show",
     }),
     "template": ("template_cmd", {
-        "list": "epic_task:cmd_template_list", "show": "epic_task:cmd_template_show",
-        "create": "epic_task:cmd_template_create",
+        "list": "templates:cmd_template_list", "show": "templates:cmd_template_show",
+        "create": "templates:cmd_template_create",
     }),
     "workflow": ("workflow_cmd", {
         "list": "workflow:cmd_workflow_list", "show": "workflow:cmd_workflow_show",
