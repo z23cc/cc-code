@@ -131,6 +131,9 @@ def cmd_task_create(args):
     """Create a new task in an epic with title, size, deps, tags, and template."""
     from cc_flow.core import resolve_epic_id
     epic_id = resolve_epic_id(args.epic)
+    # Validate epic exists
+    if not (EPICS_DIR / f"{epic_id}.md").exists():
+        error(f"Epic not found: {args.epic} (resolved to: {epic_id}). Run: cc-flow epics")
     # Find next task number for this epic
     existing = list(TASKS_SUBDIR.glob(f"{epic_id}.*.json"))
     next_num = len(existing) + 1
