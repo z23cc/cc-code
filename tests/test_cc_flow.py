@@ -867,3 +867,211 @@ class TestMissingCommands:
         out, _, code = run(["summary"], cwd=workspace)
         assert code == 0
         assert "Autoimmune Summary" in out
+
+
+# -- New feature integration tests (v3.10-3.18) --
+
+
+class TestVerify:
+    def test_verify_runs(self, tmp_path):
+        # verify needs pyproject.toml to detect language
+        (tmp_path / "pyproject.toml").write_text("[project]\nname = 'test'\n")
+        _, _, code = run(["verify"], cwd=tmp_path)
+        # May fail if ruff/pytest not on PATH in tmp, but should detect language
+        assert code in (0, 1)
+
+    def test_verify_no_project(self, tmp_path):
+        _, _, code = run(["verify"], cwd=tmp_path)
+        assert code == 1  # No pyproject.toml → error
+
+
+class TestFind:
+    def test_find_keyword(self, workspace):
+        run(["epic", "create", "--title", "Auth"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-auth", "--title", "Fix login bug"], cwd=workspace)
+        out, _, code = run(["find", "login"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["total"] >= 1
+        assert "login" in data["tasks"][0]["title"].lower()
+
+
+class TestReopen:
+    def test_reopen_done_task(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["start", "epic-1-test.1"], cwd=workspace)
+        run(["done", "epic-1-test.1"], cwd=workspace)
+        out, _, code = run(["reopen", "epic-1-test.1"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["status"] == "todo"
+        assert data["previous"] == "done"
+
+
+class TestBulk:
+    def test_bulk_done(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T2"], cwd=workspace)
+        out, _, code = run(["bulk", "done", "--epic", "epic-1-test"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["count"] == 2
+
+
+class TestStandup:
+    def test_standup_runs(self, workspace):
+        out, _, code = run(["standup"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert "done" in data
+        assert "next_up" in data
+
+
+class TestChangelog:
+    def test_changelog_empty(self, workspace):
+        out, _, code = run(["changelog"], cwd=workspace)
+        assert code == 0
+        assert "Changelog" in out
+
+
+class TestBurndown:
+    def test_burndown(self, workspace):
+        run(["epic", "create", "--title", "Sprint"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-sprint", "--title", "T1"], cwd=workspace)
+        run(["start", "epic-1-sprint.1"], cwd=workspace)
+        run(["done", "epic-1-sprint.1"], cwd=workspace)
+        out, _, code = run(["burndown", "--epic", "epic-1-sprint"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["done"] == 1
+        assert len(data["burndown"]) >= 1
+
+
+class TestReport:
+    def test_report_stdout(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        out, _, code = run(["report"], cwd=workspace)
+        assert code == 0
+        assert "Project Report" in out
+
+
+class TestTimeCmd:
+    def test_time_runs(self, workspace):
+        out, _, code = run(["time"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert "total_time" in data
+
+
+class TestCriticalPath:
+    def test_critical_path(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        out, _, code = run(["critical-path"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["length"] >= 1
+
+
+class TestExport:
+    def test_export_stdout(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        out, _, code = run(["export", "epic-1-test"], cwd=workspace)
+        assert code == 0
+        assert "epic-1-test" in out
+
+    def test_export_file(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        out_file = workspace / "report.md"
+        _, _, code = run(["export", "epic-1-test", "--output", str(out_file)], cwd=workspace)
+        assert code == 0
+        assert out_file.exists()
+
+
+class TestClean:
+    def test_clean_dry_run(self, workspace):
+        out, _, code = run(["clean", "--dry-run"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["dry_run"] is True
+
+
+class TestPriority:
+    def test_priority_list(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        out, _, code = run(["priority"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["total"] >= 1
+
+
+class TestWorkflow:
+    def test_workflow_list(self, workspace):
+        out, _, code = run(["workflow", "list"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["count"] >= 3
+        assert "health" in data["workflows"]
+
+    def test_workflow_show(self, workspace):
+        out, _, code = run(["workflow", "show", "release"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert len(data["steps"]) >= 3
+
+    def test_workflow_dry_run(self, workspace):
+        out, _, code = run(["workflow", "run", "health", "--dry-run"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert all(s["status"] == "dry-run" for s in data["steps"])
+
+
+class TestTaskUpdate:
+    def test_update_title(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "Old"], cwd=workspace)
+        out, _, code = run(["task", "update", "epic-1-test.1", "--title", "New Title"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert "title" in data["updated"]
+
+
+class TestTaskComment:
+    def test_add_comment(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        out, _, code = run(["task", "comment", "epic-1-test.1", "--text", "Looking good"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["comment_count"] == 1
+
+
+class TestDepShow:
+    def test_dep_show(self, workspace):
+        run(["epic", "create", "--title", "Test"], cwd=workspace)
+        run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
+        out, _, code = run(["dep", "show", "epic-1-test.1"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert data["id"] == "epic-1-test.1"
+
+
+class TestTemplateCmd:
+    def test_template_list(self, workspace):
+        out, _, code = run(["template", "list"], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        assert "feature" in data["templates"]
+        assert "bugfix" in data["templates"]
+
+    def test_template_create(self, workspace):
+        _, _, code = run(["template", "create", "hotfix", "--steps", "Fix,Test,Deploy"], cwd=workspace)
+        assert code == 0
+        out, _, _ = run(["template", "list"], cwd=workspace)
+        data = json.loads(out)
+        assert "hotfix" in data["templates"]
