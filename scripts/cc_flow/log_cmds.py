@@ -218,3 +218,126 @@ def cmd_changelog(args):
         lines.append("")
 
     print("\n".join(lines))
+
+
+def cmd_burndown(args):
+    """Burndown data for an epic — remaining tasks over time."""
+    from cc_flow.core import EPICS_DIR
+
+    epic_id = args.epic
+    if not (EPICS_DIR / f"{epic_id}.md").exists():
+        error(f"Epic not found: {epic_id}")
+
+    tasks = all_tasks()
+    epic_tasks = [t for t in tasks.values() if t.get("epic") == epic_id]
+    if not epic_tasks:
+        error(f"No tasks in epic: {epic_id}")
+
+    total = len(epic_tasks)
+
+    # Build timeline: for each completion timestamp, count remaining
+    events = sorted(
+        [(t["completed"], t["id"]) for t in epic_tasks if t.get("completed")],
+        key=lambda x: x[0],
+    )
+
+    # Create daily burndown points
+    points = []
+    if events:
+        # Start point: first task's start or created time
+        start_times = [t.get("started") or t.get("created", "") for t in epic_tasks]
+        earliest = min(t for t in start_times if t) if any(start_times) else events[0][0]
+        points.append({"date": earliest[:10], "remaining": total, "done": 0})
+
+        done_count = 0
+        for completed, _ in events:
+            done_count += 1
+            points.append({
+                "date": completed[:10],
+                "remaining": total - done_count,
+                "done": done_count,
+            })
+
+    remaining = total - sum(1 for t in epic_tasks if t["status"] == "done")
+
+    print(json.dumps({
+        "success": True,
+        "epic": epic_id,
+        "total": total,
+        "remaining": remaining,
+        "done": total - remaining,
+        "pct": int((total - remaining) / total * 100) if total > 0 else 0,
+        "burndown": points,
+    }))
+
+
+def cmd_report(args):
+    """Generate comprehensive project report in markdown."""
+    from cc_flow.core import EPICS_DIR, LEARNINGS_DIR
+
+    tasks = all_tasks()
+    total = len(tasks)
+    done = [t for t in tasks.values() if t["status"] == "done"]
+    in_prog = [t for t in tasks.values() if t["status"] == "in_progress"]
+    blocked = [t for t in tasks.values() if t["status"] == "blocked"]
+    todo = [t for t in tasks.values() if t["status"] == "todo"]
+
+    velocity = _calc_velocity(tasks)
+    epic_files = sorted(EPICS_DIR.glob("*.md")) if EPICS_DIR.exists() else []
+    learn_count = len(list(LEARNINGS_DIR.glob("*.json"))) if LEARNINGS_DIR.exists() else 0
+
+    lines = [
+        "# Project Report",
+        f"*Generated: {now_iso()}*",
+        "",
+        "## Overview",
+        "",
+        "| Metric | Value |",
+        "|--------|-------|",
+        f"| Epics | {len(epic_files)} |",
+        f"| Total tasks | {total} |",
+        f"| Done | {len(done)} ({int(len(done) / total * 100) if total else 0}%) |",
+        f"| In progress | {len(in_prog)} |",
+        f"| Blocked | {len(blocked)} |",
+        f"| Todo | {len(todo)} |",
+        f"| Velocity | {velocity} tasks/hour |" if velocity else "| Velocity | — |",
+        f"| Learnings | {learn_count} |",
+        "",
+    ]
+
+    # Epic breakdown
+    if epic_files:
+        lines.extend(["## Epics", ""])
+        for f in epic_files:
+            eid = f.stem
+            etasks = [t for t in tasks.values() if t.get("epic") == eid]
+            edone = sum(1 for t in etasks if t["status"] == "done")
+            pct = int(edone / len(etasks) * 100) if etasks else 0
+            lines.append(f"- **{eid}**: {edone}/{len(etasks)} ({pct}%)")
+        lines.append("")
+
+    # Recently completed
+    if done:
+        lines.extend(["## Recently Completed", ""])
+        for t in sorted(done, key=lambda x: x.get("completed", ""), reverse=True)[:10]:
+            date = t.get("completed", "")[:10]
+            lines.append(f"- [{date}] {t.get('title', '')}")
+        lines.append("")
+
+    # Blocked items
+    if blocked:
+        lines.extend(["## Blocked", ""])
+        lines.extend(
+            f"- **{t['id']}**: {t.get('title', '')} — {t.get('blocked_reason', 'no reason')}"
+            for t in blocked
+        )
+        lines.append("")
+
+    output = "\n".join(lines)
+    out_file = getattr(args, "output", "") or ""
+    if out_file:
+        from pathlib import Path
+        Path(out_file).write_text(output)
+        print(json.dumps({"success": True, "file": out_file, "lines": len(lines)}))
+    else:
+        print(output)

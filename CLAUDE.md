@@ -4,7 +4,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 ## Architecture
 
-- `scripts/cc_flow/` — Task & workflow CLI package (56 subcommands, entry: `cc_flow.entry:main`)
+- `scripts/cc_flow/` — Task & workflow CLI package (59 subcommands, entry: `cc_flow.entry:main`)
 - `scripts/morph_client.py` — Pure Python Morph API client (Apply, WarpGrep, Embed, Rerank)
 - `agents/` — 11 general agents + 12 scout agents (read-only specialists), all `model: inherit`
 - `skills/` — 47 skills (all prefixed `cc-`):

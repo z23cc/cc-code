@@ -284,3 +284,54 @@ def cmd_rollback(args):
         "sha": start_sha[:8],
         "diff": diff_stats,
     }))
+
+
+_VALID_BULK_ACTIONS = ("done", "todo", "blocked")
+
+
+def cmd_bulk(args):
+    """Batch status change: mark multiple tasks done/todo/blocked at once."""
+    action = args.action
+    if action not in _VALID_BULK_ACTIONS:
+        error(f"Invalid action: {action}. Use: {', '.join(_VALID_BULK_ACTIONS)}")
+
+    tasks = all_tasks()
+    task_ids = args.ids
+    epic_filter = getattr(args, "epic", "") or ""
+
+    # If --epic, apply to all matching tasks
+    if epic_filter and not task_ids:
+        task_ids = [tid for tid, t in tasks.items() if t.get("epic") == epic_filter]
+
+    if not task_ids:
+        error("No tasks specified. Use task IDs or --epic.")
+
+    updated = []
+    skipped = []
+    for tid in task_ids:
+        path = TASKS_SUBDIR / f"{tid}.json"
+        if not path.exists():
+            skipped.append({"id": tid, "reason": "not found"})
+            continue
+
+        data = safe_json_load(path)
+        if data["status"] == action:
+            skipped.append({"id": tid, "reason": f"already {action}"})
+            continue
+
+        data["status"] = action
+        if action == "done":
+            data["completed"] = now_iso()
+        elif action == "todo":
+            for field in ("started", "completed", "summary", "blocked_reason", "blocked_at"):
+                data.pop(field, None)
+        save_task(path, data)
+        updated.append(tid)
+
+    print(json.dumps({
+        "success": True,
+        "action": action,
+        "updated": updated,
+        "skipped": skipped,
+        "count": len(updated),
+    }))
