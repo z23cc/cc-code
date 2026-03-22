@@ -19,8 +19,11 @@ from cc_flow.epic_task import (
     cmd_task_reset,
     cmd_task_set_spec,
     cmd_task_update,
+    cmd_template_create,
+    cmd_template_list,
+    cmd_template_show,
 )
-from cc_flow.graph import cmd_graph
+from cc_flow.graph import cmd_critical_path, cmd_graph
 from cc_flow.log_cmds import (
     cmd_archive,
     cmd_burndown,
@@ -30,6 +33,7 @@ from cc_flow.log_cmds import (
     cmd_standup,
     cmd_stats,
     cmd_summary,
+    cmd_time,
 )
 from cc_flow.morph_cmds import cmd_apply, cmd_compact, cmd_embed, cmd_github_search, cmd_search
 from cc_flow.quality import cmd_scan, cmd_validate, cmd_verify
@@ -68,7 +72,8 @@ _COMMANDS = {
     "scan": cmd_scan, "route": cmd_route, "learn": cmd_learn,
     "learnings": cmd_learnings, "log": cmd_log, "summary": cmd_summary,
     "standup": cmd_standup, "changelog": cmd_changelog, "priority": cmd_priority,
-    "burndown": cmd_burndown, "report": cmd_report, "bulk": cmd_bulk,
+    "burndown": cmd_burndown, "report": cmd_report, "bulk": cmd_bulk, "time": cmd_time,
+    "critical-path": cmd_critical_path,
     "archive": cmd_archive, "stats": cmd_stats, "consolidate": cmd_consolidate,
     "history": cmd_history, "config": cmd_config, "graph": cmd_graph,
     "verify": cmd_verify, "clean": cmd_clean, "export": cmd_export,
@@ -81,11 +86,16 @@ _COMMANDS = {
 }
 
 _SUBCMD_MAP = {
-    "epic": {"epic_cmd": {"create": cmd_epic_create, "close": cmd_epic_close,
-                           "import": cmd_epic_import, "reset": cmd_epic_reset}},
-    "task": {"task_cmd": {"create": cmd_task_create, "reset": cmd_task_reset,
-                           "set-spec": cmd_task_set_spec, "update": cmd_task_update,
-                           "comment": cmd_task_comment}},
+    "epic": ("epic_cmd", {"create": cmd_epic_create, "close": cmd_epic_close,
+                          "import": cmd_epic_import, "reset": cmd_epic_reset}),
+    "task": ("task_cmd", {"create": cmd_task_create, "reset": cmd_task_reset,
+                          "set-spec": cmd_task_set_spec, "update": cmd_task_update,
+                          "comment": cmd_task_comment}),
+    "dep": ("dep_cmd", {"add": cmd_dep_add, "show": cmd_dep_show}),
+    "template": ("template_cmd", {"list": cmd_template_list, "show": cmd_template_show,
+                                  "create": cmd_template_create}),
+    "auto": ("auto_cmd", None),  # special: dispatched by cmd_auto
+    "session": ("session_cmd", None),  # special: dispatched by cmd_session
 }
 
 
@@ -94,24 +104,18 @@ def main():
     parser = build_parser()
     args = parser.parse_args()
 
-    if args.command in _SUBCMD_MAP:
-        for attr, handlers in _SUBCMD_MAP[args.command].items():
-            sub = getattr(args, attr, None)
-            if sub in handlers:
-                handlers[sub](args)
-            else:
-                parser.print_help()
-                sys.exit(1)
-    elif args.command == "auto":
+    if args.command in ("auto",):
         cmd_auto(args)
-    elif args.command == "session":
+    elif args.command in ("session",):
         cmd_session(args)
-    elif args.command == "dep":
-        dep_cmd = getattr(args, "dep_cmd", None)
-        if dep_cmd == "add":
-            cmd_dep_add(args)
-        elif dep_cmd == "show":
-            cmd_dep_show(args)
+    elif args.command in _SUBCMD_MAP:
+        attr, handlers = _SUBCMD_MAP[args.command]
+        if handlers is None:
+            parser.print_help()
+            sys.exit(1)
+        sub = getattr(args, attr, None)
+        if sub in handlers:
+            handlers[sub](args)
         else:
             parser.print_help()
             sys.exit(1)

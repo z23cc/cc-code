@@ -341,3 +341,65 @@ def cmd_report(args):
         print(json.dumps({"success": True, "file": out_file, "lines": len(lines)}))
     else:
         print(output)
+
+
+def cmd_time(args):
+    """Time tracking report — duration per task, averages, slowest tasks."""
+    tasks = all_tasks()
+    epic_filter = getattr(args, "epic", "") or ""
+
+    timed = []
+    for t in tasks.values():
+        dur = t.get("duration_sec")
+        if dur is None or t["status"] != "done":
+            continue
+        if epic_filter and t.get("epic") != epic_filter:
+            continue
+        timed.append({
+            "id": t["id"], "title": t.get("title", ""), "epic": t.get("epic", ""),
+            "duration_sec": dur, "duration": _fmt_time(dur),
+            "size": t.get("size", "M"),
+        })
+
+    timed.sort(key=lambda t: -t["duration_sec"])
+
+    total_sec = sum(t["duration_sec"] for t in timed)
+    avg_sec = total_sec // len(timed) if timed else 0
+
+    # Time by size
+    by_size = {}
+    for t in timed:
+        s = t["size"]
+        by_size.setdefault(s, []).append(t["duration_sec"])
+    size_avg = {s: sum(v) // len(v) for s, v in by_size.items()}
+
+    # Time by epic
+    by_epic = {}
+    for t in timed:
+        e = t["epic"]
+        by_epic.setdefault(e, {"total": 0, "count": 0})
+        by_epic[e]["total"] += t["duration_sec"]
+        by_epic[e]["count"] += 1
+
+    print(json.dumps({
+        "success": True,
+        "tasks": timed[:10],
+        "total_tasks": len(timed),
+        "total_time": _fmt_time(total_sec),
+        "avg_time": _fmt_time(avg_sec),
+        "slowest": timed[0] if timed else None,
+        "by_size": {s: _fmt_time(v) for s, v in size_avg.items()},
+        "by_epic": {e: {"total": _fmt_time(v["total"]), "count": v["count"]}
+                    for e, v in by_epic.items()},
+    }))
+
+
+def _fmt_time(seconds):
+    """Format seconds as human-readable duration."""
+    if seconds < 60:
+        return f"{seconds}s"
+    if seconds < 3600:
+        return f"{seconds // 60}m {seconds % 60}s"
+    h = seconds // 3600
+    m = (seconds % 3600) // 60
+    return f"{h}h {m}m"

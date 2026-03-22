@@ -109,3 +109,46 @@ def _dot(filtered, edges):
         lines.append(f'    "{src}" -> "{dst}";')
     lines.append("}")
     print("\n".join(lines))
+
+
+def cmd_critical_path(args):
+    """Find the longest dependency chain (critical path) in an epic."""
+    tasks = all_tasks()
+    epic_filter = getattr(args, "epic", "") or ""
+
+    filtered = {tid: t for tid, t in tasks.items() if not epic_filter or t.get("epic") == epic_filter}
+    if not filtered:
+        error("No tasks found")
+
+    # Build adjacency: task → deps
+    def _longest_path(tid, memo=None):
+        if memo is None:
+            memo = {}
+        if tid in memo:
+            return memo[tid]
+        deps = filtered.get(tid, {}).get("depends_on", [])
+        valid_deps = [d for d in deps if d in filtered]
+        if not valid_deps:
+            memo[tid] = [tid]
+            return [tid]
+        best = max((_longest_path(d, memo) for d in valid_deps), key=len)
+        memo[tid] = [*best, tid]
+        return memo[tid]
+
+    # Find the longest path across all tasks
+    all_paths = [_longest_path(tid) for tid in filtered]
+    critical = max(all_paths, key=len)
+
+    path_details = [
+        {"id": tid, "title": filtered[tid].get("title", ""), "status": filtered[tid]["status"]}
+        for tid in critical
+    ]
+    remaining = sum(1 for p in path_details if p["status"] != "done")
+
+    print(json.dumps({
+        "success": True,
+        "critical_path": path_details,
+        "length": len(critical),
+        "remaining": remaining,
+        "total_tasks": len(filtered),
+    }))
