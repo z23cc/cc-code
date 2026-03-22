@@ -43,8 +43,8 @@ _COMMANDS = {
     "burndown": "log_cmds:cmd_burndown", "report": "log_cmds:cmd_report",
     "time": "log_cmds:cmd_time",
     # route_learn
-    "route": "route_learn:cmd_route", "learn": "route_learn:cmd_learn",
-    "learnings": "route_learn:cmd_learnings", "consolidate": "route_learn:cmd_consolidate",
+    "route": "route_learn:cmd_route", "learn": "learning:cmd_learn",
+    "learnings": "learning:cmd_learnings", "consolidate": "learning:cmd_consolidate",
     # morph_cmds
     "apply": "morph_cmds:cmd_apply", "search": "morph_cmds:cmd_search",
     "embed": "morph_cmds:cmd_embed", "compact": "morph_cmds:cmd_compact",
@@ -126,6 +126,12 @@ def _run_with_perf(cmd, handler, args):
 
 def main():
     """Parse args and dispatch to the appropriate command handler."""
+    # No arguments → enter interactive REPL
+    if len(sys.argv) <= 1:
+        from cc_flow.repl import run_repl
+        run_repl()
+        return
+
     parser = build_parser()
     args = parser.parse_args()
 
