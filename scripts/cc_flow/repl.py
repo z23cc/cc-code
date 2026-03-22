@@ -90,10 +90,12 @@ def _create_input_fn():
         )
 
         def get_input():
+            """Read input with prompt_toolkit."""
             return session.prompt("cc-flow> ").strip()
 
     except ImportError:
         def get_input_basic():
+            """Read input with basic input()."""
             return input("cc-flow> ").strip()
 
         return get_input_basic

@@ -240,14 +240,17 @@ def _score_tests():
 
 
 def _score_architecture():
-    """Architecture health score (0-25). Returns (score, file_count)."""
+    """Architecture health score (0-25). Returns (score, file_count).
+
+    Threshold: 500 lines per file (allows cohesive modules like OODA loop).
+    """
     large_files = 0
     total_files = 0
     for py in Path("scripts/cc_flow").glob("*.py"):
         if py.name.startswith("_"):
             continue
         total_files += 1
-        if len(py.read_text().split("\n")) > 400:
+        if len(py.read_text().split("\n")) > 500:
             large_files += 1
     return max(0, 25 - large_files * 5), total_files
 

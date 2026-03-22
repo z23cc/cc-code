@@ -14,7 +14,7 @@ from cc_flow.core import (
 )
 
 ROUTE_TABLE = [
-    # (keywords, command, team, description)
+    # Columns: keywords, command, team, description
     (["new feature", "add feature", "implement", "build", "新功能", "加功能"],
      "/brainstorm", "feature-dev", "New feature → brainstorm first"),
     (["bug", "broken", "error", "fix", "crash", "报错", "故障", "修"],

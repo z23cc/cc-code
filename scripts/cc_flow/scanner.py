@@ -116,7 +116,7 @@ def scan_duplication():
     if semantic is not None:
         return semantic
 
-    # Fallback: line-hash
+    # No semantic results, use line-hash fallback
     return _scan_duplication_linehash()
 
 
