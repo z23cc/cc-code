@@ -130,6 +130,27 @@ def cmd_block(args):
     print(json.dumps({"success": True, "id": args.id, "status": "blocked"}))
 
 
+def cmd_reopen(args):
+    """Reopen a done or blocked task back to todo."""
+    path = TASKS_SUBDIR / f"{args.id}.json"
+    if not path.exists():
+        error(f"Task not found: {args.id}")
+
+    data = safe_json_load(path)
+    if data["status"] not in ("done", "blocked"):
+        error(f"Cannot reopen task with status: {data['status']} (must be done or blocked)")
+
+    prev_status = data["status"]
+    data["status"] = "todo"
+    for field in ("completed", "summary", "blocked_reason", "blocked_at", "duration_sec", "diff"):
+        data.pop(field, None)
+    if args.reason:
+        data["reopen_reason"] = args.reason
+    data["reopened_at"] = now_iso()
+    save_task(path, data)
+    print(json.dumps({"success": True, "id": args.id, "previous": prev_status, "status": "todo"}))
+
+
 def _get_diff_stats(start_sha=None):
     """Get git diff stats since a commit SHA."""
     import subprocess as _sp

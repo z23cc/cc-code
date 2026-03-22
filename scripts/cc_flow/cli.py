@@ -35,6 +35,12 @@ def _add_project_commands(sub):
     task_set_spec = task_sub.add_parser("set-spec")
     task_set_spec.add_argument("id")
     task_set_spec.add_argument("--file", required=True)
+    task_update = task_sub.add_parser("update", help="Update task attributes")
+    task_update.add_argument("id")
+    task_update.add_argument("--title", default="")
+    task_update.add_argument("--priority", type=int, default=None)
+    task_update.add_argument("--size", choices=["XS", "S", "M", "L", "XL"], default="")
+    task_update.add_argument("--tags", default="")
 
     dep_p = sub.add_parser("dep", help="Dependency management")
     dep_sub = dep_p.add_subparsers(dest="dep_cmd")
@@ -72,6 +78,8 @@ def _add_view_commands(sub):
     export_p = sub.add_parser("export", help="Export epic as markdown report")
     export_p.add_argument("id")
     export_p.add_argument("--output", default="", help="Output file path (default: stdout)")
+    find_p = sub.add_parser("find", help="Search across task titles and specs")
+    find_p.add_argument("query", nargs="*")
 
 
 def _add_work_commands(sub):
@@ -87,6 +95,9 @@ def _add_work_commands(sub):
     rollback_p = sub.add_parser("rollback", help="Rollback failed task to git state")
     rollback_p.add_argument("id")
     rollback_p.add_argument("--confirm", action="store_true", default=False)
+    reopen_p = sub.add_parser("reopen", help="Reopen a done/blocked task")
+    reopen_p.add_argument("id")
+    reopen_p.add_argument("--reason", default="")
 
 
 def _add_quality_commands(sub):
