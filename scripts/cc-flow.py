@@ -13,13 +13,13 @@ from pathlib import Path
 # Ensure cc_flow package is importable
 sys.path.insert(0, str(Path(__file__).parent))
 
-from cc_flow.auto import cmd_auto  # noqa: E402
-from cc_flow.cli import build_parser  # noqa: E402
-from cc_flow.config import cmd_config, cmd_history, cmd_version  # noqa: E402
-from cc_flow.doctor import cmd_doctor  # noqa: E402
+from cc_flow.auto import cmd_auto
+from cc_flow.cli import build_parser
+from cc_flow.config import cmd_config, cmd_history, cmd_version
+from cc_flow.doctor import cmd_doctor
 
 # Import all command functions from domain modules
-from cc_flow.epic_task import (  # noqa: E402
+from cc_flow.epic_task import (
     cmd_dep_add,
     cmd_epic_close,
     cmd_epic_create,
@@ -30,18 +30,18 @@ from cc_flow.epic_task import (  # noqa: E402
     cmd_task_reset,
     cmd_task_set_spec,
 )
-from cc_flow.graph import cmd_graph  # noqa: E402
-from cc_flow.log_cmds import cmd_archive, cmd_log, cmd_stats, cmd_summary  # noqa: E402
-from cc_flow.morph_cmds import cmd_apply, cmd_compact, cmd_embed, cmd_github_search, cmd_search  # noqa: E402
-from cc_flow.quality import cmd_scan, cmd_validate  # noqa: E402
-from cc_flow.route_learn import (  # noqa: E402
+from cc_flow.graph import cmd_graph
+from cc_flow.log_cmds import cmd_archive, cmd_log, cmd_stats, cmd_summary
+from cc_flow.morph_cmds import cmd_apply, cmd_compact, cmd_embed, cmd_github_search, cmd_search
+from cc_flow.quality import cmd_scan, cmd_validate
+from cc_flow.route_learn import (
     cmd_consolidate,
     cmd_learn,
     cmd_learnings,
     cmd_route,
 )
-from cc_flow.session import cmd_session  # noqa: E402
-from cc_flow.views import (  # noqa: E402
+from cc_flow.session import cmd_session
+from cc_flow.views import (
     cmd_dashboard,
     cmd_epics,
     cmd_list,
@@ -52,7 +52,7 @@ from cc_flow.views import (  # noqa: E402
     cmd_status,
     cmd_tasks,
 )
-from cc_flow.work import cmd_block, cmd_done, cmd_rollback, cmd_start  # noqa: E402
+from cc_flow.work import cmd_block, cmd_done, cmd_rollback, cmd_start
 
 
 def main():

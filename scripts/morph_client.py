@@ -44,13 +44,13 @@ class MorphClient:
         data = json.dumps(payload).encode("utf-8")
 
         for attempt in range(retries + 1):
-            req = Request(url, data=data, method="POST")  # noqa: S310
+            req = Request(url, data=data, method="POST")
             req.add_header("Authorization", f"Bearer {self.api_key}")
             req.add_header("Content-Type", "application/json")
             req.add_header("User-Agent", "cc-code-morph/1.0")
             req.add_header("Accept", "application/json")
             try:
-                with urlopen(req, timeout=timeout) as resp:  # noqa: S310
+                with urlopen(req, timeout=timeout) as resp:
                     return json.loads(resp.read().decode("utf-8"))
             except HTTPError as exc:
                 body = exc.read().decode("utf-8", errors="replace")[:500]

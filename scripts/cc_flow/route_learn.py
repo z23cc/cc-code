@@ -250,7 +250,7 @@ def _search_learnings(query):
                     "alternatives": len(ranked) - 1,
                     "engine": "morph-rerank",
                 }
-        except Exception:  # noqa: S110
+        except Exception:
             pass  # Fall through to keyword matching
 
     # Fallback: keyword overlap scoring

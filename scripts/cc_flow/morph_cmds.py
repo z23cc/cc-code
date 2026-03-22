@@ -93,7 +93,7 @@ def cmd_search(args):
                     print(f"## Search: {query} (morph warpgrep)\n")
                     print(result if isinstance(result, str) else json.dumps(result, indent=2))
                 return
-        except Exception:  # noqa: S110
+        except Exception:
             pass
 
     # Fallback to grep
