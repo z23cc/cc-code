@@ -49,6 +49,8 @@ _COMMANDS = {
     "apply": "morph_cmds:cmd_apply", "search": "morph_cmds:cmd_search",
     "embed": "morph_cmds:cmd_embed", "compact": "morph_cmds:cmd_compact",
     "github-search": "morph_cmds:cmd_github_search",
+    # perf + profile
+    "perf": "perf:cmd_perf", "profile": "config:cmd_profile",
 }
 
 # Subcommands: parent → (attr, {subcmd: "module:function"})
@@ -93,6 +95,16 @@ def _resolve(ref):
     return getattr(mod, func_name)
 
 
+def _run_with_perf(cmd, handler, args):
+    """Run a command handler with optional performance tracking."""
+    try:
+        from cc_flow.perf import PerfTimer
+        with PerfTimer(cmd):
+            handler(args)
+    except ImportError:
+        handler(args)
+
+
 def main():
     """Parse args and dispatch to the appropriate command handler."""
     parser = build_parser()
@@ -102,19 +114,19 @@ def main():
 
     # Special dispatchers (handle own subcommands)
     if cmd in _SPECIAL:
-        _resolve(_SPECIAL[cmd])(args)
+        _run_with_perf(cmd, _resolve(_SPECIAL[cmd]), args)
     # Subcommand groups (epic/task/dep/template)
     elif cmd in _SUBCMD_MAP:
         attr, handlers = _SUBCMD_MAP[cmd]
         sub = getattr(args, attr, None)
         if sub in handlers:
-            _resolve(handlers[sub])(args)
+            _run_with_perf(f"{cmd}.{sub}", _resolve(handlers[sub]), args)
         else:
             parser.print_help()
             sys.exit(1)
     # Direct commands
     elif cmd in _COMMANDS:
-        _resolve(_COMMANDS[cmd])(args)
+        _run_with_perf(cmd, _resolve(_COMMANDS[cmd]), args)
     else:
         # Try plugin commands before giving up
         try:
