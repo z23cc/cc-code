@@ -126,97 +126,84 @@ def _auto_scan(args):
     cmd_scan(scan_args)
 
 
+def _find_auto_epic(explicit_epic=""):
+    """Find the best epic to work on: explicit → latest scan → any with todo tasks."""
+    if explicit_epic:
+        return explicit_epic
+    scan_epics = [f.stem for f in sorted(EPICS_DIR.glob("epic-*-scan-*.md"))]
+    if scan_epics:
+        return scan_epics[-1]
+    for f in sorted(EPICS_DIR.glob("*.md"), reverse=True):
+        if any(t.get("epic") == f.stem and t["status"] == "todo" for t in all_tasks().values()):
+            return f.stem
+    return ""
+
+
+def _find_ready_tasks(epic_filter):
+    """Find todo tasks in an epic whose dependencies are all done, sorted by priority."""
+    tasks = all_tasks()
+    ready = [
+        t for t in tasks.values()
+        if t.get("epic") == epic_filter
+        and t["status"] == "todo"
+        and all(tasks.get(d, {}).get("status") == "done" for d in t.get("depends_on", []))
+    ]
+    ready.sort(key=lambda t: (t.get("priority", 999), t["id"]))
+    return ready
+
+
+def _emit_task_instruction(task):
+    """Start a task and emit structured instruction for Claude."""
+    task_id = task["id"]
+    task["status"] = "in_progress"
+    task["started"] = now_iso()
+    save_task(TASKS_SUBDIR / f"{task_id}.json", task)
+
+    team_rec = _recommend_team(task)
+    spec_path = TASKS_SUBDIR / f"{task_id}.md"
+    spec_content = spec_path.read_text().strip() if spec_path.exists() else ""
+
+    print(json.dumps({
+        "action": "implement",
+        "task_id": task_id,
+        "title": task["title"],
+        "size": task.get("size", "M"),
+        "spec": str(spec_path),
+        "spec_preview": spec_content[:200] if spec_content else "",
+        "team": team_rec,
+        "instruction": (
+            f"Execute this task using the {team_rec['template']} team pattern:\n"
+            f"1. {team_rec['steps'][0]}\n"
+            f"2. {team_rec['steps'][1]}\n"
+            f"3. {team_rec['steps'][2]}\n"
+            f"Max diff: {team_rec['max_diff']} lines. Verify before marking done."
+        ),
+        "morph_available": get_morph_client() is not None,
+        "morph_hint": "Use cc-flow apply for fast edits, cc-flow search for exploration.",
+    }))
+
+
 def _auto_run(args):
     """Mode A: pick tasks, implement, verify, mark done/discarded."""
-    epic_filter = getattr(args, "epic", "") or ""
-
-    # Find the latest scan epic if no filter
-    if not epic_filter:
-        tasks = all_tasks()
-        scan_epics = [f.stem for f in sorted(EPICS_DIR.glob("epic-*-scan-*.md"))]
-        if scan_epics:
-            epic_filter = scan_epics[-1]
-
-    if not epic_filter:
-        # Fall back to any epic with todo tasks
-        for f in sorted(EPICS_DIR.glob("*.md"), reverse=True):
-            epic_tasks = [t for t in all_tasks().values() if t.get("epic") == f.stem and t["status"] == "todo"]
-            if epic_tasks:
-                epic_filter = f.stem
-                break
-
+    epic_filter = _find_auto_epic(getattr(args, "epic", "") or "")
     if not epic_filter:
         print(json.dumps({"success": True, "action": "none", "reason": "No tasks to work on. Run: cc-flow auto scan"}))
         return
 
     max_iterations = getattr(args, "max", 0) or 20
-    iteration = 0
-    kept = 0
-    discarded = 0
-
     print(f"## Auto Run: epic={epic_filter}, max={max_iterations}")
 
-    while iteration < max_iterations:
-        # Find next ready task
-        tasks = all_tasks()
-        ready = []
-        for t in tasks.values():
-            if t.get("epic") != epic_filter:
-                continue
-            if t["status"] != "todo":
-                continue
-            deps_done = all(tasks.get(d, {}).get("status") == "done" for d in t.get("depends_on", []))
-            if deps_done:
-                ready.append(t)
-
+    for iteration in range(1, max_iterations + 1):
+        ready = _find_ready_tasks(epic_filter)
         if not ready:
-            print(f"\n✅ All tasks done or blocked. Iterations: {iteration}, kept: {kept}, discarded: {discarded}")
-            break
+            print(f"\n✅ All tasks done or blocked after {iteration - 1} iterations.")
+            return
 
-        ready.sort(key=lambda t: (t.get("priority", 999), t["id"]))
-        task = ready[0]
-        task_id = task["id"]
-        iteration += 1
+        print(f"\n--- Iteration {iteration}: {ready[0]['id']} — {ready[0]['title']} ---")
+        _emit_task_instruction(ready[0])
+        return  # Return control to Claude for implementation
 
-        print(f"\n--- Iteration {iteration}: {task_id} — {task['title']} ---")
-
-        # Start task
-        task["status"] = "in_progress"
-        task["started"] = now_iso()
-        save_task(TASKS_SUBDIR / f"{task_id}.json", task)
-
-        # Determine team based on task content
-        team_rec = _recommend_team(task)
-
-        # Read spec content for context
-        spec_path = TASKS_SUBDIR / f"{task_id}.md"
-        spec_content = spec_path.read_text().strip() if spec_path.exists() else ""
-
-        # Output structured instruction for Claude
-        print(json.dumps({
-            "action": "implement",
-            "task_id": task_id,
-            "title": task["title"],
-            "size": task.get("size", "M"),
-            "spec": str(spec_path),
-            "spec_preview": spec_content[:200] if spec_content else "",
-            "team": team_rec,
-            "instruction": (
-                f"Execute this task using the {team_rec['template']} team pattern:\n"
-                f"1. {team_rec['steps'][0]}\n"
-                f"2. {team_rec['steps'][1]}\n"
-                f"3. {team_rec['steps'][2]}\n"
-                f"Max diff: {team_rec['max_diff']} lines. Verify before marking done."
-            ),
-            "morph_available": get_morph_client() is not None,
-            "morph_hint": "Use cc-flow apply for fast edits, cc-flow search for exploration.",
-        }))
-
-        # Return control to Claude for implementation
-        break
-
-    if iteration >= max_iterations:
-        print(f"\n⏹ Max iterations ({max_iterations}) reached. Kept: {kept}, Discarded: {discarded}")
+    print(f"\n⏹ Max iterations ({max_iterations}) reached.")
 
 
 def _auto_test(args):
