@@ -13,6 +13,7 @@ from cc_flow.core import (
     TASKS_DIR,
     TASKS_SUBDIR,
     all_tasks,
+    error,
     locked_meta_update,
     now_iso,
     safe_json_load,
@@ -101,8 +102,7 @@ def cmd_epic_import(args):
 
     plan_path = Path(args.file)
     if not plan_path.exists():
-        print(json.dumps({"success": False, "error": f"File not found: {args.file}"}))
-        sys.exit(1)
+        error(f"File not found: {args.file}")
 
     content = plan_path.read_text()
 
@@ -223,8 +223,7 @@ def cmd_epic_close(args):
     epic_id = args.id
     epic_path = EPICS_DIR / f"{epic_id}.md"
     if not epic_path.exists():
-        print(json.dumps({"success": False, "error": f"Epic not found: {epic_id}"}))
-        sys.exit(1)
+        error(f"Epic not found: {epic_id}")
 
     tasks = all_tasks()
     epic_tasks = [t for t in tasks.values() if t.get("epic") == epic_id]
@@ -250,8 +249,7 @@ def cmd_task_reset(args):
     """Reset task to todo, clearing started/completed/blocked fields."""
     path = TASKS_SUBDIR / f"{args.id}.json"
     if not path.exists():
-        print(json.dumps({"success": False, "error": f"Task not found: {args.id}"}))
-        sys.exit(1)
+        error(f"Task not found: {args.id}")
 
     data = safe_json_load(path)
     data["status"] = "todo"
@@ -268,13 +266,11 @@ def cmd_task_set_spec(args):
     json_path = TASKS_SUBDIR / f"{task_id}.json"
 
     if not json_path.exists():
-        print(json.dumps({"success": False, "error": f"Task not found: {task_id}"}))
-        sys.exit(1)
+        error(f"Task not found: {task_id}")
 
     src = Path(args.file)
     if not src.exists():
-        print(json.dumps({"success": False, "error": f"File not found: {args.file}"}))
-        sys.exit(1)
+        error(f"File not found: {args.file}")
 
     spec_path.write_text(src.read_text())
     print(json.dumps({"success": True, "id": task_id, "spec": str(spec_path)}))
@@ -286,8 +282,7 @@ def cmd_epic_reset(args):
     tasks = all_tasks()
     epic_tasks = [t for t in tasks.values() if t.get("epic") == epic_id]
     if not epic_tasks:
-        print(json.dumps({"success": False, "error": f"No tasks found for: {epic_id}"}))
-        sys.exit(1)
+        error(f"No tasks found for: {epic_id}")
 
     reset_count = 0
     for t in epic_tasks:
@@ -305,13 +300,11 @@ def cmd_dep_add(args):
     """Add dependency to existing task."""
     path = TASKS_SUBDIR / f"{args.id}.json"
     if not path.exists():
-        print(json.dumps({"success": False, "error": f"Task not found: {args.id}"}))
-        sys.exit(1)
+        error(f"Task not found: {args.id}")
 
     dep_path = TASKS_SUBDIR / f"{args.dep}.json"
     if not dep_path.exists():
-        print(json.dumps({"success": False, "error": f"Dependency not found: {args.dep}"}))
-        sys.exit(1)
+        error(f"Dependency not found: {args.dep}")
 
     data = safe_json_load(path)
     deps = data.get("depends_on", [])

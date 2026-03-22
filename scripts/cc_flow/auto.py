@@ -2,13 +2,13 @@
 
 import argparse
 import json
-import sys
 
 from cc_flow.core import (
     EPICS_DIR,
     LOG_FILE,
     TASKS_SUBDIR,
     all_tasks,
+    error,
     get_morph_client,
     now_iso,
     save_task,
@@ -114,8 +114,7 @@ def cmd_auto(args):
     elif mode == "status":
         _auto_status(args)
     else:
-        print(json.dumps({"success": False, "error": "Usage: cc-flow auto [scan|run|test|full|status]"}))
-        sys.exit(1)
+        error("Usage: cc-flow auto [scan|run|test|full|status]")
 
 
 def _auto_scan(args):

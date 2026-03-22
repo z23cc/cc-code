@@ -1,7 +1,6 @@
 """cc-flow views commands."""
 
 import json
-import sys
 from datetime import datetime
 
 from cc_flow import VERSION
@@ -12,6 +11,7 @@ from cc_flow.core import (
     TASKS_DIR,
     TASKS_SUBDIR,
     all_tasks,
+    error,
     safe_json_load,
 )
 from cc_flow.route_learn import _load_route_stats
@@ -108,8 +108,7 @@ def cmd_show(args):
                 print(f"- [{t['status']}] {t['id']}: {t['title']}")
         return
 
-    print(json.dumps({"success": False, "error": f"Not found: {task_id}"}))
-    sys.exit(1)
+    error(f"Not found: {task_id}")
 
 
 def cmd_ready(args):

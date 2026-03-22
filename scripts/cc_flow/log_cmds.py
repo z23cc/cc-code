@@ -1,10 +1,9 @@
 """cc-flow logging commands — log, summary, archive, stats."""
 
 import json
-import sys
 from datetime import datetime
 
-from cc_flow.core import COMPLETED_DIR, LOG_FILE, all_tasks, now_iso, safe_json_load
+from cc_flow.core import COMPLETED_DIR, LOG_FILE, all_tasks, error, now_iso, safe_json_load
 
 LOG_HEADER = (
     "timestamp\titeration\tmode\tarea\ttask_id\tdescription"
@@ -16,8 +15,7 @@ def cmd_log(args):
     """Append entry to improvement-results.tsv or show recent entries."""
     if args.show:
         if not LOG_FILE.exists():
-            print(json.dumps({"success": False, "error": "No log file found"}))
-            sys.exit(1)
+            error("No log file found")
         lines = LOG_FILE.read_text().strip().split("\n")
         n = min(args.show, len(lines) - 1)
         entries = []
