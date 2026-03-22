@@ -5,13 +5,8 @@ import argparse
 from cc_flow import VERSION
 
 
-def build_parser():
-    """Build the complete argparse parser."""
-    parser = argparse.ArgumentParser(prog="cc-flow", description="cc-code task & workflow manager")
-    parser.add_argument("-V", "--version", action="version", version=f"cc-flow {VERSION}")
-    sub = parser.add_subparsers(dest="command")
-
-    # Project
+def _add_project_commands(sub):
+    """Add project management subcommands: init, epic, task, dep."""
     sub.add_parser("init", help="Initialize .tasks/ directory")
 
     epic_p = sub.add_parser("epic", help="Epic management (create/close/import/reset)")
@@ -47,7 +42,9 @@ def build_parser():
     dep_add.add_argument("id")
     dep_add.add_argument("dep")
 
-    # Views
+
+def _add_view_commands(sub):
+    """Add view/query subcommands: list, epics, tasks, show, ready, next, progress, etc."""
     list_p = sub.add_parser("list", help="Show all epics + tasks")
     list_p.add_argument("--json", action="store_true", default=False)
     sub.add_parser("epics", help="List epics (JSON)")
@@ -73,7 +70,9 @@ def build_parser():
     graph_p.add_argument("--json", action="store_true", default=False)
     sub.add_parser("history", help="Task completion timeline with velocity trends")
 
-    # Work
+
+def _add_work_commands(sub):
+    """Add work lifecycle subcommands: start, done, block, rollback."""
     start_p = sub.add_parser("start", help="Start a task (checks deps)")
     start_p.add_argument("id")
     done_p = sub.add_parser("done", help="Complete a task")
@@ -86,14 +85,15 @@ def build_parser():
     rollback_p.add_argument("id")
     rollback_p.add_argument("--confirm", action="store_true", default=False)
 
-    # Quality
+
+def _add_quality_commands(sub):
+    """Add quality/auto subcommands: validate, scan, doctor, auto."""
     sub.add_parser("validate", help="Check structure, deps, cycles")
     scan_p = sub.add_parser("scan", help="Auto-detect issues via ruff/mypy/bandit")
     scan_p.add_argument("--create-tasks", action="store_true", default=False)
     doctor_p = sub.add_parser("doctor", help="Health check — environment, tools, tasks")
     doctor_p.add_argument("--format", choices=["text", "json"], default="text")
 
-    # Auto
     auto_p = sub.add_parser("auto", help="Autoimmune loop integrated with task system")
     auto_sub = auto_p.add_subparsers(dest="auto_cmd")
     auto_sub.add_parser("scan")
@@ -104,7 +104,9 @@ def build_parser():
     auto_sub.add_parser("full")
     auto_sub.add_parser("status")
 
-    # Routing + Learning
+
+def _add_route_learn_commands(sub):
+    """Add routing and learning subcommands: route, learn, learnings, consolidate."""
     route_p = sub.add_parser("route", help="Smart router: analyze task → suggest command + team")
     route_p.add_argument("query", nargs="*")
     learn_p = sub.add_parser("learn", help="Record a learning for future routing")
@@ -119,7 +121,9 @@ def build_parser():
     learnings_p.add_argument("--last", type=int, default=10)
     sub.add_parser("consolidate", help="Merge similar learnings, promote patterns")
 
-    # Session
+
+def _add_session_commands(sub):
+    """Add session management subcommands: session save/restore/list."""
     sess_p = sub.add_parser("session", help="Save/restore session state")
     sess_sub = sess_p.add_subparsers(dest="session_cmd")
     sess_save = sess_sub.add_parser("save")
@@ -129,7 +133,9 @@ def build_parser():
     sess_restore.add_argument("name", nargs="?", default="latest")
     sess_sub.add_parser("list")
 
-    # Morph
+
+def _add_morph_commands(sub):
+    """Add Morph API subcommands: apply, search, embed, compact, github-search."""
     apply_p = sub.add_parser("apply", help="Fast Apply code changes via Morph (10,500+ tok/s)")
     apply_p.add_argument("--file", required=True, help="File to modify")
     apply_p.add_argument("--instruction", required=True, help="What to change")
@@ -156,7 +162,9 @@ def build_parser():
     ghsearch_p.add_argument("--repo", default="")
     ghsearch_p.add_argument("--url", default="")
 
-    # Misc
+
+def _add_misc_commands(sub):
+    """Add misc subcommands: log, summary, archive, stats, version, config."""
     log_p = sub.add_parser("log")
     log_p.add_argument("--show", type=int, default=0)
     log_p.add_argument("--iteration", type=int, default=None)
@@ -176,5 +184,21 @@ def build_parser():
     config_p = sub.add_parser("config", help="View/set cc-flow configuration")
     config_p.add_argument("key", nargs="?", default="")
     config_p.add_argument("value", nargs="?", default="")
+
+
+def build_parser():
+    """Build the complete argparse parser."""
+    parser = argparse.ArgumentParser(prog="cc-flow", description="cc-code task & workflow manager")
+    parser.add_argument("-V", "--version", action="version", version=f"cc-flow {VERSION}")
+    sub = parser.add_subparsers(dest="command")
+
+    _add_project_commands(sub)
+    _add_view_commands(sub)
+    _add_work_commands(sub)
+    _add_quality_commands(sub)
+    _add_route_learn_commands(sub)
+    _add_session_commands(sub)
+    _add_morph_commands(sub)
+    _add_misc_commands(sub)
 
     return parser
