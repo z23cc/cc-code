@@ -537,3 +537,89 @@ def cmd_priority(args):
         "total": len(active),
         "ready_count": sum(1 for t in active if t["ready"]),
     }))
+
+
+def _task_documents(tasks):
+    """Build document list from tasks for embedding operations."""
+    return [
+        {"id": tid, "text": f"{t.get('title', '')} {t.get('summary', '')}".strip()}
+        for tid, t in tasks.items()
+    ]
+
+
+def cmd_index(_args):
+    """Pre-build embedding index for all tasks."""
+    from cc_flow.embeddings import build_index
+
+    tasks = all_tasks()
+    documents = _task_documents(tasks)
+    result = build_index(documents)
+    if result is None:
+        error("Embedding unavailable. Set MORPH_API_KEY.")
+
+    print(json.dumps({"success": True, **result}))
+
+
+def cmd_dedupe(args):
+    """Detect near-duplicate tasks using embedding similarity."""
+    from cc_flow.embeddings import find_duplicates
+
+    tasks = all_tasks()
+    documents = _task_documents(tasks)
+    threshold = getattr(args, "threshold", 0.85) or 0.85
+
+    duplicates = find_duplicates(documents, threshold=threshold)
+    if duplicates is None:
+        error("Embedding unavailable. Set MORPH_API_KEY.")
+
+    print(json.dumps({
+        "success": True,
+        "duplicates": duplicates,
+        "count": len(duplicates),
+        "threshold": threshold,
+        "total_tasks": len(tasks),
+    }))
+
+
+def cmd_suggest(args):
+    """Suggest approach for a task based on similar completed tasks."""
+    from cc_flow.embeddings import semantic_search
+
+    task_id = args.id
+    tasks = all_tasks()
+    if task_id not in tasks:
+        error(f"Task not found: {task_id}")
+
+    source = tasks[task_id]
+    query_text = f"{source.get('title', '')} {source.get('summary', '')}"
+
+    # Search only completed tasks that have summaries
+    completed = [
+        {"id": tid, "text": f"{t.get('title', '')} {t.get('summary', '')}",
+         "title": t.get("title", ""), "summary": t.get("summary", ""),
+         "approach": t.get("approach", ""), "duration_sec": t.get("duration_sec")}
+        for tid, t in tasks.items()
+        if t["status"] == "done" and tid != task_id
+    ]
+
+    if not completed:
+        print(json.dumps({"success": True, "id": task_id, "suggestions": [],
+                          "reason": "No completed tasks to learn from"}))
+        return
+
+    results = semantic_search(query_text, completed, top_n=3)
+    if results is None:
+        error("Embedding unavailable. Set MORPH_API_KEY.")
+
+    suggestions = [
+        {"based_on": r["id"], "title": r.get("title", ""),
+         "summary": r.get("summary", ""), "similarity": r["score"]}
+        for r in results if r["score"] > 0.2
+    ]
+
+    print(json.dumps({
+        "success": True,
+        "id": task_id,
+        "title": source.get("title", ""),
+        "suggestions": suggestions,
+    }))

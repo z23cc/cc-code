@@ -112,3 +112,59 @@ def semantic_search(query, documents, top_n=5):
 
     scored.sort(key=lambda x: -x["score"])
     return scored[:top_n]
+
+
+def build_index(documents):
+    """Pre-embed all documents and return cache stats.
+
+    Args:
+        documents: list of {"id": str, "text": str} dicts
+    Returns:
+        {"cached": int, "embedded": int, "total": int} or None if unavailable.
+    """
+    if not documents:
+        return {"cached": 0, "embedded": 0, "total": 0}
+
+    cache = _load_cache()
+    cached = sum(1 for d in documents if _content_hash(d["text"]) in cache)
+    to_embed = [d["text"] for d in documents if _content_hash(d["text"]) not in cache]
+
+    if to_embed:
+        texts = [d["text"] for d in documents]
+        result = embed_texts(texts)
+        if result is None:
+            return None
+
+    return {"cached": cached, "embedded": len(to_embed), "total": len(documents)}
+
+
+def find_duplicates(documents, threshold=0.85):
+    """Find near-duplicate document pairs using embedding similarity.
+
+    Args:
+        documents: list of {"id": str, "text": str, ...} dicts
+        threshold: min cosine similarity to consider duplicate (default 0.85)
+    Returns:
+        List of {"pair": [id1, id2], "score": float, "texts": [t1, t2]}, or None.
+    """
+    if len(documents) < 2:
+        return []
+
+    texts = [d["text"] for d in documents]
+    embedded = embed_texts(texts)
+    if not embedded:
+        return None
+
+    duplicates = []
+    for i in range(len(documents)):
+        for j in range(i + 1, len(documents)):
+            score = cosine_similarity(embedded[i][1], embedded[j][1])
+            if score >= threshold:
+                duplicates.append({
+                    "pair": [documents[i]["id"], documents[j]["id"]],
+                    "score": round(score, 4),
+                    "texts": [documents[i]["text"][:80], documents[j]["text"][:80]],
+                })
+
+    duplicates.sort(key=lambda x: -x["score"])
+    return duplicates
