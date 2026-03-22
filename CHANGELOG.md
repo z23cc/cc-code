@@ -1,5 +1,44 @@
 # Changelog
 
+## [4.2.0] - 2026-03-22
+### Fixed
+- CRITICAL: Atomic file writes (temp + os.replace) prevent data corruption
+- CRITICAL: Cross-platform file locking (fcntl on Unix, msvcrt on Windows)
+- Missing docstrings on 6 public commands
+- Documentation drift (__init__.py, CLAUDE.md now accurate)
+- auto.py print/JSON mixing — structured output only
+
+## [4.1.0] - 2026-03-22
+### Added
+- Deep Morph API integration into OODA loop
+- Embedding-based semantic duplication detection in scanner
+- Morph Search for pattern discovery + task context
+- Morph Rerank for priority refinement in auto deep
+
+## [4.0.0] - 2026-03-22
+### Added
+- Autoimmune v2: OODA loop architecture (observe/orient/decide/act/learn)
+- Smart scanner module: architecture, test coverage, docstrings, duplication, dependencies
+- Scan trend tracking (improving/stable/declining)
+- Q-learning adaptive priority based on success history
+
+## [3.20.0] - 2026-03-22
+### Added
+- Q-learning router (qrouter.py) — learns optimal commands from history
+- Performance tracking (perf.py) — auto-times every command
+- Config profiles — fast/strict/minimal presets
+
+## [3.19.0] - 2026-03-22
+### Added
+- Plugin system — discover, load, manage user plugins (.tasks/plugins/)
+- Plugin lifecycle hooks (on_task_start/done/block)
+- Plugin CLI: list/enable/disable/create
+
+## [3.18.1] - 2026-03-22
+### Added
+- 23 integration tests for v3.10-3.18 features
+- CHANGELOG.md with full version history
+
 ## [3.18.0] - 2026-03-22
 ### Added
 - Lazy command loading — only imports the module needed for invoked command

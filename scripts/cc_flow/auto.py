@@ -1,5 +1,7 @@
 """cc-flow auto commands — OODA-loop autonomous improvement.
 
+All status messages go to stderr, all data goes to stdout as JSON.
+
 v2 architecture:
   OBSERVE: multi-dimensional scan (lint + architecture + tests + docs + deps)
   ORIENT:  Q-learning adaptive priority + trend analysis
@@ -10,6 +12,7 @@ v2 architecture:
 
 import argparse
 import json
+import sys as _sys
 
 from cc_flow.core import (
     EPICS_DIR,
@@ -22,6 +25,11 @@ from cc_flow.core import (
     save_task,
 )
 from cc_flow.quality import cmd_scan
+
+
+def _log(msg):
+    """Log status to stderr (keeps stdout clean for JSON)."""
+    _sys.stderr.write(f"cc-flow: {msg}\n")
 
 TEAM_PATTERNS = [
     {
@@ -115,7 +123,7 @@ def cmd_auto(args):
     elif mode == "test":
         _auto_test(args)
     elif mode == "full":
-        print("## Mode: Full (observe → orient → decide → act)")
+        _log("Mode: Full (observe → orient → decide → act)")
         _auto_scan(args)
         _auto_run(args)
         _auto_test(args)
@@ -129,7 +137,7 @@ def cmd_auto(args):
 
 def _auto_scan(args):
     """OBSERVE: lint scan + create tasks."""
-    print("## OBSERVE: scanning with lint tools...")
+    _log("OBSERVE: scanning with lint tools...")
     scan_args = argparse.Namespace(create_tasks=True)
     cmd_scan(scan_args)
 
@@ -138,13 +146,13 @@ def _auto_deep_scan(args):
     """OBSERVE+ORIENT: multi-dimensional scan with Morph-enhanced analysis."""
     from cc_flow.scanner import get_scan_trend, record_scan_snapshot, run_smart_scan
 
-    print("## OBSERVE: deep multi-dimensional scan...")
+    _log("OBSERVE: deep multi-dimensional scan...")
 
     # Run all smart scanners (uses Morph embed for duplication if available)
     findings = run_smart_scan()
 
     # Also run standard lint scan
-    print("## Running lint scan...")
+    _log("Running lint scan...")
     scan_args = argparse.Namespace(create_tasks=False)
     cmd_scan(scan_args)
 
@@ -372,39 +380,37 @@ def _auto_run(args):
         return
 
     max_iterations = getattr(args, "max", 0) or 20
-    print(f"## DECIDE+ACT: epic={epic_filter}, max={max_iterations}")
+    _log(f"DECIDE+ACT: epic={epic_filter}, max={max_iterations}")
 
     for iteration in range(1, max_iterations + 1):
         ready = _find_ready_tasks(epic_filter)
         if not ready:
-            print(f"\n✅ All tasks done or blocked after {iteration - 1} iterations.")
+            _log(f"All tasks done or blocked after {iteration - 1} iterations.")
             return
 
-        print(f"\n--- Iteration {iteration}: {ready[0]['id']} — {ready[0]['title']} ---")
+        _log(f"Iteration {iteration}: {ready[0]['id']} — {ready[0]['title']}")
         _emit_task_instruction(ready[0])
         return
 
-    print(f"\n⏹ Max iterations ({max_iterations}) reached.")
+    _log(f"Max iterations ({max_iterations}) reached.")
 
 
 def _auto_test(args):
     """ACT: auto-fix lint/type/test errors."""
     import subprocess as sp
 
-    print("## ACT: fixing lint + type + test errors...")
+    _log("ACT: fixing lint + type + test errors...")
 
     result = sp.run(["ruff", "check", ".", "--fix"], check=False, capture_output=True, text=True)
-    if result.returncode == 0:
-        print("B1 ruff: clean (or auto-fixed)")
-    else:
-        print(f"B1 ruff: {result.stdout[:200]}")
+    ruff_status = "clean" if result.returncode == 0 else result.stdout[:200]
 
     result = sp.run(["ruff", "check", "."], check=False, capture_output=True, text=True)
     remaining = result.stdout.strip().count("\n") + 1 if result.stdout.strip() else 0
-    print(f"B2 remaining ruff issues: {remaining}")
 
     print(json.dumps({
         "action": "fix_remaining",
+        "ruff": ruff_status,
+        "remaining_issues": remaining,
         "instruction": "Run mypy and pytest. Fix any errors with minimal changes.",
     }))
 
