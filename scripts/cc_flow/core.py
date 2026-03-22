@@ -30,6 +30,7 @@ _MISSING = object()
 
 
 def now_iso():
+    """Return current UTC time as ISO 8601 string."""
     return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
@@ -81,10 +82,12 @@ def locked_meta_update(fn):
 
 
 def load_meta():
+    """Load .tasks/meta.json, returning defaults if missing."""
     return safe_json_load(META_FILE, default={"next_epic": 1})
 
 
 def save_meta(meta):
+    """Write meta.json to disk."""
     META_FILE.write_text(json.dumps(meta, indent=2) + "\n")
 
 

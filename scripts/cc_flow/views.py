@@ -18,6 +18,7 @@ from cc_flow.route_learn import _load_route_stats
 
 
 def cmd_list(args):
+    """Show all epics with their tasks, in text or JSON format."""
     epics = {}
     for f in sorted(EPICS_DIR.glob("*.md")):
         epic_id = f.stem
@@ -56,6 +57,7 @@ def cmd_list(args):
 
 
 def cmd_epics(_args):
+    """List all epics with task counts (JSON)."""
     epics = []
     tasks = all_tasks()
     for f in sorted(EPICS_DIR.glob("*.md")):
@@ -67,6 +69,7 @@ def cmd_epics(_args):
 
 
 def cmd_tasks(args):
+    """Filter and list tasks by epic, status, or tag."""
     tasks = all_tasks()
     tag_filter = getattr(args, "tag", "") or ""
     result = []
