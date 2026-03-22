@@ -39,15 +39,9 @@ def cmd_init(_args):
 
 def cmd_epic_create(args):
     """Create a new epic with title, spec file, and metadata."""
+    from cc_flow.core import allocate_epic_num
     slug = slugify(args.title)
-
-    def allocate(meta):
-        """Allocate next epic number and increment counter."""
-        epic_num = meta["next_epic"]
-        meta["next_epic"] = epic_num + 1
-        return epic_num
-
-    epic_num = locked_meta_update(allocate)
+    epic_num = locked_meta_update(allocate_epic_num)
     epic_id = f"epic-{epic_num}-{slug}"
 
     spec_path = EPICS_DIR / f"{epic_id}.md"
@@ -75,15 +69,9 @@ def cmd_epic_import(args):
 
     # Create epic with locked meta
     cmd_init(argparse.Namespace())
+    from cc_flow.core import allocate_epic_num
     slug = slugify(title)
-
-    def allocate(meta):
-        """Allocate next epic number and increment counter."""
-        n = meta["next_epic"]
-        meta["next_epic"] = n + 1
-        return n
-
-    epic_num = locked_meta_update(allocate)
+    epic_num = locked_meta_update(allocate_epic_num)
     epic_id = f"epic-{epic_num}-{slug}"
 
     # Copy plan as epic spec

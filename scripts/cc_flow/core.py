@@ -148,6 +148,13 @@ def slugify(title):
     return "-".join(title.lower().split()[:4]).replace("/", "-").replace(".", "")
 
 
+def allocate_epic_num(meta):
+    """Allocate next epic number and increment counter."""
+    n = meta["next_epic"]
+    meta["next_epic"] = n + 1
+    return n
+
+
 def resolve_epic_id(epic_id):
     """Resolve a potentially abbreviated epic ID to the full ID.
 

@@ -179,13 +179,9 @@ def cmd_scan(args):
         cmd_init(argparse.Namespace())
         date_slug = datetime.now(timezone.utc).strftime("%Y%m%d")
 
-        def allocate(meta):
-            """Allocate next epic number and increment counter."""
-            n = meta["next_epic"]
-            meta["next_epic"] = n + 1
-            return n
+        from cc_flow.core import allocate_epic_num
 
-        epic_num = locked_meta_update(allocate)
+        epic_num = locked_meta_update(allocate_epic_num)
         epic_id = f"epic-{epic_num}-scan-{date_slug}"
         task_num = _create_scan_tasks(findings, epic_id)
 
