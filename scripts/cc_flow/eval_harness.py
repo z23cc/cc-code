@@ -89,14 +89,27 @@ def eval_route():
 
 def eval_search():
     """Can search locate relevant code? Tests both task search and code search."""
+    # Ensure at least one task exists for task search test
+    _run_cc("init")
+    from cc_flow.core import all_tasks
+    tasks = all_tasks()
+    # Pick a word from an existing task title, or use a safe fallback
+    task_word = ""
+    for t in tasks.values():
+        words = t.get("title", "").split()
+        if len(words) >= 2:
+            task_word = words[0]
+            break
+
     cases = [
-        # Task search (find command)
-        ("find ruff", True, "task"),
-        ("find zzz_nonexistent_xyz", False, "task"),
-        # Code search (search command — Morph or grep fallback)
+        # Code search (always works — searches source files)
         ("search atomic_write", True, "code"),
         ("search " + "z" * 40, False, "code"),
     ]
+    # Task search (only if we have tasks with known content)
+    if task_word:
+        cases.insert(0, (f"find {task_word}", True, "task"))
+    cases.append(("find " + "q" * 30, False, "task"))
 
     correct = 0
     details = []
