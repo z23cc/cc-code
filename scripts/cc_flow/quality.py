@@ -210,10 +210,7 @@ _VERIFY_PROFILES = {
     },
     "node": {
         "detect": ["package.json"],
-        "steps": [
-            (["npm", "run", "lint"], "lint"),
-            (["npm", "test"], "test"),
-        ],
+        "steps": "auto",  # auto-detect from package.json scripts
     },
     "go": {
         "detect": ["go.mod"],
@@ -230,6 +227,33 @@ _VERIFY_PROFILES = {
         ],
     },
 }
+
+
+def _detect_node_steps():
+    """Auto-detect available npm scripts for verification."""
+    from pathlib import Path
+    try:
+        pkg = json.loads(Path("package.json").read_text())
+        scripts = pkg.get("scripts", {})
+    except (OSError, json.JSONDecodeError):
+        return [(["npm", "test"], "test")]
+
+    steps = []
+    # Prefer: lint → typecheck → build → test
+    for name in ("lint", "lint:check"):
+        if name in scripts:
+            steps.append((["npm", "run", name], name))
+            break
+    if "typecheck" in scripts:
+        steps.append((["npm", "run", "typecheck"], "typecheck"))
+    if not steps and "build" in scripts:
+        steps.append((["npm", "run", "build"], "build"))
+    if "test" in scripts:
+        steps.append((["npm", "test"], "test"))
+    elif "ci" in scripts:
+        steps.append((["npm", "run", "ci"], "ci"))
+
+    return steps if steps else [(["npm", "test"], "test")]
 
 
 def _detect_language():
@@ -255,9 +279,14 @@ def cmd_verify(args):
     if fix_mode and lang == "python":
         subprocess.run(["ruff", "check", ".", "--fix"], check=False, capture_output=True, text=True)
 
+    # Auto-detect Node.js steps from package.json scripts
+    steps = profile["steps"]
+    if steps == "auto":
+        steps = _detect_node_steps()
+
     results = []
     all_passed = True
-    for cmd, label in profile["steps"]:
+    for cmd, label in steps:
         result = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=120)
         passed = result.returncode == 0
         if not passed:

@@ -141,7 +141,8 @@ def cmd_epic_import(args):
 
 def cmd_task_create(args):
     """Create a new task in an epic with title, size, deps, tags, and template."""
-    epic_id = args.epic
+    from cc_flow.core import resolve_epic_id
+    epic_id = resolve_epic_id(args.epic)
     # Find next task number for this epic
     existing = list(TASKS_SUBDIR.glob(f"{epic_id}.*.json"))
     next_num = len(existing) + 1

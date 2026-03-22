@@ -148,6 +148,24 @@ def slugify(title):
     return "-".join(title.lower().split()[:4]).replace("/", "-").replace(".", "")
 
 
+def resolve_epic_id(epic_id):
+    """Resolve a potentially abbreviated epic ID to the full ID.
+
+    Tries exact match first, then prefix match. Returns the full ID
+    or the original if no match found.
+    """
+    if not EPICS_DIR.exists():
+        return epic_id
+    # Exact match
+    if (EPICS_DIR / f"{epic_id}.md").exists():
+        return epic_id
+    # Prefix match
+    candidates = [f.stem for f in EPICS_DIR.glob("*.md") if f.stem.startswith(epic_id)]
+    if len(candidates) == 1:
+        return candidates[0]
+    return epic_id
+
+
 def load_task(path):
     """Load a task JSON file."""
     return safe_json_load(path)
