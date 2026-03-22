@@ -396,3 +396,66 @@ class TestWorkflowHelpers:
         workflows = _all_workflows()
         assert "my-wf" in workflows
         assert workflows["my-wf"]["description"] == "Custom"
+
+
+class TestScanner:
+    def test_scan_architecture(self):
+        from cc_flow.scanner import scan_architecture
+        findings = scan_architecture()
+        # Should return a list (possibly empty for well-structured code)
+        assert isinstance(findings, list)
+
+    def test_scan_docstrings(self):
+        from cc_flow.scanner import scan_docstrings
+        findings = scan_docstrings()
+        assert isinstance(findings, list)
+
+    def test_scan_duplication(self):
+        from cc_flow.scanner import scan_duplication
+        findings = scan_duplication()
+        assert isinstance(findings, list)
+
+    def test_run_smart_scan(self):
+        from cc_flow.scanner import run_smart_scan
+        results = run_smart_scan(["architecture", "docstrings"])
+        assert isinstance(results, dict)
+
+    def test_scan_trend_insufficient(self, tmp_path, monkeypatch):
+        import cc_flow.scanner as scanner_mod
+        monkeypatch.setattr(scanner_mod, "SCAN_HISTORY_FILE", tmp_path / "nope.json")
+        from cc_flow.scanner import get_scan_trend
+        assert get_scan_trend() == "insufficient_data"
+
+
+class TestQRouter:
+    def test_classify_feature(self):
+        from cc_flow.qrouter import _classify_task
+        assert _classify_task("add new feature for login") == "feature"
+
+    def test_classify_bugfix(self):
+        from cc_flow.qrouter import _classify_task
+        assert _classify_task("fix crash on startup") == "bugfix"
+
+    def test_classify_unknown(self):
+        from cc_flow.qrouter import _classify_task
+        result = _classify_task("zzz qqq 12345")
+        assert result == "general"
+
+    def test_q_route_empty(self, tmp_path, monkeypatch):
+        import cc_flow.qrouter as qr
+        monkeypatch.setattr(qr, "QTABLE_FILE", tmp_path / "nope.json")
+        cmd, conf, _cat = qr.q_route("fix a bug")
+        assert cmd is None
+        assert conf == 0
+
+    def test_q_update_and_route(self, tmp_path, monkeypatch):
+        import cc_flow.qrouter as qr
+        monkeypatch.setattr(qr, "QTABLE_FILE", tmp_path / "qt.json")
+        qr.q_update("fix login bug", "/debug", "success")
+        qr.q_update("fix login bug", "/debug", "success")
+        qr.q_update("fix login bug", "/debug", "success")
+        cmd, conf, cat = qr.q_route("fix crash error")
+        assert cat == "bugfix"
+        # After 3 successes, should recommend /debug
+        assert cmd == "/debug"
+        assert conf > 0
