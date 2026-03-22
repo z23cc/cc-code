@@ -482,3 +482,121 @@ class TestQRouter:
         # After 3 successes, should recommend /debug
         assert cmd == "/debug"
         assert conf > 0
+
+
+class TestSkin:
+    def test_banner(self, capsys):
+        from cc_flow import skin
+        skin.banner()
+        out = capsys.readouterr().out
+        assert "cc-flow" in out
+
+    def test_success(self, capsys):
+        from cc_flow import skin
+        skin.success("done")
+        assert "done" in capsys.readouterr().out
+
+    def test_table(self, capsys):
+        from cc_flow import skin
+        skin.table(["A", "B"], [["1", "2"], ["3", "4"]])
+        out = capsys.readouterr().out
+        assert "A" in out
+        assert "1" in out
+
+    def test_progress_bar(self, capsys):
+        from cc_flow import skin
+        skin.progress_bar(5, 10, "half")
+        out = capsys.readouterr().out
+        assert "50%" in out
+        assert "half" in out
+
+    def test_no_color(self, monkeypatch, capsys):
+        monkeypatch.setenv("NO_COLOR", "1")
+        from cc_flow import skin
+        skin.success("plain")
+        out = capsys.readouterr().out
+        assert "\033" not in out  # No ANSI codes
+
+
+class TestAliases:
+    def test_load_empty(self, tmp_path, monkeypatch):
+        import cc_flow.aliases as al
+        monkeypatch.setattr(al, "ALIAS_FILE", tmp_path / "nope.json")
+        assert al._load_aliases() == {}
+
+    def test_save_load(self, tmp_path, monkeypatch):
+        import cc_flow.aliases as al
+        alias_file = tmp_path / "aliases.json"
+        monkeypatch.setattr(al, "ALIAS_FILE", alias_file)
+        al._save_aliases({"s": "status"})
+        assert al._load_aliases() == {"s": "status"}
+
+    def test_resolve_alias(self, tmp_path, monkeypatch):
+        import cc_flow.aliases as al
+        alias_file = tmp_path / "aliases.json"
+        monkeypatch.setattr(al, "ALIAS_FILE", alias_file)
+        al._save_aliases({"s": "status"})
+        result = al.resolve_alias("s", [])
+        assert result == ("status", [])
+
+    def test_resolve_unknown(self, tmp_path, monkeypatch):
+        import cc_flow.aliases as al
+        monkeypatch.setattr(al, "ALIAS_FILE", tmp_path / "nope.json")
+        assert al.resolve_alias("nope", []) is None
+
+
+class TestInsights:
+    def test_calc_velocity_insufficient(self):
+        from cc_flow.analytics import _calc_velocity
+        assert _calc_velocity({}) is None
+        assert _calc_velocity({"t1": {"status": "done", "completed": "2026-01-01T00:00:00Z"}}) is None
+
+    def test_fmt_time(self):
+        from cc_flow.analytics import _fmt_time
+        assert _fmt_time(30) == "30s"
+        assert _fmt_time(90) == "1m 30s"
+        assert _fmt_time(3661) == "1h 1m"
+
+
+class TestContextModule:
+    def test_git_info(self):
+        from cc_flow.context import _git_info
+        info = _git_info()
+        assert "sha" in info
+        assert "branch" in info
+        assert isinstance(info["recent_commits"], list)
+
+
+class TestLearning:
+    def test_make_result(self):
+        from cc_flow.learning import _make_result
+        r = _make_result({"task": "x", "approach": "y", "lesson": "z", "score": 5}, 80, 2, "test")
+        assert r["confidence"] == 80
+        assert r["engine"] == "test"
+
+    def test_keyword_search_no_match(self):
+        from cc_flow.learning import _keyword_search
+        learnings = [{"task": "deploy", "lesson": "use CI", "approach": "auto", "score": 3}]
+        assert _keyword_search("zzz_impossible", learnings) is None
+
+
+class TestTemplates:
+    def test_builtin_templates(self):
+        from cc_flow.templates import TASK_TEMPLATES
+        assert "feature" in TASK_TEMPLATES
+        assert "bugfix" in TASK_TEMPLATES
+        assert "refactor" in TASK_TEMPLATES
+        assert "security" in TASK_TEMPLATES
+        for tmpl in TASK_TEMPLATES.values():
+            assert "steps" in tmpl
+            assert "spec" in tmpl
+
+    def test_generate_spec_default(self):
+        from cc_flow.templates import _generate_spec
+        spec = _generate_spec("My Task")
+        assert "My Task" in spec
+
+    def test_generate_spec_template(self):
+        from cc_flow.templates import _generate_spec
+        spec = _generate_spec("Fix bug", "bugfix")
+        assert "Bug Description" in spec

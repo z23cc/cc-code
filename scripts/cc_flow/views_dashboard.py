@@ -120,23 +120,26 @@ def _print_dashboard_learning():
 
 def _print_dashboard_hint(tasks):
     """Print next-action suggestion based on task state."""
+    from cc_flow import skin
+
     counts = _task_counts(list(tasks.values()))
+    print()
     if counts["blocked"] > 0:
-        print(f"\n  ⚠ {counts['blocked']} blocked task(s). Run: cc-flow tasks --status blocked")
+        skin.warning(f"{counts['blocked']} blocked task(s). Run: cc-flow tasks --status blocked")
     elif counts["in_progress"] > 0:
         ip = next(t for t in tasks.values() if t["status"] == "in_progress")
-        print(f"\n  → Resume: {ip['id']} — {ip['title']}")
+        skin.info(f"Resume: {ip['id']} -- {ip['title']}")
     elif counts["todo"] > 0:
         for t in tasks.values():
             if t["status"] == "todo":
                 deps_done = all(tasks.get(d, {}).get("status") == "done" for d in t.get("depends_on", []))
                 if deps_done:
-                    print(f"\n  → Next: cc-flow start {t['id']} — {t['title']}")
+                    skin.info(f"Next: cc-flow start {t['id']} -- {t['title']}")
                     break
     elif counts["total"] > 0:
-        print("\n  ✅ All tasks done!")
+        skin.success("All tasks done!")
     else:
-        print("\n  → Get started: cc-flow epic create --title 'My Feature'")
+        skin.dim("Get started: cc-flow epic create --title 'My Feature'")
 
 
 def cmd_dashboard(args):

@@ -57,13 +57,14 @@ def cmd_summary(_args):
     skipped = sum(1 for row in lines if "SKIPPED" in row)
     total = len(lines)
     pct = int(kept / total * 100) if total > 0 else 0
-    print("## Autoimmune Summary")
-    print("| Metric | Value |")
-    print("|--------|-------|")
-    print(f"| Iterations | {total} |")
-    print(f"| Kept | {kept} ({pct}%) |")
-    print(f"| Discarded | {discarded} |")
-    print(f"| Skipped | {skipped} |")
+    from cc_flow import skin
+    skin.heading("Autoimmune Summary")
+    skin.table(["Metric", "Value"], [
+        ["Iterations", str(total)],
+        ["Kept", f"{kept} ({pct}%)"],
+        ["Discarded", str(discarded)],
+        ["Skipped", str(skipped)],
+    ])
 
 
 def cmd_archive(_args):
