@@ -10,12 +10,19 @@ requires-python = ">=3.9"
 license = "MIT"
 readme = "README.md"
 authors = [{name = "cc-code contributors"}]
-keywords = ["workflow", "tasks", "ai", "claude"]
+keywords = ["workflow", "tasks", "ai", "claude", "claude-code", "cli", "task-management", "embeddings"]
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Build Tools",
+    "Intended Audience :: Developers",
 ]
+
+[project.urls]
+Homepage = "https://github.com/cc-code/cc-code"
+Repository = "https://github.com/cc-code/cc-code"
+Changelog = "https://github.com/cc-code/cc-code/blob/main/CHANGELOG.md"
 
 [project.scripts]
 cc-flow = "cc_flow.entry:main"

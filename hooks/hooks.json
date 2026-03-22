@@ -6,10 +6,11 @@
         "hooks": [
           {
             "type": "command",
-            "command": "cat ${CLAUDE_PLUGIN_ROOT}/hooks/session-start.md 2>/dev/null || true"
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/session-start.sh",
+            "timeout": 5
           }
         ],
-        "description": "Inject cc-code skills overview at session start"
+        "description": "Show skills overview + recent project context at session start"
       }
     ],
     "PreToolUse": [
