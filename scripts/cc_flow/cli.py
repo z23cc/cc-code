@@ -118,6 +118,10 @@ def _add_work_commands(sub):
     diff_p.add_argument("id")
     diff_p.add_argument("--stat", action="store_true", default=False, help="Show stat only")
     diff_p.add_argument("--json", action="store_true", default=False)
+    bulk_p = sub.add_parser("bulk", help="Batch status change (done/todo/blocked)")
+    bulk_p.add_argument("action", choices=["done", "todo", "blocked"])
+    bulk_p.add_argument("ids", nargs="*", help="Task IDs (or use --epic)")
+    bulk_p.add_argument("--epic", default="", help="Apply to all tasks in epic")
 
 
 def _add_quality_commands(sub):
@@ -220,6 +224,10 @@ def _add_misc_commands(sub):
     standup_p.add_argument("--hours", type=int, default=24, help="Lookback period (default: 24h)")
     changelog_p = sub.add_parser("changelog", help="Generate changelog from completed tasks")
     changelog_p.add_argument("--json", action="store_true", default=False)
+    burndown_p = sub.add_parser("burndown", help="Epic burndown data (remaining tasks over time)")
+    burndown_p.add_argument("--epic", required=True)
+    report_p = sub.add_parser("report", help="Comprehensive project report (markdown)")
+    report_p.add_argument("--output", default="", help="Save to file")
     sub.add_parser("version", help="Print cc-flow version")
     config_p = sub.add_parser("config", help="View/set cc-flow configuration")
     config_p.add_argument("key", nargs="?", default="")

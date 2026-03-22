@@ -21,7 +21,16 @@ from cc_flow.epic_task import (
     cmd_task_update,
 )
 from cc_flow.graph import cmd_graph
-from cc_flow.log_cmds import cmd_archive, cmd_changelog, cmd_log, cmd_standup, cmd_stats, cmd_summary
+from cc_flow.log_cmds import (
+    cmd_archive,
+    cmd_burndown,
+    cmd_changelog,
+    cmd_log,
+    cmd_report,
+    cmd_standup,
+    cmd_stats,
+    cmd_summary,
+)
 from cc_flow.morph_cmds import cmd_apply, cmd_compact, cmd_embed, cmd_github_search, cmd_search
 from cc_flow.quality import cmd_scan, cmd_validate, cmd_verify
 from cc_flow.route_learn import (
@@ -49,7 +58,7 @@ from cc_flow.views import (
     cmd_suggest,
     cmd_tasks,
 )
-from cc_flow.work import cmd_block, cmd_diff, cmd_done, cmd_reopen, cmd_rollback, cmd_start
+from cc_flow.work import cmd_block, cmd_bulk, cmd_diff, cmd_done, cmd_reopen, cmd_rollback, cmd_start
 
 _COMMANDS = {
     "init": cmd_init, "list": cmd_list, "epics": cmd_epics, "tasks": cmd_tasks,
@@ -59,6 +68,7 @@ _COMMANDS = {
     "scan": cmd_scan, "route": cmd_route, "learn": cmd_learn,
     "learnings": cmd_learnings, "log": cmd_log, "summary": cmd_summary,
     "standup": cmd_standup, "changelog": cmd_changelog, "priority": cmd_priority,
+    "burndown": cmd_burndown, "report": cmd_report, "bulk": cmd_bulk,
     "archive": cmd_archive, "stats": cmd_stats, "consolidate": cmd_consolidate,
     "history": cmd_history, "config": cmd_config, "graph": cmd_graph,
     "verify": cmd_verify, "clean": cmd_clean, "export": cmd_export,
