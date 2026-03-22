@@ -31,7 +31,7 @@ class TestInit:
         assert (tmp_path / ".tasks" / "meta.json").exists()
 
     def test_init_idempotent(self, workspace):
-        out, _, code = run(["init"], cwd=workspace)
+        _, _, code = run(["init"], cwd=workspace)
         assert code == 0
 
 
@@ -441,7 +441,7 @@ class TestSession:
 
     def test_session_restore_latest(self, workspace):
         run(["session", "save", "--name", "s1"], cwd=workspace)
-        out, _, code = run(["session", "restore"], cwd=workspace)
+        _, _, code = run(["session", "restore"], cwd=workspace)
         assert code == 0
 
 
@@ -549,7 +549,7 @@ class TestErrorHandling:
         meta = workspace / ".tasks" / "meta.json"
         meta.write_text("not json")
         # epic create should still work via locked update
-        out, _, code = run(["epic", "create", "--title", "Recovery"], cwd=workspace)
+        _, _, code = run(["epic", "create", "--title", "Recovery"], cwd=workspace)
         assert code == 0
 
     def test_start_already_done(self, workspace):
@@ -569,16 +569,16 @@ class TestErrorHandling:
         assert code == 1
 
     def test_task_reset_nonexistent(self, workspace):
-        out, _, code = run(["task", "reset", "nonexistent"], cwd=workspace)
+        _, _, code = run(["task", "reset", "nonexistent"], cwd=workspace)
         assert code == 1
 
     def test_empty_workspace_commands(self, workspace):
         """Commands should work gracefully on empty workspace."""
-        out, _, code = run(["status"], cwd=workspace)
+        _, _, code = run(["status"], cwd=workspace)
         assert code == 0
-        out, _, code = run(["ready"], cwd=workspace)
+        _, _, code = run(["ready"], cwd=workspace)
         assert code == 0
-        out, _, code = run(["next"], cwd=workspace)
+        _, _, code = run(["next"], cwd=workspace)
         assert code == 0
 
 
@@ -841,7 +841,7 @@ class TestMissingCommands:
         run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
         spec = workspace / "my-spec.md"
         spec.write_text("# Custom Spec\nDo this thing.")
-        out, _, code = run(["task", "set-spec", "epic-1-test.1", "--file", str(spec)], cwd=workspace)
+        _, _, code = run(["task", "set-spec", "epic-1-test.1", "--file", str(spec)], cwd=workspace)
         assert code == 0
         actual = (workspace / ".tasks" / "tasks" / "epic-1-test.1.md").read_text()
         assert "Custom Spec" in actual
