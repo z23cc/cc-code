@@ -226,14 +226,14 @@ def _auto_test(args):
     print("## Auto Test: fixing lint + type + test errors...")
 
     # Phase B1: ruff auto-fix
-    result = sp.run(["ruff", "check", ".", "--fix"], capture_output=True, text=True)
+    result = sp.run(["ruff", "check", ".", "--fix"], check=False, capture_output=True, text=True)
     if result.returncode == 0:
         print("B1 ruff: clean (or auto-fixed)")
     else:
         print(f"B1 ruff: {result.stdout[:200]}")
 
     # Phase B2: Check for remaining issues
-    result = sp.run(["ruff", "check", "."], capture_output=True, text=True)
+    result = sp.run(["ruff", "check", "."], check=False, capture_output=True, text=True)
     remaining = result.stdout.strip().count("\n") + 1 if result.stdout.strip() else 0
     print(f"B2 remaining ruff issues: {remaining}")
 

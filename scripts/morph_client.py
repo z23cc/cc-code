@@ -210,7 +210,7 @@ class MorphClient:
             if include:
                 cmd.insert(2, f"--include={include}")
             try:
-                result = sp.run(cmd, capture_output=True, text=True, timeout=10)
+                result = sp.run(cmd, check=False, capture_output=True, text=True, timeout=10)
                 lines = result.stdout.strip().split("\n")[:30]
                 return "\n".join(lines) if lines[0] else "No matches"
             except (sp.TimeoutExpired, OSError):

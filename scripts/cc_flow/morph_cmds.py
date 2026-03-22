@@ -102,7 +102,7 @@ def cmd_search(args):
             ["grep", "-rn", "--include=*.py", "--include=*.ts", "--include=*.js",
              "--include=*.go", "--include=*.rs", "--include=*.md",
              "-i", query, search_dir],
-            capture_output=True, text=True, timeout=15,
+            check=False, capture_output=True, text=True, timeout=15,
         )
         lines = [ln for ln in result.stdout.strip().split("\n") if ln.strip()][:30]
 
@@ -177,7 +177,7 @@ def cmd_github_search(args):
     try:
         result = _sp.run(
             ["gh", "search", "code", query, "--repo", target, "--json", "repository,path,textMatches", "-L", "10"],
-            capture_output=True, text=True, timeout=30,
+            check=False, capture_output=True, text=True, timeout=30,
         )
         if result.returncode == 0 and result.stdout.strip():
             data = json.loads(result.stdout)

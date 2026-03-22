@@ -77,7 +77,7 @@ def cmd_scan(args):
     # Ruff
     try:
         result = subprocess.run(["ruff", "check", ".", "--output-format", "json"],
-                                capture_output=True, text=True, timeout=30)
+                                check=False, capture_output=True, text=True, timeout=30)
         if result.stdout.strip():
             issues = json.loads(result.stdout)
             by_rule = {}
@@ -91,7 +91,7 @@ def cmd_scan(args):
     # Mypy
     try:
         result = subprocess.run(["mypy", ".", "--no-error-summary"],
-                                capture_output=True, text=True, timeout=60)
+                                check=False, capture_output=True, text=True, timeout=60)
         for line in result.stdout.strip().split("\n")[:10]:
             if line.strip() and "error:" in line:
                 findings["P2"].append(f"Fix mypy: {line.strip()}")
@@ -101,7 +101,7 @@ def cmd_scan(args):
     # Bandit
     try:
         result = subprocess.run(["bandit", "-r", ".", "-f", "json", "-q"],
-                                capture_output=True, text=True, timeout=30)
+                                check=False, capture_output=True, text=True, timeout=30)
         if result.stdout.strip():
             data = json.loads(result.stdout)
             for r in data.get("results", [])[:10]:

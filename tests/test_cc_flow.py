@@ -11,7 +11,7 @@ CC_FLOW = [sys.executable, str(Path(__file__).parent.parent / "scripts" / "cc-fl
 
 
 def run(args, cwd=None):
-    result = subprocess.run(CC_FLOW + args, capture_output=True, text=True, cwd=cwd)
+    result = subprocess.run(CC_FLOW + args, check=False, capture_output=True, text=True, cwd=cwd)
     return result.stdout.strip(), result.stderr.strip(), result.returncode
 
 
@@ -660,9 +660,9 @@ class TestRollback:
         assert code == 1  # No SHA recorded
 
     def test_rollback_preview(self, workspace):
-        subprocess.run(["git", "init", "-q"], cwd=workspace)
-        subprocess.run(["git", "add", "."], cwd=workspace)
-        subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=workspace)
+        subprocess.run(["git", "init", "-q"], check=False, cwd=workspace)
+        subprocess.run(["git", "add", "."], check=False, cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "init"], check=False, cwd=workspace)
         run(["epic", "create", "--title", "Test"], cwd=workspace)
         run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
         run(["start", "epic-1-test.1"], cwd=workspace)
@@ -673,18 +673,18 @@ class TestRollback:
 
 
     def test_rollback_confirm(self, workspace):
-        subprocess.run(["git", "init", "-q"], cwd=workspace)
-        subprocess.run(["git", "add", "."], cwd=workspace)
-        subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=workspace)
+        subprocess.run(["git", "init", "-q"], check=False, cwd=workspace)
+        subprocess.run(["git", "add", "."], check=False, cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "init"], check=False, cwd=workspace)
         run(["epic", "create", "--title", "Test"], cwd=workspace)
         run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
-        subprocess.run(["git", "add", "."], cwd=workspace)
-        subprocess.run(["git", "commit", "-q", "-m", "add tasks"], cwd=workspace)
+        subprocess.run(["git", "add", "."], check=False, cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "add tasks"], check=False, cwd=workspace)
         run(["start", "epic-1-test.1"], cwd=workspace)
         # Make a change
         (workspace / "extra.txt").write_text("will be rolled back\n")
-        subprocess.run(["git", "add", "extra.txt"], cwd=workspace)
-        subprocess.run(["git", "commit", "-q", "-m", "add extra"], cwd=workspace)
+        subprocess.run(["git", "add", "extra.txt"], check=False, cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "add extra"], check=False, cwd=workspace)
         out, _, code = run(["rollback", "epic-1-test.1", "--confirm"], cwd=workspace)
         assert code == 0
         data = json.loads(out)
@@ -756,16 +756,16 @@ class TestGithubSearch:
 
 class TestDiffTracking:
     def test_done_records_diff(self, workspace):
-        subprocess.run(["git", "init", "-q"], cwd=workspace)
-        subprocess.run(["git", "add", "."], cwd=workspace)
-        subprocess.run(["git", "commit", "-q", "-m", "init"], cwd=workspace)
+        subprocess.run(["git", "init", "-q"], check=False, cwd=workspace)
+        subprocess.run(["git", "add", "."], check=False, cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "init"], check=False, cwd=workspace)
         run(["epic", "create", "--title", "Test"], cwd=workspace)
         run(["task", "create", "--epic", "epic-1-test", "--title", "T1"], cwd=workspace)
         run(["start", "epic-1-test.1"], cwd=workspace)
         # Make a change and commit
         (workspace / "newfile.txt").write_text("hello\n")
-        subprocess.run(["git", "add", "newfile.txt"], cwd=workspace)
-        subprocess.run(["git", "commit", "-q", "-m", "add file"], cwd=workspace)
+        subprocess.run(["git", "add", "newfile.txt"], check=False, cwd=workspace)
+        subprocess.run(["git", "commit", "-q", "-m", "add file"], check=False, cwd=workspace)
         out, _, _ = run(["done", "epic-1-test.1", "--summary", "added file"], cwd=workspace)
         data = json.loads(out)
         assert "diff" in data

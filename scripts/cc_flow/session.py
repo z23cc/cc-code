@@ -121,9 +121,9 @@ def _session_list():
 def _git_state():
     """Get current git SHA, branch, and dirty status."""
     try:
-        sha = _sp.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, timeout=5).stdout.strip()
-        branch = _sp.run(["git", "branch", "--show-current"], capture_output=True, text=True, timeout=5).stdout.strip()
-        dirty = _sp.run(["git", "status", "--porcelain"], capture_output=True, text=True, timeout=5).stdout.strip()
+        sha = _sp.run(["git", "rev-parse", "HEAD"], check=False, capture_output=True, text=True, timeout=5).stdout.strip()
+        branch = _sp.run(["git", "branch", "--show-current"], check=False, capture_output=True, text=True, timeout=5).stdout.strip()
+        dirty = _sp.run(["git", "status", "--porcelain"], check=False, capture_output=True, text=True, timeout=5).stdout.strip()
         return sha, branch, dirty
     except (OSError, _sp.TimeoutExpired):
         return "", "", ""

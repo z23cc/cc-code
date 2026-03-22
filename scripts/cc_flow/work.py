@@ -43,7 +43,7 @@ def cmd_start(args):
     import subprocess as _sp
     try:
         sha = _sp.run(["git", "rev-parse", "HEAD"],
-                       capture_output=True, text=True, timeout=5).stdout.strip()
+                       check=False, capture_output=True, text=True, timeout=5).stdout.strip()
         if sha:
             data["git_sha_start"] = sha
     except (OSError, _sp.TimeoutExpired):
@@ -131,7 +131,7 @@ def _get_diff_stats(start_sha=None):
     try:
         result = _sp.run(
             ["git", "diff", "--stat", start_sha, "HEAD"],
-            capture_output=True, text=True, timeout=10,
+            check=False, capture_output=True, text=True, timeout=10,
         )
         if result.returncode != 0 or not result.stdout.strip():
             return None
