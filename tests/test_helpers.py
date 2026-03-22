@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 import json
 
 from cc_flow.config import _age_days, _safe_load_json
-from cc_flow.core import atomic_write, now_iso, safe_json_load, save_task, slugify
+from cc_flow.core import atomic_write, now_iso, safe_json_load, safe_read, save_task, slugify
 from cc_flow.doctor import _check_python, _chk
 from cc_flow.embeddings import _content_hash, cosine_similarity
 from cc_flow.graph import STATUS_STYLE, _mermaid
@@ -187,6 +187,17 @@ class TestCoreUtils:
         save_task(path, {"id": "t1", "status": "todo"})
         data = json.loads(path.read_text())
         assert data["id"] == "t1"
+
+    def test_safe_read_valid(self, tmp_path):
+        f = tmp_path / "test.txt"
+        f.write_text("hello")
+        assert safe_read(f) == "hello"
+
+    def test_safe_read_missing(self, tmp_path):
+        assert safe_read(tmp_path / "nope.txt") == ""
+
+    def test_safe_read_default(self, tmp_path):
+        assert safe_read(tmp_path / "nope.txt", "fallback") == "fallback"
 
     def test_safe_json_load_valid(self, tmp_path):
         good = tmp_path / "good.json"

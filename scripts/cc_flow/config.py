@@ -23,7 +23,7 @@ def _safe_load_json(path):
     """Load JSON file, return None on decode error."""
     try:
         return json.loads(path.read_text())
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, OSError):
         return None
 
 

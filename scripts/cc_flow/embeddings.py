@@ -22,7 +22,8 @@ def _load_cache():
     """Load embedding cache from disk."""
     if EMBED_CACHE_FILE.exists():
         try:
-            return json.loads(EMBED_CACHE_FILE.read_text())
+            from cc_flow.core import safe_read
+            return json.loads(safe_read(EMBED_CACHE_FILE, "{}"))
         except (json.JSONDecodeError, OSError):
             pass
     return {}

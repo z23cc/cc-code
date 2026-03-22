@@ -92,6 +92,14 @@ def _file_unlock(f):
 
 # ── JSON operations ──
 
+def safe_read(path, default=""):
+    """Read file text safely. Returns default on any failure."""
+    try:
+        return Path(path).read_text()
+    except (OSError, UnicodeDecodeError):
+        return default
+
+
 def safe_json_load(path, default=_MISSING):
     """Safely load JSON from a file. Returns default on any failure."""
     p = Path(path)
