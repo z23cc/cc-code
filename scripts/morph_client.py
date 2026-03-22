@@ -115,10 +115,10 @@ class MorphClient:
             List of search results
         """
         # Build repo structure — skip hidden dirs and common noise
-        SKIP_DIRS = {".git", "__pycache__", "node_modules", ".venv", "venv",
+        skip_dirs = {".git", "__pycache__", "node_modules", ".venv", "venv",
                      "dist", "build", ".next", ".ruff_cache", ".pytest_cache",
                      ".mypy_cache", ".tox", "target", "coverage"}
-        CODE_EXTS = {".py", ".ts", ".js", ".tsx", ".jsx", ".go", ".rs", ".java",
+        code_exts = {".py", ".ts", ".js", ".tsx", ".jsx", ".go", ".rs", ".java",
                      ".md", ".yaml", ".yml", ".toml", ".json", ".sh"}
 
         repo_files = []
@@ -127,9 +127,9 @@ class MorphClient:
             if not f.is_file():
                 continue
             parts = f.relative_to(dir_path).parts
-            if any(p in SKIP_DIRS or p.startswith(".") for p in parts):
+            if any(p in skip_dirs or p.startswith(".") for p in parts):
                 continue
-            if f.suffix not in CODE_EXTS:
+            if f.suffix not in code_exts:
                 continue
             repo_files.append(str(f))
             if len(repo_files) >= 500:
@@ -226,10 +226,7 @@ class MorphClient:
             start = args.get("start_line", 1) - 1
             end = args.get("end_line")
             lines = content.split("\n")
-            if end:
-                lines = lines[start:end]
-            else:
-                lines = lines[start:start + 100]
+            lines = lines[start:end] if end else lines[start:start + 100]
             return "\n".join(f"{i + start + 1}: {line}" for i, line in enumerate(lines))
 
         elif name == "list_directory":
@@ -399,10 +396,7 @@ def main():
         print(json.dumps({"success": True, "results": results}))
 
     elif args.command == "compact":
-        if args.file:
-            text = Path(args.file).read_text()
-        else:
-            text = sys.stdin.read()
+        text = Path(args.file).read_text() if args.file else sys.stdin.read()
         result = client.compact(text, args.ratio)
         original = len(text)
         compressed = len(result)
