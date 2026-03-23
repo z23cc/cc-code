@@ -205,53 +205,97 @@ def cmd_evolve(_args):
 
 # ── Health Score ──
 
+def _detect_lang():
+    """Detect project language for health scoring."""
+    if Path("pyproject.toml").exists() or Path("setup.py").exists():
+        return "python"
+    if Path("package.json").exists():
+        return "node"
+    if Path("go.mod").exists():
+        return "go"
+    return "unknown"
+
+
 def _score_lint():
-    """Lint health score (0-25)."""
+    """Lint health score (0-25). Auto-detects language."""
+    lang = _detect_lang()
     try:
-        result = subprocess.run(["ruff", "check", ".", "--output-format", "json"],
-                                check=False, capture_output=True, text=True, timeout=15)
-        if result.returncode == 0:
-            return 25
-        violations = len(json.loads(result.stdout)) if result.stdout.strip() else 0
-        return max(0, 25 - violations)
+        if lang == "python":
+            result = subprocess.run(["ruff", "check", ".", "--output-format", "json"],
+                                    check=False, capture_output=True, text=True, timeout=15)
+            if result.returncode == 0:
+                return 25
+            violations = len(json.loads(result.stdout)) if result.stdout.strip() else 0
+            return max(0, 25 - violations)
+        if lang == "node":
+            # Try npm run lint or typecheck
+            for script in ("lint", "typecheck"):
+                result = subprocess.run(["npm", "run", script],
+                                        check=False, capture_output=True, text=True, timeout=30)
+                if result.returncode == 0:
+                    return 25
+            return 15  # No lint script but project exists
     except (subprocess.TimeoutExpired, OSError, json.JSONDecodeError):
         return 0
+    else:
+        return 20  # Unknown language, give partial credit
 
 
 def _score_tests():
-    """Test health score (0-25)."""
-    import re
+    """Test health score (0-25). Auto-detects language."""
+    lang = _detect_lang()
     try:
-        result = subprocess.run(["python3", "-m", "pytest", "--tb=no", "-q"],
-                                check=False, capture_output=True, text=True, timeout=120)
+        if lang == "python":
+            result = subprocess.run(["python3", "-m", "pytest", "--tb=no", "-q"],
+                                    check=False, capture_output=True, text=True, timeout=120)
+        elif lang == "node":
+            result = subprocess.run(["npm", "test"],
+                                    check=False, capture_output=True, text=True, timeout=120)
+        elif lang == "go":
+            result = subprocess.run(["go", "test", "./..."],
+                                    check=False, capture_output=True, text=True, timeout=120)
+        else:
+            return 15  # Unknown, partial credit
         if result.returncode == 0:
             return 25
-        last = result.stdout.strip().split("\n")[-1] if result.stdout else ""
-        if "passed" in last:
-            m = re.search(r"(\d+) passed", last)
-            f = re.search(r"(\d+) failed", last)
-            passed = int(m.group(1)) if m else 0
-            failed = int(f.group(1)) if f else 0
-            total = passed + failed
-            return int(25 * passed / total) if total > 0 else 0
     except (subprocess.TimeoutExpired, OSError):
-        pass
-    return 0
+        return 5  # Timeout = tests exist but slow
+    else:
+        return 10  # Tests exist but some fail
 
 
 def _score_architecture():
     """Architecture health score (0-25). Returns (score, file_count).
 
-    Threshold: 500 lines per file (allows cohesive modules like OODA loop).
+    Scans source files per detected language. Threshold: 500 lines.
     """
+    lang = _detect_lang()
+    patterns = {
+        "python": ("scripts/cc_flow/*.py", "src/**/*.py", "**/*.py"),
+        "node": ("src/**/*.ts", "src/**/*.js", "lib/**/*.ts"),
+        "go": ("**/*.go",),
+    }
+    globs = patterns.get(lang, ("src/**/*.py",))
+
     large_files = 0
     total_files = 0
-    for py in Path("scripts/cc_flow").glob("*.py"):
-        if py.name.startswith("_"):
-            continue
-        total_files += 1
-        if len(py.read_text().split("\n")) > 500:
-            large_files += 1
+    for pattern in globs:
+        for f in Path(".").glob(pattern):
+            if any(skip in str(f) for skip in ("node_modules", ".git", "__pycache__", "dist", "build")):
+                continue
+            if f.name.startswith("_"):
+                continue
+            total_files += 1
+            try:
+                if len(f.read_text().split("\n")) > 500:
+                    large_files += 1
+            except (OSError, UnicodeDecodeError):
+                continue
+        if total_files > 0:
+            break  # Found files with first matching pattern
+
+    if total_files == 0:
+        return 20, 0  # No files found, partial credit
     return max(0, 25 - large_files * 5), total_files
 
 
