@@ -94,6 +94,109 @@ SKILL_CHAINS = {
             {"skill": "/cc-scout repo", "role": "Find existing patterns", "required": False},
         ],
     },
+    # ── New chains: end-to-end workflows ──
+    "idea-to-ship": {
+        "description": "Full lifecycle: validate idea → plan → implement → review → ship",
+        "trigger": ["idea to production", "end to end", "full lifecycle", "from scratch",
+                     "idea to ship", "complete workflow", "everything",
+                     "从想法到上线", "想法到发布", "端到端", "完整流程", "从零开始"],
+        "skills": [
+            {"skill": "/cc-office-hours", "role": "Validate the idea (5 forcing questions)", "required": True},
+            {"skill": "/cc-brainstorm", "role": "Explore design options", "required": True},
+            {"skill": "/cc-grill-me", "role": "Adversarial review of the plan", "required": False},
+            {"skill": "/cc-plan", "role": "Create implementation plan with tasks", "required": True},
+            {"skill": "/cc-work", "role": "Execute tasks (worktree + worker + review)", "required": True},
+            {"skill": "/cc-epic-review", "role": "Verify all requirements met", "required": True},
+            {"skill": "/cc-ship", "role": "Version bump + PR + release", "required": True},
+        ],
+    },
+    "qa-fix": {
+        "description": "QA test → fix bugs → verify → ship",
+        "trigger": ["qa", "test the site", "find and fix bugs", "QA测试", "测试修复"],
+        "skills": [
+            {"skill": "/cc-qa", "role": "Diff-aware QA with health scoring", "required": True},
+            {"skill": "/cc-review", "role": "Review the fixes", "required": False},
+            {"skill": "/cc-commit", "role": "Commit verified fixes", "required": True},
+        ],
+    },
+    "security-audit": {
+        "description": "Full security review: scout → code review → fix",
+        "trigger": ["security audit", "security review", "security scan", "penetration", "vulnerability",
+                     "安全审计", "安全审查", "安全检查", "漏洞扫描"],
+        "skills": [
+            {"skill": "/cc-scout security", "role": "Check security config", "required": True},
+            {"skill": "/cc-security-review", "role": "Code-level security patterns", "required": True},
+            {"skill": "/cc-review", "role": "Final review of fixes", "required": False},
+            {"skill": "/cc-commit", "role": "Commit security fixes", "required": True},
+        ],
+    },
+    "performance": {
+        "description": "Profile → optimize → verify improvement",
+        "trigger": ["performance", "slow", "speed up", "optimize", "profile",
+                     "性能优化", "太慢", "加速"],
+        "skills": [
+            {"skill": "/cc-performance", "role": "Profile and identify bottlenecks", "required": True},
+            {"skill": "/cc-optimize", "role": "Frontend Core Web Vitals optimization", "required": False},
+            {"skill": "/cc-review", "role": "Review optimization changes", "required": False},
+            {"skill": "/cc-commit", "role": "Commit improvements", "required": True},
+        ],
+    },
+    "incident": {
+        "description": "Production incident: triage → fix → postmortem → prevent",
+        "trigger": ["incident", "production down", "outage", "sev1",
+                     "生产故障", "线上崩了", "紧急修复"],
+        "skills": [
+            {"skill": "/cc-incident", "role": "Triage + investigate + mitigate", "required": True},
+            {"skill": "/cc-debug", "role": "Root cause analysis", "required": True},
+            {"skill": "/cc-tdd", "role": "Regression test + fix", "required": True},
+            {"skill": "/cc-review", "role": "Verify fix safety", "required": True},
+            {"skill": "/cc-retro", "role": "Postmortem and learnings", "required": False},
+        ],
+    },
+    "docs-update": {
+        "description": "Documentation refresh: audit gaps → update → verify",
+        "trigger": ["update docs", "documentation", "readme", "stale docs",
+                     "更新文档", "文档过期", "写文档"],
+        "skills": [
+            {"skill": "/cc-scout docs-gap", "role": "Find stale/missing documentation", "required": True},
+            {"skill": "/cc-docs", "role": "Update README, CHANGELOG, API docs", "required": True},
+            {"skill": "/cc-commit", "role": "Commit doc updates", "required": True},
+        ],
+    },
+    "dependency-upgrade": {
+        "description": "Safe dependency upgrade: audit → upgrade → test → fix",
+        "trigger": ["upgrade deps", "update dependencies", "outdated packages",
+                     "升级依赖", "更新包", "依赖过期"],
+        "skills": [
+            {"skill": "/cc-dependency-upgrade", "role": "Audit and plan upgrades", "required": True},
+            {"skill": "/cc-verification", "role": "Run full test suite", "required": True},
+            {"skill": "/cc-review", "role": "Review breaking changes", "required": False},
+            {"skill": "/cc-commit", "role": "Commit upgrades", "required": True},
+        ],
+    },
+    "api-feature": {
+        "description": "API development: design → scaffold → implement → test",
+        "trigger": ["build api", "new endpoint", "api development", "rest api",
+                     "api", "endpoint", "接口", "写API", "新接口", "API开发", "写接口"],
+        "skills": [
+            {"skill": "/cc-brainstorm", "role": "API design exploration", "required": True},
+            {"skill": "/cc-plan", "role": "Endpoint specs with request/response", "required": True},
+            {"skill": "/cc-fastapi", "role": "FastAPI patterns and implementation", "required": True},
+            {"skill": "/cc-tdd", "role": "Test-driven endpoint development", "required": True},
+            {"skill": "/cc-security-review", "role": "Auth + input validation review", "required": True},
+            {"skill": "/cc-commit", "role": "Commit API changes", "required": True},
+        ],
+    },
+    "autonomous": {
+        "description": "Unattended autonomous loop with quality gates",
+        "trigger": ["autonomous", "ralph", "unattended", "run all tasks",
+                     "自治", "无人值守", "自动跑"],
+        "skills": [
+            {"skill": "/cc-autonomous-loops", "role": "Choose loop pattern", "required": True},
+            {"skill": "/cc-work", "role": "Execute tasks with worker isolation", "required": True},
+            {"skill": "/cc-epic-review", "role": "Verify epic completion", "required": True},
+        ],
+    },
 }
 
 
