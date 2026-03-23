@@ -68,6 +68,16 @@ def _add_plugin_commands(sub):
     plug_create = plug_sub.add_parser("create", help="Scaffold a new plugin")
     plug_create.add_argument("name")
 
+    # Skills marketplace (skills.sh)
+    skills_p = sub.add_parser("skills", help="Search/install skills from skills.sh marketplace")
+    skills_sub = skills_p.add_subparsers(dest="skills_cmd")
+    sk_find = skills_sub.add_parser("find", help="Search for skills by keyword")
+    sk_find.add_argument("query", nargs="*")
+    sk_add = skills_sub.add_parser("add", help="Install a skill package")
+    sk_add.add_argument("package")
+    sk_add.add_argument("-g", "--global", dest="global_install", action="store_true", default=False)
+    skills_sub.add_parser("list", help="List installed skills")
+
 
 def _add_gh_commands(sub):
     """Add GitHub integration subcommands."""

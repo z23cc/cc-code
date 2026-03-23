@@ -81,6 +81,10 @@ _SUBCMD_MAP = {
         "list": "plugins:cmd_plugin_list", "enable": "plugins:cmd_plugin_enable",
         "disable": "plugins:cmd_plugin_disable", "create": "plugins:cmd_plugin_create",
     }),
+    "skills": ("skills_cmd", {
+        "find": "skill_store:cmd_skills_find", "add": "skill_store:cmd_skills_add",
+        "list": "skill_store:cmd_skills_list",
+    }),
     "gh": ("gh_cmd", {
         "import": "gh_sync:cmd_gh_import", "export": "gh_sync:cmd_gh_export",
         "status": "gh_sync:cmd_gh_status",
