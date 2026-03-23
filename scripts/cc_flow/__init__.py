@@ -4,7 +4,7 @@ Usage:
     cc-flow <command>          (after pip install -e .)
     python -m cc_flow <command>
 
-Package structure (45 modules, 119 subcommands):
+Package structure (51 modules, 136 commands):
   cc_flow/
     __init__.py      → VERSION
     __main__.py      → python -m cc_flow support

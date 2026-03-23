@@ -4,19 +4,20 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 ## Architecture
 
-- `scripts/cc_flow/` — Task & workflow CLI package (39 modules, lazy-loaded, atomic writes, cross-platform)
+- `scripts/cc_flow/` — Task & workflow CLI package (51 modules, lazy-loaded, atomic writes, cross-platform)
 - `scripts/morph_client.py` — Pure Python Morph API client (Apply, WarpGrep, Embed, Rerank)
-- `scripts/worktree.sh` — Git worktree manager (create/list/switch/remove/cleanup/status)
+- `scripts/worktree.sh` — Git worktree manager (create/list/switch/remove/cleanup/status + nesting guard)
 - `agents/` — 11 general agents + 12 scout agents (read-only specialists), all `model: inherit`
-- `templates/ralph/` — Ralph autonomous harness templates (ralph.sh, config.env, prompts, guard hooks)
-- `skills/` — 59 skills (all prefixed `cc-`):
-  - **Core (35):** brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, teams, autoimmune, readiness-audit, search-strategy, git-workflow, prompt-engineering, clean-architecture, context-tips, docs, incident, dependency-upgrade, feedback-loop, web-design, ui-ux, browser, optimize, **work, worktree, plan-sync, epic-review, review-backend, ralph, rp**
+- `templates/ralph/` — Ralph autonomous harness (goal-driven + self-heal + receipt gates)
+- `skills/` — 68 skills (all prefixed `cc-`):
+  - **Core (42):** brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, teams, autoimmune, readiness-audit, search-strategy, git-workflow, prompt-engineering, clean-architecture, context-tips, docs, incident, dependency-upgrade, feedback-loop, web-design, ui-ux, browser, optimize, **work, worktree, plan-sync, epic-review, review-backend, ralph, rp, bridge, ship, autonomous-loops, clone-site, qa, qa-report, aside, grill-me, retro, office-hours**
   - **Python pack (12):** python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, scaffold, deploy, task-queues
   - **Scouts (12):** scout-practices, scout-repo, scout-docs, scout-docs-gap, scout-security, scout-testing, scout-tooling, scout-build, scout-env, scout-observability, scout-gaps, scout-context
-- `commands/` — 32 slash commands (all prefixed `/cc-`)
+  - **Chains:** 22 predefined workflows (idea-to-ship, feature, bugfix, qa-fix, incident, security-audit, etc.)
+- `commands/` — 42 slash commands (all prefixed `/cc-`)
 - `tests/` — 245 tests (128 cc-flow integration + 87 unit + 15 morph + 15 bridge)
-- `rules/` — 9 always-on rules: python-style, testing, security, git, docs-sync, agent-orchestration, workflow, performance, tool-priority
-- `hooks/` — 10 hooks across 6 events: UserPromptSubmit (auto-context), PreToolUse (worktree-guard + config-protect + commit-gate + push-review), PostToolUse (task-hint + edit-verify), SessionStart, PreCompact, Stop
+- `rules/` — 10 always-on rules: python-style, testing, security, git, docs-sync, agent-orchestration, workflow, performance, tool-priority, proactive-suggestions
+- `hooks/` — 11 hooks across 6 events: UserPromptSubmit (auto-context), PreToolUse (worktree-guard + config-protect + mode-guard + commit-gate + push-review), PostToolUse (task-hint + edit-verify), SessionStart, PreCompact, Stop
 
 ## Quick Decision Tree
 
@@ -26,12 +27,16 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 | Execute a plan end-to-end | `/cc-work epic-1` (worktree + worker + review loop) |
 | Verify epic completion | `/cc-epic-review epic-1` |
 | Run autonomously (unattended) | `cc-flow ralph` or `cc-flow ralph --goal "all tests pass"` |
+| Clone/replicate a website | `/cc-clone-site https://example.com` |
+| QA test a site | `/cc-qa` (test + fix) or `/cc-qa-report` (report only) |
 | Configure review backend | `cc-flow config set review.backend rp` |
 | Fix a bug | `/cc-debug` (researcher → fixer → reviewer) |
 | Fix build/lint errors | `/cc-fix` (build-fixer agent) |
 | Review code quality | `/cc-review` (parallel reviewers) |
-| Understand unfamiliar code | `/cc-research` (researcher agent) |
+| Understand unfamiliar code | `/cc-research` or `cc-flow deep-search "query"` |
 | Assess project health | `/cc-audit` or `/cc-prime` (all scouts) |
+| Manage worktrees | `cc-flow worktree create/list/status/info` |
+| Enable safety mode | `cc-flow careful --enable` or `cc-flow guard --enable` |
 | Not sure what to do | `/cc-route "describe your task"` |
 
 ## Teams
@@ -71,12 +76,21 @@ cc-flow search "auth flow" --rerank            # semantic search + rerank
 cc-flow route "fix login bug"                  # smart routing
 cc-flow bridge-status                          # Morph × RP × SM status
 cc-flow deep-search "how does auth work"       # Morph search → RP analysis
+cc-flow worktree create feature-auth           # create isolated worktree
+cc-flow worktree list                          # list all worktrees
+cc-flow worktree info                          # current worktree context
+cc-flow ralph                                  # autonomous task execution
+cc-flow ralph --goal "all tests pass"          # goal-driven until achieved
+cc-flow careful --enable                       # safety mode (warn on destructive ops)
+cc-flow checkpoint create "before-refactor"    # save state snapshot
+cc-flow context-budget                         # analyze token overhead
 cc-flow session save --notes "context"         # persist session
 cc-flow session restore                        # resume
 cc-flow graph --format ascii                   # dependency tree
 cc-flow doctor                                 # health check
 cc-flow verify                                 # lint + test (auto-detect language)
 cc-flow verify --fix                           # auto-fix lint, then test
+cc-flow chain suggest "what should I do"       # suggest best workflow chain
 cc-flow export epic-1-xxx                      # export epic as markdown
 cc-flow clean --dry-run                        # preview old data cleanup
 ```

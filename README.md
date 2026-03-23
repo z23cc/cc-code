@@ -181,11 +181,16 @@ Ralph spawns fresh Claude sessions per iteration, validates completion via recei
 | **Work Pipeline** | `/cc-work epic-1` | End-to-end: task → worktree → worker → verify → review → done |
 | **Multi-Backend Review** | `/cc-review --backend=rp` | agent, RepoPrompt, Codex CLI, export |
 | **Review Setup** | `cc-flow review-setup` | Detect backends + configure defaults |
-| **Ralph Autonomous** | `ralph.sh` | Unattended execution with receipt-based quality gates |
+| **Ralph Autonomous** | `cc-flow ralph --goal "..."` | Goal-driven unattended execution with self-heal |
 | **Epic Review** | `/cc-epic-review` | Verify all tasks satisfy epic spec |
 | **Plan Sync** | Automatic in `/cc-work` | Detect implementation drift, update downstream specs |
-| **Worktree** | `/cc-worktree create` | Isolated work in `.claude/worktrees/` (Claude Code native) |
-| **Cross-Worktree State** | `cc-flow state-path` | Task state shared via `.git/cc-flow-state/` |
+| **Worktree** | `cc-flow worktree create` | Default isolation mode, auto-detected, nesting-safe |
+| **Clone Site** | `/cc-clone-site URL` | Replicate reference site: screenshot → analyze → implement → QA |
+| **QA Testing** | `/cc-qa` or `/cc-qa-report` | Diff-aware QA with health scoring (0-100) |
+| **Safety Modes** | `cc-flow careful/freeze/guard` | Session-scoped safety guards for destructive ops |
+| **Checkpoint** | `cc-flow checkpoint create` | Save/compare workflow state snapshots |
+| **Context Budget** | `cc-flow context-budget` | Analyze token overhead from rules, skills, agents |
+| **Skill Chains** | `cc-flow chain suggest "task"` | 22 predefined workflows with alternatives |
 | **REPL** | `cc-flow` | Interactive shell with tab completion + "did you mean?" |
 | **Dashboard** | `cc-flow dashboard` | Colored one-screen project overview |
 | **Smart Router** | `cc-flow route "fix bug"` | Q-learning command suggestions |
@@ -204,19 +209,20 @@ Ralph spawns fresh Claude sessions per iteration, validates completion via recei
 ## Architecture
 
 ```
-cc-flow CLI (45 modules, 119 commands)
+cc-flow CLI (51 modules, 136 commands)
 ├── Core: init, epic/task CRUD, deps, templates (atomic writes, cross-platform locks)
 ├── Views: list, dashboard, progress, graph, export
 ├── Work: start, done, block, reopen, diff, bulk, /cc-work pipeline
 ├── Review: review-setup, multi-backend routing (agent/rp/codex/export), receipts
 ├── Search: find, similar, dedupe, suggest, index (Morph embed)
-├── Quality: verify, scan, doctor, health, auto deep (OODA loop)
+├── Quality: verify, scan, doctor, health, auto deep (OODA loop), validate-skills
 ├── Analytics: stats, standup, changelog, burndown, report, forecast, evolve
 ├── Routing: route (Q-learning + embedding + rerank), learn, consolidate
-├── Orchestration: 8 skill chains, 6 workflows, 3 pipelines, Ralph autonomous
-├── Worktree: state-path, migrate-state, worktree.sh, boundary guard (.claude/worktrees/)
+├── Orchestration: 22 skill chains, 6 workflows, 3 pipelines, Ralph goal-driven
+├── Worktree: create, list, switch, remove, status, info (auto-detect, nesting-safe)
+├── Safety: careful, freeze, guard (session-scoped modes), checkpoint create/verify
 ├── Bridge: deep-search, smart-chat, embed-structure, recall-review (Morph×RP×SM)
-├── Integration: gh sync, context, session, Supermemory, skills.sh
+├── Integration: gh sync, context, session, Supermemory, skills.sh, context-budget
 └── UX: REPL with tab completion, colored skin, "did you mean?", progressive help
 
 Skills (58):

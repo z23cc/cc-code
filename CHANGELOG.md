@@ -1,5 +1,37 @@
 # Changelog
 
+## [5.4.0] - 2026-03-23
+### Added
+- Safety modes: `cc-flow careful/freeze/guard` — session-scoped safety guards
+- QA skills: `cc-qa` (test+fix with health scoring) and `cc-qa-report` (report-only)
+- Clone site: `/cc-clone-site URL` — replicate reference website end-to-end
+- Autonomous: `cc-flow ralph --goal "..."` — goal-driven with self-heal
+- Worktree CLI: `cc-flow worktree create/list/switch/remove/status/info`
+- Checkpoint: `cc-flow checkpoint create/verify/compare/list`
+- Context budget: `cc-flow context-budget` — token overhead analysis
+- Ship workflow: `/cc-ship` — version bump + changelog + PR
+- Skills: aside, grill-me, retro, office-hours, autonomous-loops, bridge, clone-site, qa, qa-report (68 total)
+- Chains: 22 predefined workflows (idea-to-ship, qa-fix, incident, security-audit, etc.)
+- Agent personality: emoji + deliverables for all 23 agents
+- Proactive suggestions rule: 12 contextual triggers
+- Config-protect hook: warns on linter/CI config changes
+- Push-review hook: diff stats before git push
+- Post-edit-verify hook: reminds to verify after source edits
+- Mode-guard hook: enforces careful/freeze/guard modes
+
+### Improved
+- Worktree is now default isolation mode for cc-work and Ralph
+- Worktree-guard auto-detects worktree context (zero config)
+- Worktree nesting prevention (blocks create inside worktree)
+- All skills: TRIGGER + NOT FOR + DEPENDS ON + FLOWS INTO metadata
+- All skill/command references: `cc-flow` CLI instead of `python3 cc-flow.py`
+- Chain suggest: top-3 alternatives with scoring
+- Ralph: goal verification (tests/health/custom) + periodic self-heal scan
+
+### Fixed
+- 12 scout agents: model: haiku → model: inherit (per agent-orchestration rule)
+- pre-commit-gate: stricter pattern matching, excludes git log/show
+
 ## [5.3.0] - 2026-03-23
 ### Added
 - Bridge module (`bridge.py`): 6 Morph×RP×Supermemory collaboration loops
