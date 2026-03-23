@@ -132,6 +132,13 @@ def _add_workflow_commands(sub):
     wf_chain = wf_sub.add_parser("chain", help="Run ad-hoc command chain: 'verify,scan,health'")
     wf_chain.add_argument("chain", help="Comma-separated commands")
 
+    # Pipelines (context-aware skill orchestration)
+    pipe_p = sub.add_parser("pipeline", help="Skill orchestration with context passing")
+    pipe_sub = pipe_p.add_subparsers(dest="pipeline_cmd")
+    pipe_sub.add_parser("list", help="List available pipelines")
+    pipe_run = pipe_sub.add_parser("run", help="Execute a pipeline")
+    pipe_run.add_argument("name")
+
 
 def _add_template_commands(sub):
     """Add template management subcommands."""
