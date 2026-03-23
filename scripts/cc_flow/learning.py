@@ -28,6 +28,28 @@ def _save_route_stats(stats):
     ROUTE_STATS_FILE.write_text(json.dumps(stats, indent=2) + "\n")
 
 
+def _auto_sync_memory(learning, fname):
+    """Auto-sync a learning to Supermemory if API key is set."""
+    try:
+        from cc_flow.memory import _get_client
+        client = _get_client()
+        if not client:
+            return
+        content = (
+            f"Task: {learning.get('task', '')}\n"
+            f"Outcome: {learning.get('outcome', '')}\n"
+            f"Approach: {learning.get('approach', '')}\n"
+            f"Lesson: {learning.get('lesson', '')}"
+        )
+        client.add(
+            content=content,
+            custom_id=f"cc-flow-learning-{fname.replace('.json', '')}",
+            container_tags=["cc-flow", "learning", learning.get("outcome", "")],
+        )
+    except (ImportError, RuntimeError, TimeoutError, OSError, ValueError, KeyError):
+        pass  # Best-effort, don't fail learn on sync error
+
+
 def cmd_learn(args):
     """Record a learning from the current session for future routing."""
     LEARNINGS_DIR.mkdir(parents=True, exist_ok=True)
@@ -66,6 +88,9 @@ def cmd_learn(args):
             q_update(args.task, learning["command"], args.outcome)
         except ImportError:
             pass
+
+    # Auto-sync to Supermemory if configured
+    _auto_sync_memory(learning, fname)
 
     print(json.dumps({"success": True, "saved": str(path)}))
 

@@ -115,6 +115,27 @@ def _calc_confidence(best, past_match, pattern_match, cmd_stats):
     return min(confidence, 99)
 
 
+def _attach_memory_recall(result, query):
+    """Attach Supermemory recall results to route if available."""
+    try:
+        from cc_flow.memory import _get_client
+        client = _get_client()
+        if not client:
+            return
+        results = client.search.execute(
+            q=query, container_tags=["cc-flow", "learning"],
+            limit=2, rerank=True,
+        )
+        items = [
+            (getattr(c, "summary", "") or getattr(c, "content", "") or "")[:100]
+            for c in getattr(results, "results", [])
+        ]
+        if items:
+            result["memory_recall"] = items
+    except (ImportError, RuntimeError, TimeoutError, OSError, ValueError, KeyError):
+        pass
+
+
 def _attach_chain(result, query):
     """Attach matching skill chain to route result."""
     try:
@@ -169,6 +190,8 @@ def cmd_route(args):
         },
     }
     _attach_chain(result, query)
+
+    _attach_memory_recall(result, query)
 
     if past_match:
         result["past_learning"] = past_match
