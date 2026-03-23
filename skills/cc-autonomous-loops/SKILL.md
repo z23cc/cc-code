@@ -80,6 +80,33 @@ Workers produce proof-of-work JSON before the loop advances. No receipt = no pro
 - `touch .../PAUSE` — pause at next iteration boundary
 - `touch .../STOP` — stop gracefully
 
+## Pattern 6: Goal-Driven (Ralph + Self-Heal)
+
+Set `GOAL` in config.env → Ralph runs continuously until the goal is achieved:
+
+```bash
+# config.env
+GOAL="All tests pass and health score >= 90"
+GOAL_VERIFY="health"        # "tests" | "health" | "custom"
+GOAL_HEALTH_THRESHOLD=90
+SELF_HEAL=1                  # scan for new issues when stuck
+SELF_HEAL_SCAN_INTERVAL=5   # deep scan every 5 iterations
+MAX_ITERATIONS=100           # safety ceiling
+```
+
+How it works:
+1. If no tasks exist → auto-generate from GOAL description
+2. Work through tasks normally (plan → implement → review)
+3. After each iteration → check if GOAL is met
+4. If tasks exhausted but GOAL not met → **self-heal**: deep scan → create new tasks
+5. Periodic re-scan catches emergent issues
+6. Stop when GOAL achieved or MAX_ITERATIONS reached
+
+```bash
+bash scripts/ralph/ralph.sh
+# Output: "=== GOAL ACHIEVED ===" or "Goal NOT achieved after N iterations"
+```
+
 ## Choosing a Pattern
 
 | Situation | Pattern |
@@ -89,11 +116,12 @@ Workers produce proof-of-work JSON before the loop advances. No receipt = no pro
 | Independent tasks | Worktree Parallel |
 | Human review per change | Continuous PR |
 | Exploratory improvement | OODA Deep |
+| **Achieve a specific outcome** | **Goal-Driven** |
 
 ## Related Skills
 
-- **cc-ralph** — Ralph autonomous harness (Pattern 2)
+- **cc-ralph** — Ralph autonomous harness (Patterns 2 + 6)
 - **cc-work** — task execution pipeline (used by all patterns)
 - **cc-worktree** — worktree management (Pattern 3)
-- **cc-autoimmune** — scan-fix loop (Pattern 1 basis)
+- **cc-autoimmune** — scan-fix loop (Pattern 1 + self-heal basis)
 - **cc-parallel-agents** — parallel worker dispatch

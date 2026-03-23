@@ -188,13 +188,16 @@ SKILL_CHAINS = {
         ],
     },
     "autonomous": {
-        "description": "Unattended autonomous loop with quality gates",
-        "trigger": ["autonomous", "ralph", "unattended", "run all tasks",
-                     "自治", "无人值守", "自动跑"],
+        "description": "Unattended autonomous loop: goal-driven with self-heal + quality gates",
+        "trigger": ["autonomous", "ralph", "unattended", "run all tasks", "until done",
+                     "keep going", "achieve goal", "goal driven",
+                     "自治", "无人值守", "自动跑", "跑到完成", "达成目标"],
         "skills": [
-            {"skill": "/cc-autonomous-loops", "role": "Choose loop pattern", "required": True},
+            {"skill": "/cc-autonomous-loops", "role": "Choose loop pattern (simple/ralph/goal-driven)", "required": True},
+            {"skill": "/cc-ralph", "role": "Configure Ralph: GOAL, SELF_HEAL, MAX_ITERATIONS", "required": True},
             {"skill": "/cc-work", "role": "Execute tasks with worker isolation", "required": True},
-            {"skill": "/cc-epic-review", "role": "Verify epic completion", "required": True},
+            {"skill": "/cc-autoimmune", "role": "Self-heal: scan + create tasks when stuck", "required": False},
+            {"skill": "/cc-epic-review", "role": "Verify goal/epic completion", "required": True},
         ],
     },
     # ── Remaining unchained skills ──
