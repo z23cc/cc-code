@@ -143,6 +143,17 @@ def _add_workflow_commands(sub):
     pipe_create.add_argument("--steps", required=True, help="Comma-separated commands")
     pipe_create.add_argument("--description", default="")
 
+    # Memory (Supermemory integration)
+    mem_p = sub.add_parser("memory", help="Persistent knowledge via Supermemory")
+    mem_sub = mem_p.add_subparsers(dest="memory_cmd")
+    mem_save = mem_sub.add_parser("save", help="Save knowledge to Supermemory")
+    mem_save.add_argument("--content", required=True)
+    mem_save.add_argument("--tags", default="")
+    mem_search = mem_sub.add_parser("search", help="Search knowledge")
+    mem_search.add_argument("query", nargs="*")
+    mem_search.add_argument("--limit", type=int, default=5)
+    mem_sub.add_parser("sync", help="Sync local learnings to Supermemory")
+
 
 def _add_template_commands(sub):
     """Add template management subcommands."""

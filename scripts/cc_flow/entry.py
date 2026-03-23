@@ -82,6 +82,10 @@ _SUBCMD_MAP = {
         "list": "pipeline:cmd_pipeline_list", "run": "pipeline:cmd_pipeline_run",
         "create": "pipeline:cmd_pipeline_create",
     }),
+    "memory": ("memory_cmd", {
+        "save": "memory:cmd_memory_save", "search": "memory:cmd_memory_search",
+        "sync": "memory:cmd_memory_sync",
+    }),
     "plugin": ("plugin_cmd", {
         "list": "plugins:cmd_plugin_list", "enable": "plugins:cmd_plugin_enable",
         "disable": "plugins:cmd_plugin_disable", "create": "plugins:cmd_plugin_create",
