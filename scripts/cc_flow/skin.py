@@ -112,6 +112,17 @@ def progress_bar(current, total, label="", width=20):
     print(f"  {_c(color, bar)} {pct:>3}% {_c(_DIM, label)}")
 
 
+def did_you_mean(typo, candidates, threshold=0.6):
+    """Find closest match for a typo. Returns best match or None."""
+    from difflib import SequenceMatcher
+    best, best_score = None, 0
+    for c in candidates:
+        score = SequenceMatcher(None, typo.lower(), c.lower()).ratio()
+        if score > best_score:
+            best, best_score = c, score
+    return best if best_score >= threshold else None
+
+
 def goodbye():
     """Print exit message."""
     print(f"\n  {_c(_DIM, 'bye')} {_c(_ACCENT, '◆')}\n")

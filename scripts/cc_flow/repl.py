@@ -121,10 +121,17 @@ def _dispatch(cmd, args):
     else:
         try:
             from cc_flow.plugins import dispatch_plugin_command
-            if not dispatch_plugin_command(cmd, args):
-                skin.error(f"Unknown command: {cmd}")
+            if dispatch_plugin_command(cmd, args):
+                return
         except ImportError:
-            skin.error(f"Unknown command: {cmd}")
+            pass
+        # Unknown command — suggest closest match
+        all_cmds = list(_COMMANDS.keys()) + list(_SUBCMD_MAP.keys()) + list(_SPECIAL.keys())
+        suggestion = skin.did_you_mean(cmd, all_cmds)
+        if suggestion:
+            skin.error(f"Unknown command: {cmd}. Did you mean: {suggestion}?")
+        else:
+            skin.error(f"Unknown command: {cmd}. Try: help")
 
 
 def run_repl():
