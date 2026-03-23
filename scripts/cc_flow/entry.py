@@ -89,7 +89,7 @@ _SUBCMD_MAP = {
     }),
     "chain": ("chain_cmd", {
         "list": "skill_chains:cmd_chain_list", "show": "skill_chains:cmd_chain_show",
-        "suggest": "skill_chains:cmd_chain_suggest",
+        "suggest": "skill_chains:cmd_chain_suggest", "run": "skill_chains:cmd_chain_run",
     }),
     "plugin": ("plugin_cmd", {
         "list": "plugins:cmd_plugin_list", "enable": "plugins:cmd_plugin_enable",

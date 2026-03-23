@@ -164,3 +164,39 @@ def cmd_chain_suggest(args):
         ],
         "instruction": f"Run skills in order: {' → '.join(s['skill'] for s in chain['skills'])}",
     }))
+
+
+def cmd_chain_run(args):
+    """Execute a skill chain — outputs step-by-step instructions for the agent."""
+    name = args.name
+    if name not in SKILL_CHAINS:
+        error(f"Chain not found: {name}. Available: {', '.join(SKILL_CHAINS.keys())}")
+
+    chain = SKILL_CHAINS[name]
+    only_required = getattr(args, "required_only", False)
+
+    steps = chain["skills"]
+    if only_required:
+        steps = [s for s in steps if s["required"]]
+
+    print(json.dumps({
+        "success": True,
+        "chain": name,
+        "description": chain["description"],
+        "execute": [
+            {
+                "step": i + 1,
+                "skill": s["skill"],
+                "role": s["role"],
+                "required": s["required"],
+                "instruction": f"Run: {s['skill']}",
+            }
+            for i, s in enumerate(steps)
+        ],
+        "total_steps": len(steps),
+        "instruction": (
+            f"Execute this {name} chain step by step:\n"
+            + "\n".join(f"  {i + 1}. {s['skill']} — {s['role']}" for i, s in enumerate(steps))
+            + "\n\nStart with step 1. After each step completes, proceed to the next."
+        ),
+    }))

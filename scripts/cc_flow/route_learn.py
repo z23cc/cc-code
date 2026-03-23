@@ -146,6 +146,7 @@ def _attach_chain(result, query):
                 "name": chain_name,
                 "description": chain_data["description"],
                 "steps": [s["skill"] for s in chain_data["skills"]],
+                "run": f"cc-flow chain run {chain_name}",
             }
     except ImportError:
         pass

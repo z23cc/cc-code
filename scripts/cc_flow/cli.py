@@ -167,6 +167,9 @@ def _add_workflow_commands(sub):
     chain_show.add_argument("name")
     chain_suggest = chain_sub.add_parser("suggest", help="Suggest best chain for a task")
     chain_suggest.add_argument("query", nargs="*")
+    chain_run = chain_sub.add_parser("run", help="Execute a skill chain")
+    chain_run.add_argument("name")
+    chain_run.add_argument("--required-only", action="store_true", default=False)
 
 
 def _add_template_commands(sub):
