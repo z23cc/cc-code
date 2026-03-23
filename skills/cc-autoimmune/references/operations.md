@@ -59,20 +59,19 @@ printf 'timestamp\titeration\tmode\tarea\ttask_id\tdescription\tstatus\tfiles_ch
 ### Option 2: .tasks/ (structured, with cc-flow)
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
 # Mode D auto-generates an epic:
-$CCFLOW epic create --title "Autoimmune scan 2026-03-21"
+cc-flow epic create --title "Autoimmune scan 2026-03-21"
 
 # With tasks from scan results:
-$CCFLOW task create --epic epic-N-autoimmune-scan --title "[P1] Fix bandit HIGH: hardcoded secret in config.py:42"
-$CCFLOW task create --epic epic-N-autoimmune-scan --title "[P2] Fix mypy: missing return type on process_order"
-$CCFLOW task create --epic epic-N-autoimmune-scan --title "[P3] Fix ruff F401: unused import os in utils.py"
+cc-flow task create --epic epic-N-autoimmune-scan --title "[P1] Fix bandit HIGH: hardcoded secret in config.py:42"
+cc-flow task create --epic epic-N-autoimmune-scan --title "[P2] Fix mypy: missing return type on process_order"
+cc-flow task create --epic epic-N-autoimmune-scan --title "[P3] Fix ruff F401: unused import os in utils.py"
 
 # During Mode A, the loop uses:
-$CCFLOW ready --epic epic-N-autoimmune-scan  # Find next task
-$CCFLOW start <task-id>                       # Claim it
-$CCFLOW done <task-id> --summary "..."        # Mark done after commit
+cc-flow ready --epic epic-N-autoimmune-scan  # Find next task
+cc-flow start <task-id>                       # Claim it
+cc-flow done <task-id> --summary "..."        # Mark done after commit
 ```
 
 Use `.tasks/` when:
@@ -100,7 +99,7 @@ Use `improvement-program.md` when:
 
 1. Check `improvement-results.tsv` for last completed iteration
 2. Check task source:
-   - `.tasks/`: `$CCFLOW progress` → see what's left
+   - `.tasks/`: `cc-flow progress` → see what's left
    - `improvement-program.md`: look for last `[x]`
 3. `git log --oneline -5` to see branch state
 4. Run verify command to confirm clean baseline
@@ -139,6 +138,6 @@ Use `improvement-program.md` when:
 
 ### Next Steps
 - Review: `git log --oneline <SHA>..HEAD`
-- Remaining tasks: `$CCFLOW progress` or check improvement-program.md
+- Remaining tasks: `cc-flow progress` or check improvement-program.md
 - Skipped areas need manual investigation
 ```

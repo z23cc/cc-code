@@ -36,14 +36,13 @@ But Task 1 renamed it to UserAPIView in api/views/users.py
 After task N completes, compare what changed vs what downstream tasks expect:
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
 # What files changed in the completed task?
-CHANGED_FILES=$($CCFLOW diff $COMPLETED_TASK --stat)
+CHANGED_FILES=$(cc-flow diff $COMPLETED_TASK --stat)
 
 # What do remaining tasks reference?
-for TASK in $($CCFLOW tasks --epic $EPIC_ID --status todo); do
-    SPEC=$($CCFLOW show $TASK)
+for TASK in $(cc-flow tasks --epic $EPIC_ID --status todo); do
+    SPEC=$(cc-flow show $TASK)
     # Check if spec references any changed files/functions/classes
 done
 ```
@@ -68,7 +67,7 @@ For each affected task, dispatch a research agent to:
 
 ```bash
 # Update task spec
-$CCFLOW task set-spec $TASK --file /tmp/updated-spec.md
+cc-flow task set-spec $TASK --file /tmp/updated-spec.md
 ```
 
 ### Step 4: Report
@@ -111,8 +110,7 @@ When `work.plan_sync=true`, plan-sync runs automatically after each task:
 ## Config
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
-$CCFLOW config set work.plan_sync true   # Enable auto-sync in /cc-work
+cc-flow config set work.plan_sync true   # Enable auto-sync in /cc-work
 ```
 
 ## Related Skills

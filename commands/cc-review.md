@@ -11,14 +11,13 @@ description: >
 Activate code review. First determine the **review backend**, then route.
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 ```
 
 ## Backend Selection (first match wins)
 
 1. User argument: `/cc-review --backend=rp` or `/cc-review --backend=codex`
 2. Environment variable: `CC_REVIEW_BACKEND`
-3. Config: `$CCFLOW config get review.backend`
+3. Config: `cc-flow config get review.backend`
 4. Default: `agent`
 
 ## Route by Backend
@@ -113,7 +112,7 @@ When `REVIEW_RECEIPT_PATH` is set (e.g., in Ralph mode), write after review:
 ## Auto-Learn
 
 ```bash
-$CCFLOW learn --task "[reviewed]" --outcome [success/partial] \
+cc-flow learn --task "[reviewed]" --outcome [success/partial] \
   --approach "review found: [types]" --lesson "[pattern]" --score [1-5] --used-command /cc-review
 ```
 

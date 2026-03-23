@@ -15,59 +15,58 @@ description: >
 cc-flow is BUNDLED with cc-code. Always use:
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 ```
 
 ## Quick Reference
 
 ```bash
 # Initialize .tasks/ directory
-$CCFLOW init
+cc-flow init
 
 # Create epic
-$CCFLOW epic create --title "Add user authentication"
+cc-flow epic create --title "Add user authentication"
 
 # Create tasks under epic
-$CCFLOW task create --epic epic-1-add-user-auth --title "Create User model"
-$CCFLOW task create --epic epic-1-add-user-auth --title "Add login endpoint" --deps "epic-1-add-user-auth.1"
-$CCFLOW task create --epic epic-1-add-user-auth --title "Add JWT middleware" --deps "epic-1-add-user-auth.2"
+cc-flow task create --epic epic-1-add-user-auth --title "Create User model"
+cc-flow task create --epic epic-1-add-user-auth --title "Add login endpoint" --deps "epic-1-add-user-auth.1"
+cc-flow task create --epic epic-1-add-user-auth --title "Add JWT middleware" --deps "epic-1-add-user-auth.2"
 
 # View everything
-$CCFLOW list                                         # All epics + tasks (human)
-$CCFLOW epics                                        # Epics only (JSON)
-$CCFLOW tasks --epic epic-1-add-user-auth            # Tasks for one epic
-$CCFLOW tasks --status todo                          # Filter by status
-$CCFLOW status                                       # Global overview (JSON)
-$CCFLOW next --epic epic-1-add-user-auth             # Smart next task (priority-aware)
-$CCFLOW show epic-1-add-user-auth                    # Epic detail + spec
-$CCFLOW show epic-1-add-user-auth.2                  # Task detail + spec
+cc-flow list                                         # All epics + tasks (human)
+cc-flow epics                                        # Epics only (JSON)
+cc-flow tasks --epic epic-1-add-user-auth            # Tasks for one epic
+cc-flow tasks --status todo                          # Filter by status
+cc-flow status                                       # Global overview (JSON)
+cc-flow next --epic epic-1-add-user-auth             # Smart next task (priority-aware)
+cc-flow show epic-1-add-user-auth                    # Epic detail + spec
+cc-flow show epic-1-add-user-auth.2                  # Task detail + spec
 
 # What's ready to work on?
-$CCFLOW ready --epic epic-1-add-user-auth
+cc-flow ready --epic epic-1-add-user-auth
 
 # Work on a task
-$CCFLOW start epic-1-add-user-auth.1
+cc-flow start epic-1-add-user-auth.1
 # ... implement ...
-$CCFLOW done epic-1-add-user-auth.1 --summary "Created User model with SQLAlchemy"
+cc-flow done epic-1-add-user-auth.1 --summary "Created User model with SQLAlchemy"
 
 # Block a task
-$CCFLOW block epic-1-add-user-auth.3 --reason "Waiting for auth library decision"
+cc-flow block epic-1-add-user-auth.3 --reason "Waiting for auth library decision"
 
 # Reset a task back to todo
-$CCFLOW task reset epic-1-add-user-auth.3
+cc-flow task reset epic-1-add-user-auth.3
 
 # Add dependency after creation
-$CCFLOW dep add epic-1-add-user-auth.3 epic-1-add-user-auth.1
+cc-flow dep add epic-1-add-user-auth.3 epic-1-add-user-auth.1
 
 # Progress bar
-$CCFLOW progress
+cc-flow progress
 # epic-1-add-user-auth: ██████░░░░░░░░░░░░░░ 33% (1/3)
 
 # Close epic (requires all tasks done) — archives to completed/
-$CCFLOW epic close epic-1-add-user-auth
+cc-flow epic close epic-1-add-user-auth
 
 # Validate structure (deps, cycles, missing specs)
-$CCFLOW validate
+cc-flow validate
 ```
 
 ## Task States
@@ -77,7 +76,7 @@ todo → in_progress → done
                   ↘ blocked (with reason)
 ```
 
-Dependencies are enforced: `$CCFLOW start` fails if dependencies aren't done. `$CCFLOW ready` only shows tasks with all deps satisfied.
+Dependencies are enforced: `cc-flow start` fails if dependencies aren't done. `cc-flow ready` only shows tasks with all deps satisfied.
 
 ## Directory Structure
 
@@ -100,12 +99,12 @@ Dependencies are enforced: `$CCFLOW start` fails if dependencies aren't done. `$
 After creating a plan (see plan skill), convert each task to tracked items:
 
 ```bash
-$CCFLOW init
-$CCFLOW epic create --title "Feature name from plan"
+cc-flow init
+cc-flow epic create --title "Feature name from plan"
 
 # For each task in the plan:
-$CCFLOW task create --epic epic-N-slug --title "Task from plan step 1"
-$CCFLOW task create --epic epic-N-slug --title "Task from plan step 2" --deps "epic-N-slug.1"
+cc-flow task create --epic epic-N-slug --title "Task from plan step 1"
+cc-flow task create --epic epic-N-slug --title "Task from plan step 2" --deps "epic-N-slug.1"
 ```
 
 Then edit each `.tasks/tasks/epic-N-slug.M.md` to add description and acceptance criteria from the plan.
@@ -114,20 +113,20 @@ Then edit each `.tasks/tasks/epic-N-slug.M.md` to add description and acceptance
 
 ```bash
 # Find next task
-$CCFLOW ready --epic epic-1-add-user-auth
+cc-flow ready --epic epic-1-add-user-auth
 # → {"ready": [{"id": "epic-1-add-user-auth.2", "title": "Add login endpoint"}]}
 
 # Start it
-$CCFLOW start epic-1-add-user-auth.2
+cc-flow start epic-1-add-user-auth.2
 
 # Dispatch worker agent with the task spec
 # Worker reads: .tasks/tasks/epic-1-add-user-auth.2.md
 
 # When worker completes
-$CCFLOW done epic-1-add-user-auth.2 --summary "Added POST /api/login with JWT"
+cc-flow done epic-1-add-user-auth.2 --summary "Added POST /api/login with JWT"
 
 # Check progress
-$CCFLOW progress
+cc-flow progress
 ```
 
 ### 3. With Autoimmune
@@ -135,10 +134,10 @@ $CCFLOW progress
 For improvement loops, create an epic with improvement tasks:
 
 ```bash
-$CCFLOW epic create --title "Code quality improvements"
-$CCFLOW task create --epic epic-2-code-quality --title "Add type hints to api module"
-$CCFLOW task create --epic epic-2-code-quality --title "Extract validation logic"
-$CCFLOW task create --epic epic-2-code-quality --title "Add missing docstrings"
+cc-flow epic create --title "Code quality improvements"
+cc-flow task create --epic epic-2-code-quality --title "Add type hints to api module"
+cc-flow task create --epic epic-2-code-quality --title "Extract validation logic"
+cc-flow task create --epic epic-2-code-quality --title "Add missing docstrings"
 ```
 
 Then run autoimmune referencing these tasks.
@@ -148,7 +147,7 @@ Then run autoimmune referencing these tasks.
 All commands output JSON for machine parsing. Use in scripts:
 
 ```bash
-READY=$($CCFLOW ready --epic epic-1-add-user-auth)
+READY=$(cc-flow ready --epic epic-1-add-user-auth)
 NEXT_ID=$(echo "$READY" | python3 -c "import sys,json; r=json.load(sys.stdin)['ready']; print(r[0]['id'] if r else '')")
 ```
 

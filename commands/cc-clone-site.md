@@ -6,7 +6,6 @@ description: "Replicate a reference website — screenshot, analyze, implement, 
 Clone a reference site. Pass the target URL as argument.
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 TARGET_URL="${1:?Provide target URL}"
 
 echo "Cloning: $TARGET_URL"

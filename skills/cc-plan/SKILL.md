@@ -127,19 +127,18 @@ Each phase should be mergeable independently.
 ## Converting Plan to cc-flow Tasks
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
 # Option 1: Auto-import from plan markdown
-$CCFLOW epic import --file docs/specs/auth-design.md --sequential
+cc-flow epic import --file docs/specs/auth-design.md --sequential
 
 # Option 2: Manual creation with templates
-$CCFLOW epic create --title "Add JWT Authentication"
-$CCFLOW task create --epic epic-1-add-jwt --title "Define User model" --size S --template feature --tags "auth,domain"
-$CCFLOW task create --epic epic-1-add-jwt --title "Implement token service" --size M --template feature --tags "auth,service" --deps "epic-1-add-jwt.1"
-$CCFLOW task create --epic epic-1-add-jwt --title "Add login endpoint" --size M --template feature --tags "auth,api" --deps "epic-1-add-jwt.2"
+cc-flow epic create --title "Add JWT Authentication"
+cc-flow task create --epic epic-1-add-jwt --title "Define User model" --size S --template feature --tags "auth,domain"
+cc-flow task create --epic epic-1-add-jwt --title "Implement token service" --size M --template feature --tags "auth,service" --deps "epic-1-add-jwt.1"
+cc-flow task create --epic epic-1-add-jwt --title "Add login endpoint" --size M --template feature --tags "auth,api" --deps "epic-1-add-jwt.2"
 
 # View the plan
-$CCFLOW graph --epic epic-1-add-jwt --format ascii
+cc-flow graph --epic epic-1-add-jwt --format ascii
 ```
 
 ## E2E Example

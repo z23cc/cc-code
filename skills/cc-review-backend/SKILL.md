@@ -23,15 +23,14 @@ description: >
 ## Configuration
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
 # Set default backend
-$CCFLOW config set review.backend agent
+cc-flow config set review.backend agent
 
 # Per-review-type overrides
-$CCFLOW config set review.plan rp           # Plan review via RepoPrompt
-$CCFLOW config set review.impl agent        # Impl review via built-in agents
-$CCFLOW config set review.completion codex  # Epic review via Codex
+cc-flow config set review.plan rp           # Plan review via RepoPrompt
+cc-flow config set review.impl agent        # Impl review via built-in agents
+cc-flow config set review.completion codex  # Epic review via Codex
 ```
 
 **Override priority** (first wins):
@@ -227,7 +226,7 @@ On NEEDS_WORK verdict (max 3 iterations):
 
 ```
 1. Parse issues from review feedback
-2. Fix code + run verification ($CCFLOW verify)
+2. Fix code + run verification (cc-flow verify)
 3. Commit: git add -A && git commit -m "fix: address review feedback"
 4. Re-review (same backend, same session if applicable)
 5. Repeat until SHIP or max iterations

@@ -86,13 +86,12 @@ Team dispatch is the best context management strategy:
 Before long-running work, save state:
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
 # Save checkpoint (records git SHA, in-progress tasks, progress)
-$CCFLOW checkpoint save --name "before-auth-refactor"
+cc-flow checkpoint save --name "before-auth-refactor"
 
 # After compaction or session restart:
-$CCFLOW checkpoint restore latest
+cc-flow checkpoint restore latest
 # → Prints: branch, SHA, in-progress tasks, progress
 ```
 

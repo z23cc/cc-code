@@ -14,13 +14,12 @@ User provides an epic ID: `/cc-epic-review epic-1`
 ## Steps
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 ```
 
 ### 1. Verify all tasks done
 
 ```bash
-$CCFLOW progress --epic $EPIC_ID --json
+cc-flow progress --epic $EPIC_ID --json
 ```
 
 If not 100%, show remaining tasks and ask user if they want to proceed anyway.
@@ -28,7 +27,7 @@ If not 100%, show remaining tasks and ask user if they want to proceed anyway.
 ### 2. Read epic spec
 
 ```bash
-$CCFLOW show $EPIC_ID
+cc-flow show $EPIC_ID
 ```
 
 ### 3. Extract requirements
@@ -52,12 +51,12 @@ For each requirement:
 
 For each gap:
 - If small (< 20 lines): fix directly, commit
-- If larger: create new task via `$CCFLOW task create --epic $EPIC_ID --title "Fix: ..."`
+- If larger: create new task via `cc-flow task create --epic $EPIC_ID --title "Fix: ..."`
 - Re-verify after all fixes
 - Repeat until SHIP
 
 ### 7. Record
 
 ```bash
-$CCFLOW task comment $EPIC_ID --text "Epic review: SHIP"
+cc-flow task comment $EPIC_ID --text "Epic review: SHIP"
 ```

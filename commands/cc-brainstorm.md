@@ -12,7 +12,6 @@ Do NOT write any code until design is approved by user.
 ## Team: PARALLEL(scouts) → interview → architect
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 ```
 
 ### Phase 1: Auto-Scout (PARALLEL — dispatch ALL 3 scouts in ONE message)

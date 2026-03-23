@@ -30,12 +30,11 @@ Better suggestions over time
 Analyzes user input and suggests the best command + team:
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
-$CCFLOW route "add a new payment feature"
+cc-flow route "add a new payment feature"
 # → {"command": "/brainstorm", "team": "feature-dev", "reason": "New feature → brainstorm first"}
 
-$CCFLOW route "fix the broken login"
+cc-flow route "fix the broken login"
 # → {"command": "/debug", "team": "bug-fix", "past_learning": {...}}
 ```
 
@@ -57,7 +56,7 @@ Use the suggested command:
 After completing a task, record what worked:
 
 ```bash
-$CCFLOW learn \
+cc-flow learn \
   --task "fix auth middleware bug" \
   --outcome success \
   --approach "researcher agent found the issue in middleware.py, build-fixer applied the fix" \
@@ -75,9 +74,9 @@ Fields:
 ### 4. Search Learnings
 
 ```bash
-$CCFLOW learnings                  # Show recent 10
-$CCFLOW learnings --search "auth"  # Search by keyword
-$CCFLOW learnings --last 20        # Show more
+cc-flow learnings                  # Show recent 10
+cc-flow learnings --search "auth"  # Search by keyword
+cc-flow learnings --last 20        # Show more
 ```
 
 ## When to Learn

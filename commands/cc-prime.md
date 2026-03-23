@@ -6,7 +6,6 @@ team: "audit"
 Run a comprehensive project assessment using **parallel scout dispatch**.
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 ```
 
 ## Execution: PARALLEL(all scouts) → synthesize
@@ -26,7 +25,7 @@ Dispatch all scout **agents** in one message (each is a registered agent, use Ag
 
 Each scout is an independent agent — they run concurrently and don't depend on each other.
 
-Also run `$CCFLOW doctor --format json` for environment health.
+Also run `cc-flow doctor --format json` for environment health.
 
 ### Phase 2: Synthesize (after all scouts complete)
 

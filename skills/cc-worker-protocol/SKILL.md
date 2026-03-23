@@ -150,17 +150,16 @@ This is useful when autoimmune tasks are complex enough to benefit from isolated
 ## Integration with Task Tracking
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
 # Before dispatching worker:
-TASK_ID=$($CCFLOW ready --epic epic-1 | python3 -c "import sys,json; r=json.load(sys.stdin)['ready']; print(r[0]['id'] if r else '')")
-$CCFLOW start $TASK_ID
+TASK_ID=$(cc-flow ready --epic epic-1 | python3 -c "import sys,json; r=json.load(sys.stdin)['ready']; print(r[0]['id'] if r else '')")
+cc-flow start $TASK_ID
 
 # Worker receives task spec:
-$CCFLOW show $TASK_ID  # Read spec for worker prompt
+cc-flow show $TASK_ID  # Read spec for worker prompt
 
 # After worker completes:
-$CCFLOW done $TASK_ID --summary "Implemented X"
+cc-flow done $TASK_ID --summary "Implemented X"
 ```
 
 ## E2E Example

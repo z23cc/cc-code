@@ -8,7 +8,6 @@ Start autonomous execution via `cc-flow ralph`.
 ## Usage
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
 # Parse arguments
 GOAL="${1:-}"
@@ -16,10 +15,10 @@ MAX="${2:-25}"
 
 if [[ -n "$GOAL" ]]; then
   # Goal-driven: run until objective achieved
-  $CCFLOW ralph --goal "$GOAL" --max "$MAX"
+  cc-flow ralph --goal "$GOAL" --max "$MAX"
 else
   # Task-driven: work through existing tasks
-  $CCFLOW ralph --max "$MAX"
+  cc-flow ralph --max "$MAX"
 fi
 ```
 

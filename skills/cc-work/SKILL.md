@@ -36,7 +36,6 @@ start → implement → verify → commit → done.
 ### Phase 1: Resolve Input
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
 # Detect input type
 if input is epic ID:
@@ -45,11 +44,11 @@ elif input is task ID:
     MODE=single # Execute one task
 elif input is markdown file:
     # Import as epic + tasks
-    $CCFLOW epic import --file input.md
+    cc-flow epic import --file input.md
     MODE=epic
 else:
     # Treat as idea → create epic
-    $CCFLOW epic create --title "$input"
+    cc-flow epic create --title "$input"
     MODE=epic
 fi
 ```
@@ -90,14 +89,14 @@ BASE_COMMIT=$(git rev-parse HEAD)
 
 while true; do
     # 3a. Find next ready task
-    TASK=$($CCFLOW ready --epic $EPIC_ID | parse next task)
+    TASK=$(cc-flow ready --epic $EPIC_ID | parse next task)
     [[ -n "$TASK" ]] || break  # All done
 
     # 3b. Start task
-    $CCFLOW start $TASK
+    cc-flow start $TASK
 
     # 3c. Read spec
-    SPEC=$($CCFLOW show $TASK)
+    SPEC=$(cc-flow show $TASK)
 
     # 3d. Optional: create worktree
     if [[ $BRANCH_MODE == "worktree" ]]; then
@@ -119,7 +118,7 @@ while true; do
     # 3f. Verify worker output
     git log --oneline -1
     git diff --stat $BASE_COMMIT..HEAD
-    $CCFLOW verify  # ruff + mypy + pytest
+    cc-flow verify  # ruff + mypy + pytest
 
     # 3g. Review (if enabled)
     # Uses cc-code-review-loop skill
@@ -127,7 +126,7 @@ while true; do
 
     # 3h. Mark done
     SUMMARY=$(git log --oneline $BASE_COMMIT..HEAD)
-    $CCFLOW done $TASK --summary "$SUMMARY"
+    cc-flow done $TASK --summary "$SUMMARY"
 
     # 3i. Plan-sync (if enabled) — update downstream task specs
     # See cc-plan-sync skill
@@ -150,14 +149,14 @@ done
 ### Phase 4: Quality Gate
 
 ```bash
-$CCFLOW verify --fix  # Auto-fix lint/type errors
+cc-flow verify --fix  # Auto-fix lint/type errors
 ```
 
 ### Phase 5: Completion
 
 ```bash
 # If all tasks done, optionally run epic review
-$CCFLOW progress --epic $EPIC_ID
+cc-flow progress --epic $EPIC_ID
 
 # If epic complete → /cc-epic-review
 ```
@@ -219,7 +218,7 @@ When reviewing, uses **cc-code-review-loop** skill:
 On task completion, record proof-of-work:
 
 ```bash
-$CCFLOW done $TASK --summary "Implemented user auth" \
+cc-flow done $TASK --summary "Implemented user auth" \
     --evidence '{"commits":["abc123"],"tests":["pytest tests/"]}'
 ```
 
@@ -228,18 +227,18 @@ $CCFLOW done $TASK --summary "Implemented user auth" \
 | Situation | Action |
 |-----------|--------|
 | Worker fails (tests don't pass) | Dispatch build-fixer agent |
-| Worker stuck (timeout) | Kill, rollback: `$CCFLOW rollback $TASK --confirm` |
+| Worker stuck (timeout) | Kill, rollback: `cc-flow rollback $TASK --confirm` |
 | Review gives MAJOR_RETHINK | Stop loop, ask user |
 | Worktree merge conflict | Stop, surface conflict to user |
-| All retries exhausted | Block task: `$CCFLOW block $TASK --reason "3 attempts failed"` |
+| All retries exhausted | Block task: `cc-flow block $TASK --reason "3 attempts failed"` |
 
 ## Config
 
 ```bash
-$CCFLOW config set work.branch_mode worktree   # default: worktree (max isolation)
-$CCFLOW config set work.review auto             # default review mode
-$CCFLOW config set work.max_attempts 3          # retries before blocking
-$CCFLOW config set work.plan_sync true          # auto-sync downstream specs
+cc-flow config set work.branch_mode worktree   # default: worktree (max isolation)
+cc-flow config set work.review auto             # default review mode
+cc-flow config set work.max_attempts 3          # retries before blocking
+cc-flow config set work.plan_sync true          # auto-sync downstream specs
 ```
 
 ## Related Skills

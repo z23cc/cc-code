@@ -6,7 +6,6 @@ description: "Systematic debugging with PUA escalation. TRIGGER: 'debug', 'why i
 Activate the cc-debugging skill with **Bug Fix team** dispatch.
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 ```
 
 IRON LAW: NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST.
@@ -37,7 +36,7 @@ If fix fails 3+ times → question the architecture, discuss with user.
 
 After a successful fix:
 ```bash
-$CCFLOW learn --task "[bug description]" --outcome success \
+cc-flow learn --task "[bug description]" --outcome success \
   --approach "[root cause + fix approach]" \
   --lesson "[pattern to remember for next time]" \
   --score [1-5] --used-command /cc-debug

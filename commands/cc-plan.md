@@ -7,7 +7,6 @@ description: "Create implementation plan with TDD tasks. TRIGGER: 'plan this', '
 Create implementation plan with **Feature Dev team** support.
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 ```
 
 ## Default Team: researcher → architect → planner
@@ -33,12 +32,12 @@ After the plan is written:
 1. Save to `docs/plans/YYYY-MM-DD-<feature>.md`
 2. **Auto-import:**
    ```bash
-   $CCFLOW epic import --file docs/plans/YYYY-MM-DD-<feature>.md --sequential
+   cc-flow epic import --file docs/plans/YYYY-MM-DD-<feature>.md --sequential
    ```
 3. Auto-tag tasks based on content (api, database, auth, test)
 4. Auto-select template per task (feature/bugfix/refactor/security)
 5. Show dependency graph:
    ```bash
-   $CCFLOW graph --format ascii
+   cc-flow graph --format ascii
    ```
 6. Confirm: "Plan imported as [epic-id] with [N] tasks. Start with `/cc-tdd`?"

@@ -53,8 +53,7 @@ From the screenshots and snapshot, extract:
 
 Create implementation plan:
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
-$CCFLOW epic create --title "Clone: $TARGET_URL"
+cc-flow epic create --title "Clone: $TARGET_URL"
 # Create tasks per component: navbar, hero, cards, footer, responsive, animations
 ```
 

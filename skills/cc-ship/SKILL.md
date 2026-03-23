@@ -22,7 +22,6 @@ description: >
 ## Pipeline
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 ```
 
 ### Phase 1: Detect Base & Merge
@@ -37,7 +36,7 @@ git fetch origin "$BASE" && git merge "origin/$BASE" --no-edit
 ### Phase 2: Verify
 
 ```bash
-$CCFLOW verify   # If fails → $CCFLOW verify --fix → if still fails → stop
+cc-flow verify   # If fails → cc-flow verify --fix → if still fails → stop
 ```
 
 ### Phase 3: Review Diff

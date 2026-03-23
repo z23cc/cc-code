@@ -5,27 +5,26 @@ description: "File-based task management with cc-flow CLI. TRIGGER: 'show tasks'
 Activate the cc-task-tracking skill. Use the bundled cc-flow CLI:
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 ```
 
 Parse the user's intent:
 
 | User says | Command |
 |-----------|---------|
-| "show tasks" / "list" / "任务列表" | `$CCFLOW list` |
-| "what's next" / "next task" | `$CCFLOW next` (priority-aware) |
-| "what's ready" | `$CCFLOW ready` |
-| "create epic" / "new feature" | `$CCFLOW epic create --title "..."` |
-| "create task" / "add task" | `$CCFLOW task create --epic ... --title "..."` |
-| "start task X" | `$CCFLOW start <task-id>` |
-| "done with X" / "task X done" | `$CCFLOW done <task-id> --summary "..."` |
-| "block task X" | `$CCFLOW block <task-id> --reason "..."` |
-| "reset task X" | `$CCFLOW task reset <task-id>` |
-| "add dependency" | `$CCFLOW dep add <task-id> <dep-id>` |
-| "close epic" / "archive" | `$CCFLOW epic close <epic-id>` |
-| "progress" / "进度" | `$CCFLOW progress` |
-| "status" / "overview" | `$CCFLOW status` |
-| "validate" / "check structure" | `$CCFLOW validate` |
+| "show tasks" / "list" / "任务列表" | `cc-flow list` |
+| "what's next" / "next task" | `cc-flow next` (priority-aware) |
+| "what's ready" | `cc-flow ready` |
+| "create epic" / "new feature" | `cc-flow epic create --title "..."` |
+| "create task" / "add task" | `cc-flow task create --epic ... --title "..."` |
+| "start task X" | `cc-flow start <task-id>` |
+| "done with X" / "task X done" | `cc-flow done <task-id> --summary "..."` |
+| "block task X" | `cc-flow block <task-id> --reason "..."` |
+| "reset task X" | `cc-flow task reset <task-id>` |
+| "add dependency" | `cc-flow dep add <task-id> <dep-id>` |
+| "close epic" / "archive" | `cc-flow epic close <epic-id>` |
+| "progress" / "进度" | `cc-flow progress` |
+| "status" / "overview" | `cc-flow status` |
+| "validate" / "check structure" | `cc-flow validate` |
 
-If `.tasks/` doesn't exist, run `$CCFLOW init` first.
+If `.tasks/` doesn't exist, run `cc-flow init` first.
 Always read current state from cc-flow — never cache.

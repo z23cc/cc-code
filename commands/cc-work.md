@@ -22,7 +22,6 @@ Activate the cc-work skill. Parse user input to determine mode:
 ## Execution Steps
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 WORKTREE_SH="${CLAUDE_PLUGIN_ROOT}/scripts/worktree.sh"
 ```
 
@@ -36,14 +35,14 @@ If input is an epic ID:
 - Set MODE=epic
 
 Otherwise:
-- Create epic: `$CCFLOW epic create --title "$input"`
+- Create epic: `cc-flow epic create --title "$input"`
 - Set MODE=epic
 
 ### Step 2: Show progress and confirm
 
 ```bash
-$CCFLOW progress --epic $EPIC_ID
-$CCFLOW ready --epic $EPIC_ID
+cc-flow progress --epic $EPIC_ID
+cc-flow ready --epic $EPIC_ID
 ```
 
 Show user what will be executed. Proceed.
@@ -58,19 +57,19 @@ Show user what will be executed. Proceed.
 
 For each ready task (or single task):
 
-1. **Start**: `$CCFLOW start $TASK_ID`
-2. **Re-anchor**: Read task spec via `$CCFLOW show $TASK_ID`
+1. **Start**: `cc-flow start $TASK_ID`
+2. **Re-anchor**: Read task spec via `cc-flow show $TASK_ID`
 3. **Worktree** (if --branch=worktree):
    - `bash "$WORKTREE_SH" create $TASK_ID`
 4. **Dispatch worker**: Spawn Agent with fresh context
    - Worker prompt includes: task spec, acceptance criteria, BASE_COMMIT, constraints
    - Worker implements using TDD, commits, reports back
-5. **Verify**: `$CCFLOW verify`
+5. **Verify**: `cc-flow verify`
    - If fails → dispatch build-fixer agent, retry once
 6. **Review** (if enabled):
    - Use cc-code-review-loop skill
    - SHIP → continue, NEEDS_WORK → auto-fix loop, MAJOR_RETHINK → stop
-7. **Done**: `$CCFLOW done $TASK_ID --summary "..."`
+7. **Done**: `cc-flow done $TASK_ID --summary "..."`
 8. **Plan-sync** (if enabled): Update downstream task specs
 9. **Worktree merge** (if applicable):
    - Merge task branch back, remove worktree
@@ -78,5 +77,5 @@ For each ready task (or single task):
 ### Step 5: Completion
 
 After all tasks done:
-- Show: `$CCFLOW progress --epic $EPIC_ID`
+- Show: `cc-flow progress --epic $EPIC_ID`
 - If 100%: suggest `/cc-epic-review` for completion verification

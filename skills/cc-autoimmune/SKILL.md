@@ -10,13 +10,12 @@ description: "Autonomous improvement loop: scan→implement→verify→commit/re
 Autoimmune is fully integrated with cc-flow task management. Use `cc-flow auto` for CLI-driven loops:
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
-$CCFLOW auto scan     # Detect issues → create epic + tasks
-$CCFLOW auto run      # Pick next task → implement → verify → done/revert
-$CCFLOW auto test     # Auto-fix lint + type + test errors
-$CCFLOW auto full     # scan → run → test (all three)
-$CCFLOW auto status   # Session progress from task system
+cc-flow auto scan     # Detect issues → create epic + tasks
+cc-flow auto run      # Pick next task → implement → verify → done/revert
+cc-flow auto test     # Auto-fix lint + type + test errors
+cc-flow auto full     # scan → run → test (all three)
+cc-flow auto status   # Session progress from task system
 ```
 
 Each iteration automatically:
@@ -107,10 +106,9 @@ Assemble findings into `improvement-program.md` by priority:
 
 If `.tasks/` exists, optionally create an epic + tasks via cc-flow instead:
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
-$CCFLOW epic create --title "Autoimmune scan $(date +%Y-%m-%d)"
+cc-flow epic create --title "Autoimmune scan $(date +%Y-%m-%d)"
 # For each finding:
-$CCFLOW task create --epic <epic-id> --title "Fix: <description>"
+cc-flow task create --epic <epic-id> --title "Fix: <description>"
 ```
 
 Then proceed to **Mode A**.
@@ -123,7 +121,7 @@ Create branch `auto/improve-YYYYMMDD-HHMM`, then iterate:
 
 ### A1: SELECT
 1. Re-read task source every iteration (never cache):
-   - If `.tasks/` has an active autoimmune epic → use `$CCFLOW ready`
+   - If `.tasks/` has an active autoimmune epic → use `cc-flow ready`
    - Else → read `improvement-program.md`, pick first unchecked `- [ ]`
 2. Skip items in `skipped_areas`
 3. If user specified focus topic → only pick from matching section
@@ -153,7 +151,7 @@ Auto-detect project language and run appropriate verify command (see Prerequisit
 1. `git add <specific files>` (NEVER `git add -A`)
 2. `git commit`: `"improve(<area>): <description>"`
 3. Mark task done:
-   - `.tasks/`: `$CCFLOW done <task-id> --summary "..."`
+   - `.tasks/`: `cc-flow done <task-id> --summary "..."`
    - `improvement-program.md`: mark `[x]`
 4. Append KEPT to `improvement-results.tsv`
 5. Reset `consecutive_fail[area] = 0`

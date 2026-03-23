@@ -6,14 +6,13 @@ description: "Start TDD workflow. TRIGGER: 'implement X', 'add feature', 'write 
 Activate the cc-tdd skill with **worker + reviewer** team dispatch.
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 ```
 
 ## Default Team: Worker → Reviewer
 
 ### Step 1: Worker implements (you or worker agent)
 Follow Red-Green-Refactor strictly:
-1. Read task spec: `$CCFLOW show <task-id>` (if from cc-flow)
+1. Read task spec: `cc-flow show <task-id>` (if from cc-flow)
 2. Write a failing test
 3. Run it — verify it fails correctly
 4. Write minimal code to pass
@@ -31,6 +30,6 @@ Both run concurrently. Collect verdicts: worst verdict wins.
 If NEEDS_WORK → fix → re-review.
 
 ### Auto-Task Integration
-- Task started → read spec: `$CCFLOW show <task-id>`
-- After SHIP → mark done: `$CCFLOW done <task-id> --summary "..."`
-- Suggest: "Task done. Next: `$CCFLOW next`"
+- Task started → read spec: `cc-flow show <task-id>`
+- After SHIP → mark done: `cc-flow done <task-id> --summary "..."`
+- Suggest: "Task done. Next: `cc-flow next`"

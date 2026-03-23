@@ -26,9 +26,8 @@ combined implementation across all tasks.
 ### Step 1: Verify All Tasks Done
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 
-PROGRESS=$($CCFLOW progress --epic $EPIC_ID --json)
+PROGRESS=$(cc-flow progress --epic $EPIC_ID --json)
 # Must be 100% — if not, show remaining tasks and stop
 ```
 
@@ -37,7 +36,7 @@ PROGRESS=$($CCFLOW progress --epic $EPIC_ID --json)
 Read the epic spec and extract ALL explicit requirements:
 
 ```bash
-SPEC=$($CCFLOW show $EPIC_ID)
+SPEC=$(cc-flow show $EPIC_ID)
 ```
 
 Parse the spec for:
@@ -102,7 +101,7 @@ All 7 requirements verified. No gaps found.
 
 If gaps found:
 
-1. Create tasks for missing requirements: `$CCFLOW task create --epic $EPIC_ID --title "Fix: ..."`
+1. Create tasks for missing requirements: `cc-flow task create --epic $EPIC_ID --title "Fix: ..."`
 2. Or fix directly if small (< 20 lines)
 3. Re-verify after fix
 4. Repeat until all requirements DONE
@@ -110,7 +109,7 @@ If gaps found:
 ### Step 6: Record Review
 
 ```bash
-$CCFLOW task comment $EPIC_ID --text "Epic review: SHIP — all requirements verified"
+cc-flow task comment $EPIC_ID --text "Epic review: SHIP — all requirements verified"
 ```
 
 ## Integration with /cc-work
