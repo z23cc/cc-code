@@ -200,6 +200,21 @@ SKILL_CHAINS = {
             {"skill": "/cc-epic-review", "role": "Verify goal/epic completion", "required": True},
         ],
     },
+    # ── Clone/replicate workflows ──
+    "clone-site": {
+        "description": "Replicate a reference website: capture → analyze → implement → QA compare",
+        "trigger": ["clone", "replicate", "copy this site", "make it look like", "reference site",
+                     "look the same", "same as this",
+                     "仿站", "照着做", "参考", "一模一样", "一样的", "模仿", "抄这个"],
+        "skills": [
+            {"skill": "/cc-browser", "role": "Screenshot reference at 3 viewports", "required": True},
+            {"skill": "/cc-ui-ux", "role": "Extract design tokens (colors, fonts, spacing)", "required": True},
+            {"skill": "/cc-plan", "role": "Create component-level implementation plan", "required": True},
+            {"skill": "/cc-tdd", "role": "Implement each component with tests", "required": True},
+            {"skill": "/cc-qa", "role": "Visual compare against reference screenshots", "required": True},
+            {"skill": "/cc-ship", "role": "Deploy when match achieved", "required": False},
+        ],
+    },
     # ── Remaining unchained skills ──
     "new-project": {
         "description": "Bootstrap project → design → plan → first feature",
