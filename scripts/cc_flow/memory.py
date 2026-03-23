@@ -102,9 +102,9 @@ def cmd_memory_search(args):
         )
         items = [
             {
-                "content": getattr(chunk, "content", "")[:300],
-                "score": getattr(chunk, "score", 0),
-                "summary": getattr(chunk, "summary", ""),
+                "content": (getattr(chunk, "content", "") or "")[:300],
+                "score": getattr(chunk, "score", 0) or 0,
+                "summary": getattr(chunk, "summary", "") or "",
             }
             for chunk in getattr(results, "results", [])
         ]
