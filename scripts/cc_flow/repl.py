@@ -101,6 +101,8 @@ _COMPLETIONS = [
     "rp select", "rp git", "rp edit", "rp prompt", "rp chats",
     "rp setup-review", "rp session", "rp worktree-status", "rp worktree-diff",
     "rp worktree-setup", "rp worktree-cleanup", "rp windows", "rp workspace",
+    "worktree create", "worktree list", "worktree switch", "worktree remove",
+    "worktree cleanup", "worktree status", "worktree info",
     "memory save", "memory search", "memory sync", "memory recall",
     "chain list", "chain show", "chain suggest", "chain run",
     # Flags

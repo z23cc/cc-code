@@ -112,6 +112,12 @@ _SUBCMD_MAP = {
         "list": "skill_chains:cmd_chain_list", "show": "skill_chains:cmd_chain_show",
         "suggest": "skill_chains:cmd_chain_suggest", "run": "skill_chains:cmd_chain_run",
     }),
+    "worktree": ("wt_cmd", {
+        "create": "worktree_cmd:_cmd_create", "list": "worktree_cmd:_cmd_list",
+        "switch": "worktree_cmd:_cmd_switch", "remove": "worktree_cmd:_cmd_remove",
+        "cleanup": "worktree_cmd:_cmd_cleanup", "status": "worktree_cmd:_cmd_status",
+        "info": "worktree_cmd:_cmd_info",
+    }),
     "plugin": ("plugin_cmd", {
         "list": "plugins:cmd_plugin_list", "enable": "plugins:cmd_plugin_enable",
         "disable": "plugins:cmd_plugin_disable", "create": "plugins:cmd_plugin_create",

@@ -257,6 +257,28 @@ def _add_work_commands(sub):
     bulk_p.add_argument("--epic", default="", help="Apply to all tasks in epic")
 
 
+def _add_worktree_commands(sub):
+    """Add worktree management subcommands."""
+    wt_p = sub.add_parser("worktree", help="Worktree management (create/list/switch/remove/status/info)")
+    wt_sub = wt_p.add_subparsers(dest="wt_cmd")
+
+    wt_create = wt_sub.add_parser("create", help="Create a new worktree")
+    wt_create.add_argument("name", help="Worktree name (becomes branch name)")
+    wt_create.add_argument("--base", default="", help="Base branch (default: main)")
+
+    wt_sub.add_parser("list", help="List all worktrees with branch and status")
+
+    wt_switch = wt_sub.add_parser("switch", help="Print worktree path (for cd)")
+    wt_switch.add_argument("name")
+
+    wt_remove = wt_sub.add_parser("remove", help="Remove a worktree")
+    wt_remove.add_argument("name")
+
+    wt_sub.add_parser("cleanup", help="Remove all managed worktrees")
+    wt_sub.add_parser("status", help="Show dirty/clean status of all worktrees")
+    wt_sub.add_parser("info", help="Show current worktree context (or main checkout)")
+
+
 def _add_quality_commands(sub):
     """Add quality/auto subcommands: validate, scan, verify, doctor, auto."""
     sub.add_parser("validate", help="Check structure, deps, cycles")
@@ -672,6 +694,7 @@ def build_parser():
     _add_gh_commands(sub)
     _add_context_commands(sub)
     _add_alias_commands(sub)
+    _add_worktree_commands(sub)
     _add_bridge_commands(sub)
     _add_eval_commands(sub)
     _add_rp_commands(sub)
