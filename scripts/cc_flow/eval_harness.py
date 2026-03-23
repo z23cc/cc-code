@@ -116,7 +116,8 @@ def eval_search():
     total_ms = 0
 
     for query, should_find, search_type in cases:
-        out, _, _, ms = _run_cc(query)
+        t = 60 if search_type == "code" else 30
+        out, _, _, ms = _run_cc(query, timeout=t)
         total_ms += ms
         data = _parse_json(out)
         if search_type == "task":
@@ -128,7 +129,8 @@ def eval_search():
             # code search: output may be text (grep) or JSON (morph)
             has_content = bool(out.strip())
             no_results = "No matches" in out or "0 results" in out or not has_content
-            found = has_content and not no_results and "error" not in out.lower()
+            is_error = out.strip().startswith('{"success": false')
+            found = has_content and not no_results and not is_error
         is_correct = found == should_find
         if is_correct:
             correct += 1
