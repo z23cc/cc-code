@@ -1,5 +1,22 @@
 # Changelog
 
+## [5.2.0] - 2026-03-23
+### Added
+- Skill chains: 7 predefined multi-skill workflows (`chain run feature/bugfix/ui-design/...`)
+- Context-aware pipelines: `pipeline run quality-gate/full-audit/review-and-fix`
+- Supermemory integration: `memory save/search/forget/sync/recall`
+- learn → Supermemory auto-sync (cross-project knowledge)
+- route → Supermemory recall (memory-enhanced routing)
+- Performance optimization skill (cc-optimize, from pbakaus/impeccable)
+- Multi-language health scoring (Python/Node/Go auto-detect)
+- Progressive disclosure in REPL help (`help` vs `help all`)
+- `chain run` command — one-click skill chain execution
+- `pipeline create` — user-defined pipelines
+### Fixed
+- Supermemory search None content handling
+- Eval search false negative (grep output with 'error')
+- Health scoring Python-only bias (morph-plugin: 70→95)
+
 ## [5.1.0] - 2026-03-23
 ### Added
 - Skills marketplace: `cc-flow skills find/add/list` (skills.sh integration)

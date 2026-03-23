@@ -43,12 +43,15 @@ cc-flow dashboard                      # Visual overview
 | **Plugins** | `cc-flow plugin create my-tool` | Extensible plugin system |
 | **Skills Store** | `cc-flow skills find "react"` | Browse skills.sh marketplace |
 | **Eval** | `cc-flow eval run` | Automated capability testing |
+| **Skill Chains** | `cc-flow chain run feature` | Multi-skill workflows (7 chains) |
+| **Pipelines** | `cc-flow pipeline run quality-gate` | Context-aware orchestration |
+| **Memory** | `cc-flow memory search` | Cross-session knowledge (Supermemory) |
 | **Context** | `cc-flow context brief` | One-paragraph session primer |
 
 ## Architecture
 
 ```
-cc-flow CLI (35 modules, 90+ subcommands)
+cc-flow CLI (38 modules, 74 subcommands)
 ├── Core: init, epic/task CRUD, deps, templates (atomic writes, cross-platform locks)
 ├── Views: list, dashboard, progress, graph, export
 ├── Work: start, done, block, reopen, diff, bulk (race-safe task IDs)
@@ -56,9 +59,10 @@ cc-flow CLI (35 modules, 90+ subcommands)
 ├── Quality: verify, scan, doctor, health, auto deep (OODA loop)
 ├── Analytics: stats, standup, changelog, burndown, report, forecast, evolve
 ├── Routing: route (Q-learning + embedding + rerank), learn, consolidate
-├── Integration: gh sync, context, session, workflow, plugins, skills.sh
+├── Orchestration: 7 skill chains, 6 workflows, 3 pipelines (context-aware)
+├── Integration: gh sync, context, session, Supermemory, skills.sh
 ├── Eval: self-test (100/100), cross-project (100/100), health (100/100)
-└── UX: REPL with tab completion, colored skin, "did you mean?" typo correction
+└── UX: REPL with tab completion, colored skin, "did you mean?", progressive help
 ```
 
 ## Eval Scores
