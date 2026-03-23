@@ -4,6 +4,8 @@ description: >
   Test-driven development workflow — write test first, watch it fail, write minimal code to pass.
   TRIGGER: 'tdd', 'test first', 'implement', 'write feature', '写功能', 'TDD'.
   NOT FOR: fixing bugs (/debug), build errors (/fix).
+  DEPENDS ON: cc-plan (plan before implementing).
+  FLOWS INTO: cc-review (review the implementation), cc-commit (commit passing code).
 ---
 
 # Test-Driven Development (TDD)

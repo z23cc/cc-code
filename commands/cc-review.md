@@ -5,6 +5,7 @@ description: >
   Run code review on recent changes. Supports multiple backends: agent (default),
   rp (RepoPrompt GUI), codex (OpenAI CLI), export (context for external LLM).
   TRIGGER: 'review', 'code review', 'check my code', '看看代码', '代码审查'.
+  FLOWS INTO: cc-commit (commit approved changes).
 ---
 
 Activate code review. First determine the **review backend**, then route.

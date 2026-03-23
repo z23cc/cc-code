@@ -1,6 +1,8 @@
 ---
 name: planner
+emoji: "📋"
 description: Implementation planning specialist. Use PROACTIVELY when users request feature implementation, architectural changes, or complex refactoring.
+deliverables: "Phased implementation plan with exact file paths, TDD steps, and risk mitigations"
 tools: ["Read", "Grep", "Glob"]
 model: inherit
 ---

@@ -1,6 +1,8 @@
 ---
 name: cc-scout-repo
+emoji: "🗺️"
 description: "Scan repo to find existing patterns, conventions, and related code paths BEFORE making changes. Prevents reinventing existing abstractions."
+deliverables: "Repo conventions report with reusable code paths, test patterns, and do-not-duplicate warnings"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
 ---

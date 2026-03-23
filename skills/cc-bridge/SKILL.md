@@ -6,6 +6,7 @@ description: >
   TRIGGER: 'bridge', 'deep search', 'smart chat', 'morph rp', 'system status',
   '桥接', '深度搜索', '智能对话', '三系统', '联动'.
   NOT FOR: individual tool usage — use cc-rp, cc-search-strategy, or memory commands directly.
+  FLOWS INTO: cc-research (deep search findings), cc-review (review with memory context).
 ---
 
 # Bridge — Morph × RepoPrompt × Supermemory

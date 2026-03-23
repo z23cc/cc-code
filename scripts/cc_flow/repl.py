@@ -80,6 +80,7 @@ _COMPLETIONS = [
     "scan", "validate", "export", "clean", "perf", "health", "evolve",
     "deep-search", "smart-chat", "embed-structure", "recall-review", "bridge-status",
     "review-setup", "state-path",
+    "careful", "freeze", "guard",
     # Subcommands
     "epic create", "epic close", "epic import", "epic reset",
     "task create", "task update", "task comment", "task reset",

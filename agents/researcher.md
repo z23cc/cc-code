@@ -1,6 +1,8 @@
 ---
 name: researcher
+emoji: "🔍"
 description: Codebase investigation specialist. Explores architecture, traces data flow, maps dependencies, synthesizes findings. Dispatch BEFORE planning or fixing unfamiliar code.
+deliverables: "Structured research report with architecture map, data flow, dependencies, and risk assessment"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
 ---

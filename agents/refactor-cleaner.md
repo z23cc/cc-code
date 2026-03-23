@@ -1,6 +1,8 @@
 ---
 name: refactor-cleaner
+emoji: "🧹"
 description: Code simplification and dead code cleanup specialist. Use for removing unused code, duplicates, and improving clarity while preserving functionality.
+deliverables: "Cleanup report with dead code removed, duplicates consolidated, and test verification"
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 model: inherit
 ---

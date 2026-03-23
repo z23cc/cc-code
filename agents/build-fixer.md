@@ -1,6 +1,8 @@
 ---
 name: build-fixer
+emoji: "🔧"
 description: Build, type, and test error resolution specialist. Use when build fails, type errors occur, or tests break. Auto-detects project language. Fixes with minimal diffs — no refactoring, no architecture changes.
+deliverables: "Minimal-diff fixes that restore build/type/test green status"
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 model: inherit
 ---

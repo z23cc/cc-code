@@ -4,6 +4,8 @@ description: >
   Create comprehensive implementation plans with TDD workflow. Use before touching code.
   TRIGGER: 'plan', 'design', 'how to build', '规划', '写计划'.
   NOT FOR: brainstorming (/brainstorm).
+  DEPENDS ON: cc-brainstorm (design before planning).
+  FLOWS INTO: cc-tdd (implement the plan), cc-work (execute end-to-end).
 ---
 
 # Writing Plans

@@ -1,6 +1,8 @@
 ---
 name: cc-scout-testing
+emoji: "✅"
 description: "Analyze test framework setup, coverage configuration, test organization, and CI integration. Reports test health score."
+deliverables: "Test infrastructure audit with health score, coverage gaps, and CI integration status"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
 ---

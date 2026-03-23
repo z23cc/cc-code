@@ -1,6 +1,6 @@
 ---
 name: cc-epic-review
-description: "Epic completion review — verify all tasks fully implement the epic spec. Catches missing requirements, partial impl, scope drift. TRIGGER: 'epic review', 'completion review', 'verify epic', 'did we finish', 'acceptance review', '验收', '完成审查', '检查是否完成', '需求覆盖'. NOT FOR: code quality review (use cc-code-review-loop), PR review (use cc-review)."
+description: "Epic completion review — verify all tasks fully implement the epic spec. Catches missing requirements, partial impl, scope drift. TRIGGER: 'epic review', 'completion review', 'verify epic', 'did we finish', 'acceptance review', '验收', '完成审查', '检查是否完成', '需求覆盖'. NOT FOR: code quality review (use cc-code-review-loop), PR review (use cc-review). DEPENDS ON: cc-work (all tasks done before epic review)."
 ---
 
 # Epic Review — Completion Verification

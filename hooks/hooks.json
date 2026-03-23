@@ -51,6 +51,18 @@
         "description": "Warn when modifying linter/formatter/CI config files"
       },
       {
+        "matcher": "Edit|Write|Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/mode-guard.sh",
+            "timeout": 3
+          }
+        ],
+        "description": "Session-scoped safety modes: careful (warn destructive), freeze (restrict edits), guard (both)",
+        "statusMessage": "Checking safety modes..."
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           {

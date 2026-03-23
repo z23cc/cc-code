@@ -1,6 +1,8 @@
 ---
 name: cc-scout-context
+emoji: "🎯"
 description: "Token-efficient codebase exploration. Uses file trees, code structure views, and targeted reads instead of full file dumps. Minimizes context consumption."
+deliverables: "Codebase overview with progressive-depth findings at ~90% token savings vs full reads"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
 ---

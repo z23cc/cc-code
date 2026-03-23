@@ -1,6 +1,8 @@
 ---
 name: e2e-runner
+emoji: "🧪"
 description: End-to-end testing specialist — Playwright/Selenium test generation, execution, flaky test management, artifact capture. Use for UI testing and integration verification.
+deliverables: "E2E test suite with Page Object Models, execution results, and flaky test triage"
 tools: ["Read", "Grep", "Glob", "Bash", "Edit", "Write"]
 model: inherit
 ---

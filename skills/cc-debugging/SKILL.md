@@ -4,6 +4,7 @@ description: >
   Systematic debugging methodology — find root cause before attempting fixes.
   TRIGGER: 'debug', 'bug', 'broken', 'investigate', '调试', '修bug'.
   NOT FOR: build errors (/fix).
+  FLOWS INTO: cc-tdd (write regression test), cc-commit (commit the fix).
 ---
 
 # Systematic Debugging + Never Give Up

@@ -7,6 +7,7 @@ description: >
   TRIGGER: 'repoprompt', 'rp', 'builder', 'codemap', 'rp review',
   'context builder', 'repo prompt', '代码分析', '上下文构建'.
   NOT FOR: simple grep searches, single-file reads.
+  USED BY: cc-review (review backend), cc-bridge (reasoning engine), cc-work (context building).
 ---
 
 # RepoPrompt Integration — Dual Transport

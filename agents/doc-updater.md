@@ -1,6 +1,8 @@
 ---
 name: doc-updater
+emoji: "📝"
 description: Documentation synchronization specialist — keeps README, CHANGELOG, API docs, and CLAUDE.md in sync with code changes. Use after shipping features.
+deliverables: "Updated documentation files with change summary of what was synced"
 tools: ["Read", "Grep", "Glob", "Bash", "Edit", "Write"]
 model: inherit
 ---

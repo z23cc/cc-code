@@ -1,6 +1,8 @@
 ---
 name: cc-architect
+emoji: "🏗️"
 description: System design and architecture specialist. Evaluates structure, proposes designs, reviews boundaries. Dispatch for architecture decisions, layer design, or system decomposition.
+deliverables: "Architecture review/proposal with component diagrams, trade-off analysis, and migration path"
 tools: ["Read", "Grep", "Glob"]
 model: inherit
 ---

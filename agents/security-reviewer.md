@@ -1,6 +1,8 @@
 ---
 name: security-reviewer
+emoji: "🔒"
 description: Security vulnerability detection — OWASP Top 10, secrets, injection, unsafe patterns. Use PROACTIVELY after writing code that handles user input, auth, API endpoints, or sensitive data.
+deliverables: "Security audit with OWASP Top 10 checklist, vulnerability findings, and remediation steps"
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 model: inherit
 ---

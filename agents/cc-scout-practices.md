@@ -1,6 +1,8 @@
 ---
 name: cc-scout-practices
+emoji: "✨"
 description: "Gather modern best practices and pitfalls BEFORE implementing a change. Searches official docs, GitHub repos, and community guidance for current year."
+deliverables: "Best practices brief with DO/DON'T list, real-world examples, and anti-patterns to avoid"
 tools: ["Read", "Grep", "Glob", "Bash", "WebSearch", "WebFetch"]
 model: inherit
 ---

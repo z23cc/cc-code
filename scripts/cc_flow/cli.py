@@ -579,6 +579,22 @@ def _add_misc_commands(sub):
     review_setup_p.add_argument("--scope", default="", choices=["", "plan", "impl", "completion"],
                                 help="Set backend for specific review type only")
 
+    # Safety modes
+    careful_p = sub.add_parser("careful", help="Toggle careful mode (warn on destructive ops)")
+    careful_g = careful_p.add_mutually_exclusive_group()
+    careful_g.add_argument("--enable", action="store_true", default=False, help="Enable careful mode")
+    careful_g.add_argument("--disable", action="store_true", default=False, help="Disable careful mode")
+
+    freeze_p = sub.add_parser("freeze", help="Freeze edits to a specific directory only")
+    freeze_p.add_argument("directory", nargs="?", default="", help="Directory to restrict edits to")
+    freeze_p.add_argument("--disable", action="store_true", default=False, help="Disable freeze mode")
+
+    guard_p = sub.add_parser("guard", help="Maximum safety mode (careful + freeze combined)")
+    guard_g = guard_p.add_mutually_exclusive_group()
+    guard_g.add_argument("--enable", action="store_true", default=False, help="Enable guard mode")
+    guard_g.add_argument("--disable", action="store_true", default=False, help="Disable guard mode")
+    guard_p.add_argument("directory", nargs="?", default="", help="Directory to restrict edits to (default: cwd)")
+
     # Cross-worktree state commands
     sub.add_parser("state-path", help="Show shared state directory (for worktree debugging)")
     migrate_state_p = sub.add_parser("migrate-state",
@@ -602,6 +618,7 @@ Command categories:
   RepoPrompt: rp check/windows/workspace/tabs/select/builder/chat/
               read/search/tree/structure/context/prompt/chats/models/
               git/edit/file/setup-review/session/worktree-setup/run
+  Safety:     careful, freeze, guard
   Config:     config, clean, version
   Worktree:   state-path, migrate-state
 """

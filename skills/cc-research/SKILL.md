@@ -7,6 +7,7 @@ description: >
   TRIGGER: 'investigate', 'how does X work', 'understand this', 'research', 'trace code',
   '调研', '分析一下', '代码溯源'.
   NOT FOR: quick searches — use cc-search-strategy for tool selection.
+  FLOWS INTO: cc-plan (plan based on findings), cc-debug (investigate bugs).
 ---
 
 # Research Methodology

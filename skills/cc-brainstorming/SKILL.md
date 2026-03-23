@@ -3,7 +3,8 @@ name: cc-brainstorming
 description: >
   MUST use before any creative work — explores intent, requirements and design before implementation.
   TRIGGER: 'brainstorm', 'idea', 'design', 'new feature', 'explore options', '头脑风暴', '设计方案'
-  NOT FOR: bug fixes, code review, refactoring existing code
+  NOT FOR: bug fixes, code review, refactoring existing code.
+  FLOWS INTO: cc-plan (turn design into implementation plan).
 ---
 
 # Brainstorming Ideas Into Designs

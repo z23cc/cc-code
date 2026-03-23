@@ -6,6 +6,8 @@ description: >
   TRIGGER: 'work through tasks', 'execute epic', 'implement the plan', 'start working',
   '执行任务', '开始实现', '跑任务', '执行计划'.
   NOT FOR: planning — use cc-plan first. NOT FOR: single quick fixes — just do them.
+  DEPENDS ON: cc-plan (plan before executing).
+  FLOWS INTO: cc-epic-review (verify epic completion).
 ---
 
 # Work Execution — Full Pipeline

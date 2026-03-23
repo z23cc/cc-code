@@ -1,7 +1,7 @@
 ---
 team: "refactor"
 agent: "refactor-cleaner"
-description: "Simplify and clean up code. TRIGGER: 'clean up', 'simplify', 'remove dead code', 'refactor', '简化', '清理代码'. NOT for: build errors (/fix), new features (/tdd)."
+description: "Simplify and clean up code. TRIGGER: 'clean up', 'simplify', 'remove dead code', 'refactor', '简化', '清理代码'. NOT for: build errors (/fix), new features (/tdd). FLOWS INTO: cc-review (review the refactored code)."
 ---
 
 Code simplification with **Refactor team** dispatch.

@@ -1,6 +1,8 @@
 ---
 name: cc-scout-env
+emoji: "🌍"
 description: "Scan environment setup — .env templates, Docker, devcontainer, setup scripts, runtime version pinning. Reports reproducibility score."
+deliverables: "Environment audit with reproducibility score and new-developer setup steps"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
 ---

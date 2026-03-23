@@ -7,6 +7,7 @@ description: >
   TRIGGER: 'execute plan', 'work through tasks', 'implement the plan', 'worker isolation',
   '执行计划', '任务隔离', '工作协议'.
   NOT FOR: single quick tasks — just implement directly.
+  USED BY: cc-work (task execution), cc-ralph (autonomous harness).
 ---
 
 # Worker Protocol — Task Isolation
