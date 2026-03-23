@@ -18,7 +18,7 @@ QTABLE_FILE = TASKS_DIR / "qtable.json"
 REWARDS = {"success": 1.0, "partial": -0.3, "failed": -1.0}
 
 # Learning rate and discount
-LEARNING_RATE = 0.1
+LEARNING_RATE = 0.25
 MIN_CONFIDENCE = 0.3
 
 # Keyword categories for state representation
