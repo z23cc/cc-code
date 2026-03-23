@@ -95,6 +95,7 @@ cc-flow skills list                  # Show installed
 | `cc-web-design` | Web Interface Guidelines review | [vercel-labs/agent-skills](https://skills.sh/vercel-labs/agent-skills/web-design-guidelines) |
 | `cc-ui-ux` | 50+ styles, 161 palettes, 57 font pairings, 99 UX guidelines | [nextlevelbuilder/ui-ux-pro-max-skill](https://skills.sh/nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max) |
 | `cc-browser` | Browser automation — navigate, forms, screenshots, E2E testing | [vercel-labs/agent-browser](https://skills.sh/vercel-labs/agent-browser/agent-browser) |
+| `cc-optimize` | Frontend performance — Core Web Vitals, bundle size, rendering | [pbakaus/impeccable](https://skills.sh/pbakaus/impeccable/optimize) |
 | `skills find/add` | Search and install skills from skills.sh marketplace | [vercel-labs/skills](https://skills.sh/vercel-labs/skills/find-skills) |
 
 ## Claude Code Integration

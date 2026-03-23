@@ -34,11 +34,12 @@ SKILL_CHAINS = {
         ],
     },
     "ui-design": {
-        "description": "UI design → review → test",
+        "description": "UI design → review → optimize → test",
         "trigger": ["design UI", "UI review", "frontend", "design", "界面设计", "设计", "UI审查", "前端"],
         "skills": [
             {"skill": "/cc-ui-ux", "role": "Design decisions (style, colors, fonts)", "required": True},
             {"skill": "/cc-web-design", "role": "Check against Web Interface Guidelines", "required": False},
+            {"skill": "/cc-optimize", "role": "Performance optimization (Core Web Vitals)", "required": False},
             {"skill": "/cc-browser", "role": "Visual testing + screenshots", "required": False},
         ],
     },
