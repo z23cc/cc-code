@@ -4,7 +4,8 @@ description: >
   File-based task management with epic/task lifecycle, dependency tracking,
   and progress visualization. Uses cc-flow CLI and .tasks/ directory.
   TRIGGER: 'show tasks', 'what needs to be done', 'task status', 'create task',
-  'list epics', 'next task', 'progress', '任务列表', '查看进度', '创建任务'.
+  'list epics', 'next task', 'progress', '任务列表', '查看进度', '创建任务', '任务管理'.
+  NOT FOR: background job queues — use cc-task-queues instead.
 ---
 
 # Task Tracking — File-Based Project Management

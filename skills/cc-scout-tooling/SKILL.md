@@ -3,7 +3,9 @@ name: cc-scout-tooling
 description: >
   Check linting, formatting, type checking, and pre-commit hook configuration.
   Reports tooling completeness score.
-  TRIGGER: 'check tooling', 'lint config', 'what linters are set up', '检查工具链', 'lint 配置'.
+  TRIGGER: 'check tooling', 'lint config', 'what linters are set up', 'pre-commit hooks',
+  'formatter', '检查工具链', 'lint 配置', '代码格式化'.
+  NOT FOR: fixing lint errors — use cc-fix instead.
 ---
 
 # Tooling Scout — Lint/Format/Type Check Audit

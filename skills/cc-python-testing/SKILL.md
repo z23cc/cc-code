@@ -1,6 +1,9 @@
 ---
 name: cc-python-testing
-description: "Python testing with pytest — TDD methodology, fixtures, parametrization, mocking, async testing, and coverage."
+description: >
+  Python testing with pytest — TDD, fixtures, parametrization, mocking, async testing, and coverage.
+  TRIGGER: 'pytest', 'test', 'TDD', 'coverage', 'mock', 'fixture', '测试', '写测试'
+  NOT FOR: error handling patterns, debugging, deployment
 ---
 
 # Python Testing Patterns

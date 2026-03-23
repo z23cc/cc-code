@@ -3,7 +3,8 @@ name: cc-scout-security
 description: >
   Scan security configuration — branch protection, secrets management,
   dependency automation, CODEOWNERS, and security scanning tools.
-  TRIGGER: 'security check', 'scan security config', 'check branch protection', '安全检查', '安全扫描'.
+  TRIGGER: 'security check', 'scan security config', 'check branch protection', '安全检查', '安全扫描', '安全配置'.
+  NOT FOR: code-level security review — use security-reviewer agent instead.
 ---
 
 # Security Scout — Configuration Audit

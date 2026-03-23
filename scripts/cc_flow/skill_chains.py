@@ -84,6 +84,16 @@ SKILL_CHAINS = {
             {"skill": "/cc-commit", "role": "Commit changes", "required": True},
         ],
     },
+    "research": {
+        "description": "Deep codebase understanding (Morph + RP + Memory)",
+        "trigger": ["understand", "how does", "explain", "research", "deep dive",
+                     "理解", "怎么工作", "深度分析", "调研"],
+        "skills": [
+            {"skill": "deep-search", "role": "Morph search → RP builder (find + analyze)", "required": True},
+            {"skill": "/cc-research", "role": "Structured codebase research", "required": False},
+            {"skill": "/cc-scout repo", "role": "Find existing patterns", "required": False},
+        ],
+    },
 }
 
 

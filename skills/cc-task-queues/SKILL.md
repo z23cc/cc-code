@@ -5,7 +5,8 @@ description: >
   workflows, error handling, monitoring. Use when adding background processing
   to Python services.
   TRIGGER: 'background job', 'celery', 'async task', 'periodic task', 'task queue',
-  '后台任务', '定时任务', '异步队列'.
+  '后台任务', '定时任务', '异步队列', '消息队列'.
+  NOT FOR: project task tracking — use cc-task-tracking instead.
 ---
 
 # Task Queues — Celery Patterns

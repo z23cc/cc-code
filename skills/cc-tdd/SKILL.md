@@ -1,6 +1,9 @@
 ---
 name: cc-tdd
-description: "Test-driven development workflow. Use when implementing any feature or bugfix — write the test first, watch it fail, write minimal code to pass."
+description: >
+  Test-driven development workflow — write test first, watch it fail, write minimal code to pass.
+  TRIGGER: 'tdd', 'test first', 'implement', 'write feature', '写功能', 'TDD'.
+  NOT FOR: fixing bugs (/debug), build errors (/fix).
 ---
 
 # Test-Driven Development (TDD)

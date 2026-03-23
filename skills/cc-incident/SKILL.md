@@ -1,10 +1,6 @@
 ---
 name: cc-incident
-description: >
-  Production incident response and postmortem. Triage, investigate, mitigate,
-  fix, then write the postmortem. NOT for dev bugs (use debugging skill).
-  TRIGGER: 'incident', 'production down', 'outage', 'postmortem', '事故',
-  '生产故障', '复盘'.
+description: "Production incident response and postmortem — triage, investigate, mitigate, fix, write postmortem. TRIGGER: 'incident', 'production down', 'outage', 'postmortem', 'service down', 'SEV1', '事故', '生产故障', '复盘', '线上问题'. NOT FOR: dev bugs (use cc-debug), build errors (use cc-fix), code review (use cc-review)."
 ---
 
 # Incident Response & Postmortem

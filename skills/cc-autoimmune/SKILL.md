@@ -1,9 +1,6 @@
 ---
 name: cc-autoimmune
-description: >
-  Autonomous improvement loop: scan→implement→verify→commit/revert.
-  4 modes: A(code), B(lint+type+test fix), C(full: D→A→B), D(scan: auto-detect issues).
-  TRIGGER: 'autoimmune', 'auto improve', 'auto scan', '自动改进', '自动扫描'.
+description: "Autonomous improvement loop: scan→implement→verify→commit/revert. 4 modes: A(code), B(lint+type+test fix), C(full), D(scan). TRIGGER: 'autoimmune', 'auto improve', 'auto scan', 'auto fix loop', '自动改进', '自动扫描', '跑改进循环'. NOT FOR: one-off lint fix (use cc-fix), manual code review (use cc-code-review-loop)."
 ---
 
 # Autoimmune — Autonomous Project Improvement Loop

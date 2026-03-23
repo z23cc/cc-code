@@ -1,6 +1,8 @@
 ---
 name: cc-performance
-description: "Python performance profiling, optimization patterns, and benchmarking. Use when code is slow or needs optimization."
+description: >
+  Python performance profiling, optimization patterns, and benchmarking.
+  TRIGGER: 'slow', 'profile', 'bottleneck', 'optimize', '慢', '性能', '优化'.
 ---
 
 # Python Performance Optimization

@@ -1,6 +1,9 @@
 ---
 name: cc-parallel-agents
-description: "Use when facing 2+ independent tasks that can be worked on without shared state or sequential dependencies."
+description: >
+  Dispatch 2+ independent tasks to concurrent agents with isolated context. No shared state needed.
+  TRIGGER: 'parallel', 'concurrent', 'multiple agents', 'fan-out', 'simultaneous', '并行', '并发agent'
+  NOT FOR: sequential workflows, single-task execution
 ---
 
 # Dispatching Parallel Agents
@@ -72,12 +75,34 @@ Your task:
 4. Return: Summary of root cause and changes made
 ```
 
+## Worktree Isolation for Parallel Editing
+
+When parallel agents need to **edit files** (not just research), use worktree isolation:
+
+```python
+# Each agent edits in its own worktree — no conflicts
+Agent(
+    prompt: "Fix auth in .claude/worktrees/fix-auth/. ...",
+    isolation: "worktree"  # Claude Code creates isolated copy
+)
+Agent(
+    prompt: "Fix API in .claude/worktrees/fix-api/. ...",
+    isolation: "worktree"
+)
+```
+
+**Set `CC_WORKTREE_PATH`** before spawning to activate the boundary guard hook,
+which blocks edits outside the assigned worktree.
+
+Without worktree isolation, parallel editing agents **will** conflict on the same files.
+
 ## Common Mistakes
 
 - **Too broad:** "Fix all the tests" — agent gets lost
 - **No context:** "Fix the race condition" — agent doesn't know where
 - **No constraints:** Agent might refactor everything
 - **Vague output:** "Fix it" — you don't know what changed
+- **No worktree:** Parallel edit agents without isolation → merge conflicts
 
 ## Task→Agent Routing
 
@@ -120,3 +145,4 @@ After agents return:
 - **cc-worker-protocol** — single-task worker agents with fresh context
 - **cc-plan** — plan defines which tasks can run in parallel
 - **cc-code-review-loop** — review each agent's output after completion
+- **cc-worktree** — give each parallel agent its own worktree for true file isolation

@@ -78,6 +78,8 @@ _COMPLETIONS = [
     "route", "learn", "learnings", "consolidate",
     "standup", "stats", "changelog", "burndown", "report", "time", "forecast",
     "scan", "validate", "export", "clean", "perf", "health", "evolve",
+    "deep-search", "smart-chat", "embed-structure", "recall-review", "bridge-status",
+    "review-setup", "state-path",
     # Subcommands
     "epic create", "epic close", "epic import", "epic reset",
     "task create", "task update", "task comment", "task reset",
@@ -92,6 +94,13 @@ _COMPLETIONS = [
     "eval run", "eval detail", "eval cross", "eval history",
     "gh import", "gh export", "gh status",
     "profile list", "profile apply",
+    "rp check", "rp builder", "rp plan", "rp review", "rp chat",
+    "rp search", "rp tree", "rp structure", "rp read", "rp context",
+    "rp select", "rp git", "rp edit", "rp prompt", "rp chats",
+    "rp setup-review", "rp session", "rp worktree-status", "rp worktree-diff",
+    "rp worktree-setup", "rp worktree-cleanup", "rp windows", "rp workspace",
+    "memory save", "memory search", "memory sync", "memory recall",
+    "chain list", "chain show", "chain suggest", "chain run",
     # Flags
     "--json", "--epic", "--fix", "--dry-run", "--semantic",
     # REPL

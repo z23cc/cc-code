@@ -4,6 +4,7 @@ description: >
   UI/UX design intelligence — 50+ styles, 161 palettes, 57 font pairings, 99 UX guidelines,
   25 chart types across 10 stacks. TRIGGER: 'design UI', 'review UX', 'pick colors',
   'font pairing', 'accessibility', 'responsive design', 'UI审查', '设计UI', '配色方案'.
+  NOT FOR: backend API design — this is for visual UI and user experience.
   Based on ui-ux-pro-max by nextlevelbuilder.
 ---
 

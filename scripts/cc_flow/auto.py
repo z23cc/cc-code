@@ -170,6 +170,14 @@ def _auto_deep_scan(args):
     prioritized = _orient_findings(findings)
     prioritized = _morph_rerank_findings(prioritized)
 
+    # BRIDGE: save high-severity findings to Supermemory (cross-project reuse)
+    bridge_result = {"saved": 0}
+    try:
+        from cc_flow.bridge import scan_to_memory
+        bridge_result = scan_to_memory(prioritized, scan_type="deep")
+    except (ImportError, Exception):
+        pass
+
     print(json.dumps({
         "success": True,
         "scan_type": "deep",
@@ -178,6 +186,7 @@ def _auto_deep_scan(args):
         "total": total,
         "trend": trend,
         "prioritized": prioritized[:10],
+        "memory_saved": bridge_result.get("saved", 0),
         "instruction": "Run 'cc-flow auto run' to start fixing, or review findings first.",
     }))
 

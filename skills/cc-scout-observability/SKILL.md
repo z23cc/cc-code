@@ -3,7 +3,9 @@ name: cc-scout-observability
 description: >
   Scan logging, tracing, metrics, health endpoints, and error tracking setup.
   Reports observability coverage percentage.
-  TRIGGER: 'check observability', 'logging setup', 'monitoring config', '监控配置', '日志怎么设置的'.
+  TRIGGER: 'check observability', 'logging setup', 'monitoring config', 'tracing', 'metrics',
+  '监控配置', '日志怎么设置的', '可观测性'.
+  NOT FOR: adding logging to code — use cc-python-logging instead.
 ---
 
 # Observability Scout — Logging/Tracing/Metrics Audit

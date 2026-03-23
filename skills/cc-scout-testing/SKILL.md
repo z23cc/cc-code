@@ -3,7 +3,8 @@ name: cc-scout-testing
 description: >
   Analyze test framework setup, coverage configuration, test organization,
   and CI integration. Reports test health score.
-  TRIGGER: 'check test setup', 'test infrastructure', 'test coverage config', '测试配置', '检查测试'.
+  TRIGGER: 'check test setup', 'test infrastructure', 'test coverage config', '测试配置', '检查测试', '测试框架'.
+  NOT FOR: writing tests — use cc-tdd or cc-python-testing instead.
 ---
 
 # Testing Scout — Test Infrastructure Audit

@@ -4,7 +4,8 @@ description: >
   Map user flows, edge cases, and missing requirements from a brief spec.
   Identifies questions that MUST be answered before coding.
   TRIGGER: 'what am I missing', 'edge cases', 'gap analysis', 'requirements complete?',
-  '有什么遗漏', '边界情况', '需求分析'.
+  'missing requirements', '有什么遗漏', '边界情况', '需求分析', '需求完整吗'.
+  NOT FOR: post-implementation review — use cc-review instead.
 ---
 
 # Gap Analyst — Find Missing Requirements

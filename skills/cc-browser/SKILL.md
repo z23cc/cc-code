@@ -1,10 +1,6 @@
 ---
 name: cc-browser
-description: >
-  Browser automation for AI agents — navigate, fill forms, click, screenshot, scrape, E2E test.
-  TRIGGER: 'open website', 'test the site', 'take screenshot', 'fill form', 'scrape page',
-  'browser test', 'E2E test', '打开网站', '截图', '浏览器测试'.
-  Based on agent-browser by Vercel.
+description: "Browser automation — navigate, fill forms, click, screenshot, scrape, E2E test via agent-browser. TRIGGER: 'open website', 'test the site', 'take screenshot', 'fill form', 'scrape page', 'browser test', 'E2E test', '打开网站', '截图', '浏览器测试', '抓取页面'. NOT FOR: API testing (use curl), static analysis, non-browser tasks."
 allowed-tools: Bash(npx agent-browser:*), Bash(agent-browser:*)
 ---
 

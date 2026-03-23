@@ -1,6 +1,9 @@
 ---
 name: cc-debugging
-description: "Systematic debugging methodology + PUA motivation engine. Use when encountering any bug, test failure, or unexpected behavior — or when stuck and about to give up."
+description: >
+  Systematic debugging methodology — find root cause before attempting fixes.
+  TRIGGER: 'debug', 'bug', 'broken', 'investigate', '调试', '修bug'.
+  NOT FOR: build errors (/fix).
 ---
 
 # Systematic Debugging + Never Give Up

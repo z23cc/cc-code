@@ -1,6 +1,9 @@
 ---
 name: cc-async-patterns
-description: "Python async/await patterns — asyncio, FastAPI, aiohttp, task groups, error handling. Use when writing concurrent I/O code."
+description: >
+  Python async/await patterns — asyncio, FastAPI, aiohttp, task groups, error handling for concurrent I/O.
+  TRIGGER: 'async', 'await', 'asyncio', 'concurrent', 'aiohttp', 'task group', '异步', '并发'
+  NOT FOR: CPU-bound parallelism, multiprocessing, threading
 ---
 
 # Async Python Patterns

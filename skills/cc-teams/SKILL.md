@@ -3,7 +3,9 @@ name: cc-teams
 description: >
   Agent team composition and dispatch patterns. Defines which agents work
   together, in what order, and how they hand off context.
-  TRIGGER: 'assemble team', 'dispatch team', 'run team', '组团', '派团队'.
+  TRIGGER: 'assemble team', 'dispatch team', 'run team', 'multi-agent',
+  '组团', '派团队', '组队'.
+  NOT FOR: single-agent tasks — just use the agent directly.
 ---
 
 # Agent Teams — Composition & Dispatch

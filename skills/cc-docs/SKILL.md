@@ -1,10 +1,6 @@
 ---
 name: cc-docs
-description: >
-  Documentation generation and maintenance — README, CHANGELOG, API docs,
-  CLAUDE.md. Keeps docs in sync with code after changes ship.
-  TRIGGER: 'update docs', 'write README', 'changelog', 'document this',
-  'sync docs', '更新文档', '写文档'.
+description: "Documentation generation and maintenance — README, CHANGELOG, API docs, CLAUDE.md. Keeps docs in sync with code. TRIGGER: 'update docs', 'write README', 'changelog', 'document this', 'sync docs', 'API docs', '更新文档', '写文档', '同步文档'. NOT FOR: code comments (inline), architecture design (use cc-clean-architecture)."
 ---
 
 # Documentation Skill

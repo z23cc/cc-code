@@ -1,6 +1,9 @@
 ---
 name: cc-plan
-description: "Create comprehensive implementation plans with TDD workflow. Use when you have a spec or requirements for a multi-step task, before touching code."
+description: >
+  Create comprehensive implementation plans with TDD workflow. Use before touching code.
+  TRIGGER: 'plan', 'design', 'how to build', '规划', '写计划'.
+  NOT FOR: brainstorming (/brainstorm).
 ---
 
 # Writing Plans

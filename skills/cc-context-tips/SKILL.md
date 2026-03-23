@@ -1,10 +1,6 @@
 ---
 name: cc-context-tips
-description: >
-  Context window management for long sessions. When to compact, how to
-  preserve critical info, and how to structure work to avoid context overflow.
-  TRIGGER: 'context full', 'running out of context', 'session too long',
-  'compact', '上下文快满了'.
+description: "Context window management for long sessions — when to compact, preserve critical info, avoid overflow. TRIGGER: 'context full', 'running out of context', 'session too long', 'compact', 'context overflow', '上下文快满了', '会话太长', '怎么压缩上下文'. NOT FOR: session save/restore (use cc-flow session), task tracking (use cc-flow)."
 ---
 
 # Context Window Management

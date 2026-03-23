@@ -1,6 +1,9 @@
 ---
 name: cc-python-patterns
-description: "Pythonic idioms, PEP 8, type hints, and best practices for robust Python applications."
+description: >
+  Pythonic idioms, PEP 8, type hints, and best practices for robust Python applications.
+  TRIGGER: 'python patterns', 'PEP 8', 'type hints', 'idiomatic python', 'Python风格', 'Python最佳实践'
+  NOT FOR: async patterns, testing, deployment
 ---
 
 # Python Development Patterns

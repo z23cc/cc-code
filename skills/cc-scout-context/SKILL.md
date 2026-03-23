@@ -4,7 +4,8 @@ description: >
   Token-efficient codebase exploration. Uses file trees, code structure views,
   and targeted reads instead of full file dumps. Minimizes context consumption.
   TRIGGER: 'quick overview', 'explore the codebase efficiently', 'save context',
-  '快速了解', '省 token 探索'.
+  'minimal tokens', '快速了解', '省 token 探索', '高效探索'.
+  NOT FOR: deep cross-file analysis — use cc-research or cc-rp builder.
 ---
 
 # Context Scout — Efficient Codebase Exploration

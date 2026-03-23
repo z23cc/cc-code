@@ -337,6 +337,26 @@ def _add_morph_commands(sub):
     ghsearch_p.add_argument("--url", default="")
 
 
+def _add_bridge_commands(sub):
+    """Add bridge commands (Morph × RP × Supermemory collaboration)."""
+    ds_p = sub.add_parser("deep-search", help="Morph search → RP select → RP builder (deep understanding)")
+    ds_p.add_argument("query", nargs="*")
+    ds_p.add_argument("--type", choices=["question", "plan", "review", "clarify"], default="question")
+
+    sc_p = sub.add_parser("smart-chat", help="Memory-enhanced RP chat (recall → inject → chat)")
+    sc_p.add_argument("message")
+    sc_p.add_argument("--mode", choices=["chat", "plan", "review", "edit"], default="chat")
+    sc_p.add_argument("--new", action="store_true", default=True)
+
+    es_p = sub.add_parser("embed-structure", help="RP code structure → Morph embed (similarity search)")
+    es_p.add_argument("paths", nargs="*", default=["."])
+
+    rr_p = sub.add_parser("recall-review", help="Recall past review findings from Supermemory")
+    rr_p.add_argument("query", nargs="*")
+
+    sub.add_parser("bridge-status", help="Show Morph × RP × Supermemory connection status")
+
+
 def _add_eval_commands(sub):
     """Add evaluation harness subcommands."""
     ev_p = sub.add_parser("eval", help="Coding capability evaluation")
@@ -349,6 +369,160 @@ def _add_eval_commands(sub):
     ev_cross = ev_sub.add_parser("cross", help="Test cc-flow across multiple real projects")
     ev_cross.add_argument("--dir", default="", help="Directory containing projects")
     ev_cross.add_argument("--limit", type=int, default=5)
+
+
+def _add_rp_commands(sub):
+    """Add RepoPrompt (rp-cli) integration subcommands."""
+    # Parent parser with shared rp options (inherited by all rp subcommands)
+    rp_parent = argparse.ArgumentParser(add_help=False)
+    rp_parent.add_argument("-w", "--window", type=int, default=None, help="Target RP window ID")
+    rp_parent.add_argument("-t", "--tab", default=None, help="Target RP tab name/UUID")
+    rp_parent.add_argument("--json", action="store_true", default=False, help="JSON output")
+
+    rp_p = sub.add_parser("rp", help="RepoPrompt integration (rp-cli wrapper)")
+    rp_sub = rp_p.add_subparsers(dest="rp_cmd")
+
+    P = [rp_parent]  # Shorthand for parents kwarg
+
+    # check
+    rp_sub.add_parser("check", help="Check if rp-cli is available")
+
+    # windows
+    rp_sub.add_parser("windows", help="List RepoPrompt windows", parents=P)
+
+    # workspace
+    ws_p = rp_sub.add_parser("workspace", help="Manage workspaces", parents=P)
+    ws_p.add_argument("action", choices=["list", "switch", "create", "delete", "tabs"], default="list", nargs="?")
+    ws_p.add_argument("name", nargs="?", default="")
+    ws_p.add_argument("--folder-path", default="")
+    ws_p.add_argument("--new-window", action="store_true", default=False)
+    ws_p.add_argument("--close-window", action="store_true", default=False)
+
+    # tabs
+    tabs_p = rp_sub.add_parser("tabs", help="Manage compose tabs", parents=P)
+    tabs_p.add_argument("action", choices=["list", "create", "close"], default="list", nargs="?")
+    tabs_p.add_argument("name", nargs="?", default="")
+    tabs_p.add_argument("--allow-active", action="store_true", default=False)
+
+    # select
+    sel_p = rp_sub.add_parser("select", help="Manage file selection", parents=P)
+    sel_p.add_argument("op", choices=["get", "set", "add", "remove", "clear"], default="get", nargs="?")
+    sel_p.add_argument("paths", nargs="*", default=[])
+
+    # builder
+    bld_p = rp_sub.add_parser("builder", help="Context builder", parents=P)
+    bld_p.add_argument("instructions")
+    bld_p.add_argument("--type", choices=["clarify", "question", "plan", "review"], default=None)
+
+    # plan (shorthand for chat --mode plan)
+    plan_p = rp_sub.add_parser("plan", help="Architecture plan request (new chat)", parents=P)
+    plan_p.add_argument("message")
+
+    # review (shorthand for chat --mode review)
+    rev_p = rp_sub.add_parser("review", help="Code review request (new chat)", parents=P)
+    rev_p.add_argument("message", nargs="?", default="")
+
+    # chat
+    chat_p = rp_sub.add_parser("chat", help="Send chat message", parents=P)
+    chat_p.add_argument("message", nargs="?", default="")
+    chat_p.add_argument("--message-file", default="")
+    chat_p.add_argument("--new", action="store_true", default=False)
+    chat_p.add_argument("--chat-name", default="")
+
+    # read
+    read_p = rp_sub.add_parser("read", help="Read file", parents=P)
+    read_p.add_argument("path")
+    read_p.add_argument("start_line", type=int, nargs="?", default=None)
+    read_p.add_argument("limit_n", type=int, nargs="?", default=None)
+
+    # search
+    srch_p = rp_sub.add_parser("search", help="Search files", parents=P)
+    srch_p.add_argument("pattern")
+    srch_p.add_argument("--extensions", default="")
+    srch_p.add_argument("--context-lines", type=int, default=None)
+
+    # tree
+    tree_p = rp_sub.add_parser("tree", help="File tree", parents=P)
+    tree_p.add_argument("--mode", choices=["full", "folders", "selected"], default=None)
+    tree_p.add_argument("--max-depth", type=int, default=None)
+    tree_p.add_argument("path", nargs="?", default="")
+
+    # structure
+    struct_p = rp_sub.add_parser("structure", help="Code structure (codemaps)", parents=P)
+    struct_p.add_argument("paths", nargs="+")
+
+    # context
+    ctx_p = rp_sub.add_parser("context", help="Workspace context snapshot", parents=P)
+    ctx_p.add_argument("--all", action="store_true", default=False)
+
+    # prompt
+    prm_p = rp_sub.add_parser("prompt", help="Prompt management", parents=P)
+    prm_p.add_argument("op", choices=["get", "set", "export"], default="get", nargs="?")
+    prm_p.add_argument("--text", default="")
+    prm_p.add_argument("--export-path", default="")
+
+    # chats
+    chats_p = rp_sub.add_parser("chats", help="Chat history", parents=P)
+    chats_p.add_argument("action", choices=["list", "log"], default="list", nargs="?")
+    chats_p.add_argument("--scope", choices=["workspace", "tab"], default="workspace")
+    chats_p.add_argument("--chat-id", default="")
+    chats_p.add_argument("--limit-n", type=int, default=None)
+
+    # models
+    rp_sub.add_parser("models", help="List AI model presets", parents=P)
+
+    # git
+    git_p = rp_sub.add_parser("git", help="Git operations via RP", parents=P)
+    git_p.add_argument("op", choices=["status", "diff", "log", "show", "blame"], default="status", nargs="?")
+    git_p.add_argument("--compare", default=None)
+    git_p.add_argument("--detail", choices=["files", "patches", "full"], default=None)
+    git_p.add_argument("--count", type=int, default=None)
+    git_p.add_argument("--artifacts", action="store_true", default=False)
+
+    # edit (apply_edits)
+    edit_p = rp_sub.add_parser("edit", help="Apply file edits", parents=P)
+    edit_p.add_argument("path")
+    edit_p.add_argument("--search-text", required=True)
+    edit_p.add_argument("--replace-text", required=True)
+
+    # file (file_actions)
+    file_p = rp_sub.add_parser("file", help="File actions (create/delete/move)", parents=P)
+    file_p.add_argument("action", choices=["create", "delete", "move"])
+    file_p.add_argument("path")
+    file_p.add_argument("--content", default=None)
+    file_p.add_argument("--new-path", default=None)
+
+    # setup-review (composite)
+    sr_p = rp_sub.add_parser("setup-review", help="Atomic: pick window + builder for review", parents=P)
+    sr_p.add_argument("--summary", default="Review recent changes")
+    sr_p.add_argument("--repo-root", default=None)
+    sr_p.add_argument("--type", choices=["clarify", "question", "plan", "review"], default=None)
+
+    # session
+    sess_p = rp_sub.add_parser("session", help="RP session state (window/tab binding)")
+    sess_p.add_argument("action", choices=["show", "clear"], default="show", nargs="?")
+
+    # worktree-setup
+    wts_p = rp_sub.add_parser("worktree-setup", help="Create RP workspace for a worktree", parents=P)
+    wts_p.add_argument("worktree_path")
+
+    # worktree-cleanup
+    wtc_p = rp_sub.add_parser("worktree-cleanup", help="Remove RP workspace for a worktree", parents=P)
+    wtc_p.add_argument("worktree_path")
+
+    # worktree-status (query by branch, no workspace switch)
+    wt_status_p = rp_sub.add_parser("worktree-status", help="Git status for a worktree branch (@main:<branch>)", parents=P)
+    wt_status_p.add_argument("branch", help="Branch name of the worktree")
+
+    # worktree-diff (query by branch, no workspace switch)
+    wt_diff_p = rp_sub.add_parser("worktree-diff", help="Git diff for a worktree branch vs trunk", parents=P)
+    wt_diff_p.add_argument("branch", help="Branch name of the worktree")
+    wt_diff_p.add_argument("--compare", default="main", help="Compare target (default: main)")
+    wt_diff_p.add_argument("--detail", choices=["summary", "files", "patches", "full"], default="files")
+
+    # run (raw passthrough)
+    run_p = rp_sub.add_parser("run", help="Run raw rp-cli -e command", parents=P)
+    run_p.add_argument("command")
 
 
 def _add_misc_commands(sub):
@@ -395,6 +569,21 @@ def _add_misc_commands(sub):
     profile_p.add_argument("action", nargs="?", default="list", choices=["list", "apply"])
     profile_p.add_argument("name", nargs="?", default="")
 
+    # Review backend setup
+    review_setup_p = sub.add_parser("review-setup",
+                                    help="Detect available review backends and configure")
+    review_setup_p.add_argument("--set", default="",
+                                help="Set default backend: agent, rp, codex, export, none")
+    review_setup_p.add_argument("--scope", default="", choices=["", "plan", "impl", "completion"],
+                                help="Set backend for specific review type only")
+
+    # Cross-worktree state commands
+    sub.add_parser("state-path", help="Show shared state directory (for worktree debugging)")
+    migrate_state_p = sub.add_parser("migrate-state",
+                                     help="Move runtime state to shared dir for cross-worktree safety")
+    migrate_state_p.add_argument("--clean", action="store_true", default=False,
+                                 help="Remove runtime fields from .tasks/ JSON after migration")
+
 
 _HELP_CATEGORIES = """
 Command categories:
@@ -408,7 +597,11 @@ Command categories:
   Routing:    route, learn, learnings, consolidate
   Session:    session save/restore/list
   Morph API:  apply, search, embed, compact, github-search
+  RepoPrompt: rp check/windows/workspace/tabs/select/builder/chat/
+              read/search/tree/structure/context/prompt/chats/models/
+              git/edit/file/setup-review/session/worktree-setup/run
   Config:     config, clean, version
+  Worktree:   state-path, migrate-state
 """
 
 
@@ -435,7 +628,9 @@ def build_parser():
     _add_gh_commands(sub)
     _add_context_commands(sub)
     _add_alias_commands(sub)
+    _add_bridge_commands(sub)
     _add_eval_commands(sub)
+    _add_rp_commands(sub)
     _add_misc_commands(sub)
 
     # Let plugins register their own commands

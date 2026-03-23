@@ -3,7 +3,8 @@ name: cc-scout-docs
 description: >
   Find the most relevant framework/library documentation for the requested change.
   Fetches version-specific docs, source code references, and known issues.
-  TRIGGER: 'find docs for', 'what does the API say', 'check the docs', '查文档', '看看文档怎么说'.
+  TRIGGER: 'find docs for', 'what does the API say', 'check the docs', '查文档', '看看文档怎么说', '查API'.
+  NOT FOR: checking if YOUR docs are stale — use cc-scout-docs-gap instead.
 ---
 
 # Docs Scout — Find Relevant Documentation

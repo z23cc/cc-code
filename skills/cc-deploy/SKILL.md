@@ -1,6 +1,9 @@
 ---
 name: cc-deploy
-description: "Docker, CI/CD, and deployment patterns for Python applications."
+description: >
+  Docker, CI/CD, and deployment patterns for Python applications.
+  TRIGGER: 'deploy', 'docker', 'CI/CD', 'production', 'container', 'Dockerfile', '部署', 'Docker'
+  NOT FOR: local development setup, testing, scaffolding
 ---
 
 # Python Deployment Patterns

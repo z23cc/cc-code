@@ -4,8 +4,9 @@ description: >
   Structured codebase research methodology — layered search, cross-reference
   tracing, dependency analysis, findings synthesis. Use BEFORE making changes
   to unfamiliar code.
-  TRIGGER: 'investigate', 'how does X work', 'understand this', 'research',
-  '调研', '分析一下'.
+  TRIGGER: 'investigate', 'how does X work', 'understand this', 'research', 'trace code',
+  '调研', '分析一下', '代码溯源'.
+  NOT FOR: quick searches — use cc-search-strategy for tool selection.
 ---
 
 # Research Methodology

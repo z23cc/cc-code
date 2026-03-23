@@ -3,8 +3,9 @@ name: cc-scout-repo
 description: >
   Scan repo to find existing patterns, conventions, and related code paths
   BEFORE making changes. Prevents reinventing existing abstractions.
-  TRIGGER: 'what patterns exist', 'scan the repo', 'find conventions',
-  '扫描仓库', '已有什么模式'.
+  TRIGGER: 'what patterns exist', 'scan the repo', 'find conventions', 'existing abstractions',
+  '扫描仓库', '已有什么模式', '代码规范'.
+  NOT FOR: external best practices — use cc-scout-practices instead.
 ---
 
 # Repo Scout — Find Existing Patterns

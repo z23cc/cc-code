@@ -2,6 +2,7 @@
 
 import json
 import os
+import subprocess
 import sys
 import tempfile
 from datetime import datetime, timezone
@@ -18,6 +19,87 @@ LOG_FILE = Path("improvement-results.tsv")
 
 ROUTE_STATS_FILE = TASKS_DIR / "route_stats.json"
 SESSION_DIR = TASKS_DIR / ".sessions"
+
+
+# ── Cross-worktree state sharing ──
+
+def _git_common_dir():
+    """Return the git common dir (shared across worktrees).
+
+    In a worktree, `git rev-parse --git-common-dir` returns the main repo's
+    .git directory, which is shared. In a normal checkout, it returns .git.
+    """
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--git-common-dir"],
+            capture_output=True, text=True, check=True,
+        )
+        return Path(result.stdout.strip())
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+
+
+def state_dir():
+    """Return the shared state directory for cross-worktree task state.
+
+    Priority:
+    1. CC_FLOW_STATE_DIR env var (explicit override)
+    2. <git-common-dir>/cc-flow-state/ (shared across worktrees)
+    3. .tasks/ (fallback — same as TASKS_DIR)
+    """
+    env = os.environ.get("CC_FLOW_STATE_DIR")
+    if env:
+        p = Path(env)
+        p.mkdir(parents=True, exist_ok=True)
+        return p
+
+    git_common = _git_common_dir()
+    if git_common and git_common.is_dir():
+        p = git_common / "cc-flow-state"
+        p.mkdir(parents=True, exist_ok=True)
+        return p
+
+    return TASKS_DIR
+
+
+def state_tasks_dir():
+    """Return the shared task state directory."""
+    d = state_dir() / "tasks"
+    d.mkdir(parents=True, exist_ok=True)
+    return d
+
+
+def load_task_state(task_id):
+    """Load runtime state for a task from the shared state directory.
+
+    Runtime state (status, assignee, started, completed) is stored separately
+    from the task spec so it can be shared across worktrees without merge conflicts.
+    Returns empty dict if no state file exists.
+    """
+    state_file = state_tasks_dir() / f"{task_id}.json"
+    return safe_json_load(state_file, default={})
+
+
+def save_task_state(task_id, state):
+    """Save runtime state for a task to the shared state directory."""
+    state_file = state_tasks_dir() / f"{task_id}.json"
+    atomic_write(state_file, json.dumps(state, indent=2) + "\n")
+
+
+def load_task_merged(task_id):
+    """Load task with spec (from .tasks/) merged with runtime state (from shared dir).
+
+    Spec fields: id, epic, title, depends_on, size, tags, priority
+    Runtime fields: status, assignee, started, completed, duration_sec, summary, diff
+    """
+    task_file = TASKS_SUBDIR / f"{task_id}.json"
+    spec = safe_json_load(task_file, default=None)
+    if spec is None:
+        return None
+    runtime = load_task_state(task_id)
+    # Runtime fields override spec fields (runtime is source of truth for state)
+    merged = {**spec, **runtime}
+    return merged
 
 DEFAULT_CONFIG = {
     "auto_consolidate": True,

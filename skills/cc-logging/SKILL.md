@@ -1,6 +1,8 @@
 ---
 name: cc-logging
-description: "Python logging, structured output, and error handling patterns. Use when adding observability, debugging production issues, or setting up monitoring."
+description: >
+  Python logging, structured output, and error handling patterns.
+  TRIGGER: 'logging', 'log', 'monitoring', 'observability', '日志', '监控'.
 ---
 
 # Logging & Observability

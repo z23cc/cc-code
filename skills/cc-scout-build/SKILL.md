@@ -3,7 +3,9 @@ name: cc-scout-build
 description: >
   Analyze build system, scripts, CI/CD configuration, and monorepo setup.
   Reports build health score.
-  TRIGGER: 'check build', 'how does the build work', 'CI config', '构建配置', 'CI 怎么设置的'.
+  TRIGGER: 'check build', 'how does the build work', 'CI config', 'CI/CD', 'monorepo',
+  '构建配置', 'CI 怎么设置的', '构建系统'.
+  NOT FOR: fixing build errors — use cc-fix instead.
 ---
 
 # Build Scout — Build System Audit

@@ -1,10 +1,6 @@
 ---
 name: cc-code-review-loop
-description: >
-  Verdict-driven code review with auto-fix loop. Reviewer gives a structured
-  verdict (SHIP/NEEDS_WORK/MAJOR_RETHINK), implementer fixes, re-review until SHIP.
-  No manual confirmation between iterations.
-  TRIGGER: 'review and fix', 'review loop', 'get this to SHIP quality', '审查循环'.
+description: "Verdict-driven code review with auto-fix loop. SHIP/NEEDS_WORK/MAJOR_RETHINK verdicts, auto-fix until SHIP. No manual confirmation between iterations. TRIGGER: 'review and fix', 'review loop', 'get this to SHIP', 'code review', '审查循环', '代码审查', '审查并修复'. NOT FOR: epic-level review (use cc-epic-review), one-time review without fix (use cc-review)."
 ---
 
 # Code Review Loop — Verdict Gates
@@ -93,17 +89,41 @@ git diff $BASE_COMMIT..HEAD        # Review only THIS task's changes
 
 This prevents reviewing old code that isn't part of the current task.
 
-## Review Backends (Priority Order)
+## Review Backend Selection
 
-| Priority | Backend | When to Use |
+The review loop supports multiple backends. See **cc-review-backend** skill for full details.
+
+| Backend | ID | How it works |
+|---------|-----|-------------|
+| **Agent** | `agent` | Built-in reviewer agents (parallel dispatch) — default |
+| **RepoPrompt** | `rp` | GUI-based, full file context via Builder |
+| **Codex CLI** | `codex` | Terminal-based, OpenAI model review |
+| **Export** | `export` | Context markdown for external LLM |
+| **None** | `none` | Skip review |
+
+**Selection priority** (first wins):
+1. `--backend=<id>` argument
+2. `CC_REVIEW_BACKEND` env var
+3. `cc-flow config get review.impl` (per-type config)
+4. `cc-flow config get review.backend` (default)
+5. Fallback: `agent`
+
+### Agent Backend (Default)
+
+| Priority | Agent | When to Use |
 |----------|---------|-------------|
-| **1st** | `rp -e 'review "..."'` (rp-cli) | Best: AI-powered review with git diff context |
-| **2nd** | python-reviewer agent | Default for .py files (agent dispatch) |
-| **3rd** | security-reviewer agent | Auth, input handling, API endpoints |
-| **4th** | db-reviewer agent | Database queries, schema changes |
-| fallback | Manual | User explicitly wants to review themselves |
+| **1st** | python-reviewer | .py files |
+| **2nd** | code-reviewer | All other files |
+| **3rd** | security-reviewer | Auth, input handling, API endpoints |
+| **4th** | db-reviewer | Database queries, schema changes |
 
-**Rule:** Try rp-cli review first (faster, deeper context). Fall back to agent dispatch if rp-cli unavailable.
+Dispatch applicable reviewers in parallel. Consolidate verdicts (worst wins).
+
+### RP / Codex / Export Backends
+
+See **cc-review-backend** skill for the full protocol per backend.
+
+**Key rule:** When using rp or codex, the verdict MUST come from the external model's `<verdict>` tag, not from the built-in agents.
 
 ## Post-Autoimmune Review
 
@@ -164,5 +184,6 @@ Loop 2 — Re-Review:
 - **cc-refinement** — quality metrics complement review findings
 - **cc-parallel-agents** — dispatch multiple reviewers for large changes
 - **cc-autoimmune** — run review loop after autoimmune session completes
+- **cc-review-backend** — multi-backend routing (agent/rp/codex/export) + receipt system
 - **pr-review command** — GitHub PR variant of this loop
 - **cc-feedback-loop** — record review patterns for routing improvement

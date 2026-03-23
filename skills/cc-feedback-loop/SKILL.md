@@ -1,11 +1,6 @@
 ---
 name: cc-feedback-loop
-description: >
-  Closed-loop development with routing, execution, and learning.
-  Route tasks to the right command/team, execute, record outcomes,
-  and use past learnings to improve future routing.
-  TRIGGER: 'route this', 'what should I use', 'learn from this',
-  '路由', '应该用什么命令', '记录经验'.
+description: "Closed-loop development — route tasks to the right command/team, execute, record outcomes, learn for future routing. TRIGGER: 'route this', 'what should I use', 'learn from this', 'which command', 'feedback loop', '路由', '应该用什么命令', '记录经验', '反馈循环'. NOT FOR: direct task execution (use the routed command), code review (use cc-review)."
 ---
 
 # Feedback Loop — Route → Execute → Learn

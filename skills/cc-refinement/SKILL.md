@@ -3,7 +3,9 @@ name: cc-refinement
 description: >
   Post-implementation refinement loop — quality metrics, performance budgets,
   edge case hardening. Use AFTER initial implementation passes TDD.
-  TRIGGER: 'refine', 'harden', 'polish', 'production-ready', '加固', '打磨'.
+  TRIGGER: 'refine', 'harden', 'polish', 'production-ready', 'edge cases',
+  '加固', '打磨', '上线前优化'.
+  NOT FOR: initial implementation — use cc-tdd or cc-work first.
 ---
 
 # Refinement Loop

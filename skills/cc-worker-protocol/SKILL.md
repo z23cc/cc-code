@@ -4,7 +4,9 @@ description: >
   Fresh-context worker subagent protocol for task isolation. Each task gets
   a dedicated agent with re-anchor, implement, verify, commit cycle.
   Prevents context bleed between tasks.
-  TRIGGER: 'execute plan', 'work through tasks', 'implement the plan', '执行计划'.
+  TRIGGER: 'execute plan', 'work through tasks', 'implement the plan', 'worker isolation',
+  '执行计划', '任务隔离', '工作协议'.
+  NOT FOR: single quick tasks — just implement directly.
 ---
 
 # Worker Protocol — Task Isolation
@@ -83,8 +85,24 @@ BASE_COMMIT=$(git rev-parse HEAD)
 | Situation | Strategy |
 |-----------|----------|
 | Tasks have dependencies | Sequential workers |
-| Tasks touch different files | **Parallel workers** (each in worktree) |
+| Tasks touch different files | **Parallel workers** (each in worktree — see cc-worktree) |
 | Tasks share models/schemas | Sequential (earlier task may change interface) |
+
+### Worktree Boundary Enforcement
+
+When dispatching parallel workers in worktrees, **always set CC_WORKTREE_PATH**:
+
+```bash
+# Before spawning worker
+export CC_WORKTREE_PATH="$WORK_DIR"
+```
+
+This activates the worktree-guard hook which **blocks** Edit/Write operations
+targeting files outside the assigned worktree. The guard allows shared state
+dirs (`.tasks/`, `.flow/`, `.git/cc-flow-state/`).
+
+Without this, a worker could accidentally edit files in the main checkout —
+causing conflicts with other parallel workers or corrupting the main branch.
 
 ## Re-Anchor Phase
 
@@ -198,3 +216,4 @@ Final:
 - **cc-parallel-agents** — parallel worker dispatch patterns
 - **cc-autoimmune** — similar loop but for improvement tasks, not plan execution
 - **cc-code-review-loop** — review each worker's output with verdict gates
+- **cc-worktree** — worktree management for parallel worker isolation

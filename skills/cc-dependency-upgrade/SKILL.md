@@ -1,9 +1,6 @@
 ---
 name: cc-dependency-upgrade
-description: >
-  Dependency upgrade workflow — audit, plan, upgrade, test, fix breaking changes.
-  TRIGGER: 'upgrade dependencies', 'update packages', 'bump versions',
-  'security vulnerability', '升级依赖', '更新包'.
+description: "Dependency upgrade workflow — audit, plan, upgrade, test, fix breaking changes. Supports Python/JS/Go/Rust. TRIGGER: 'upgrade dependencies', 'update packages', 'bump versions', 'security vulnerability', 'outdated', '升级依赖', '更新包', '版本升级'. NOT FOR: new dependency selection (use research), code refactoring (use cc-simplify)."
 ---
 
 # Dependency Upgrade

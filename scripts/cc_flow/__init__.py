@@ -4,12 +4,12 @@ Usage:
     cc-flow <command>          (after pip install -e .)
     python -m cc_flow <command>
 
-Package structure (35 modules, 90+ subcommands):
+Package structure (45 modules, 119 subcommands):
   cc_flow/
     __init__.py      → VERSION
     __main__.py      → python -m cc_flow support
     entry.py         → lazy-loaded command dispatch (only imports needed module)
-    cli.py           → argparse with 10+ command categories
+    cli.py           → argparse with 11+ command categories
     core.py          → shared constants, atomic writes, cross-platform locks, ID resolution
     epic_task.py     → epic/task CRUD, dep management (race-safe O_EXCL)
     views.py         → list, show, ready, next, status + shared helpers
@@ -43,6 +43,11 @@ Package structure (35 modules, 90+ subcommands):
     gh_sync.py       → GitHub Issues import/export
     repl.py          → interactive REPL (tab completion + "did you mean?")
     skin.py          → terminal output (colors, tables, progress bars)
+    bridge.py        → Morph × RP × Supermemory collaboration (4 feedback loops)
+    rp.py            → RepoPrompt dual-transport SDK (CLI + MCP auto-routing)
+    rp_commands.py   → cc-flow rp <subcommand> (24 subcommands)
+    review_setup.py  → multi-backend review detection and configuration
+    worktree_state.py → cross-worktree state management
   morph_client.py    → pure Python Morph API client (5 APIs)
   cc-flow.py         → backward-compatible shim
 """

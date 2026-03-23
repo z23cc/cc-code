@@ -1,25 +1,27 @@
 ---
 name: cc-search-strategy
 description: >
-  Multi-tool search strategy — uses cc-flow morph commands and rp-cli,
-  falls back to built-in Grep/Glob. Choose the right tool for each task.
-  TRIGGER: searching codebase, exploring code, finding where X is used,
-  understanding architecture, refactoring, security audit, '搜索', '查找'.
+  Multi-tool search strategy — RP MCP first, then cc-flow CLI, then built-in.
+  Choose the right tool for each task.
+  TRIGGER: 'searching codebase', 'exploring code', 'finding where X is used',
+  'understanding architecture', 'refactoring', 'security audit', '搜索', '查找', '代码搜索'.
+  NOT FOR: known file paths — just use Read directly.
 ---
 
 # Search Strategy — Tool Priority Chain
 
 ## Priority Rule
 
-**Use cc-flow morph commands first. Fall back to rp-cli, then built-in tools.**
+**RP MCP first (in-process). Fall back to cc-flow CLI, then built-in tools.**
 
 ```
-Search:  cc-flow search "query"      → rp file_search → Grep
-Edit:    cc-flow apply --file X      → rp apply_edits → Edit
-Embed:   cc-flow embed --input X     → (no fallback)
-Rerank:  cc-flow search --rerank     → (no fallback)
-Compact: cc-flow compact --file X    → (no fallback)
-Deep:    rp context_builder          → Read + Grep
+Search:  RP file_search              → cc-flow search → Grep
+Edit:    RP apply_edits              → cc-flow apply  → Edit
+Deep:    RP context_builder          → cc-flow rp builder → Read + Grep
+Structure: RP get_code_structure     → cc-flow rp structure → Grep def/class
+Embed:   cc-flow embed --input X    → (no fallback)
+Rerank:  cc-flow search --rerank    → (no fallback)
+Compact: cc-flow compact --file X   → (no fallback)
 ```
 
 ## Decision Framework
@@ -28,26 +30,27 @@ Deep:    rp context_builder          → Read + Grep
 Do you know the exact text/pattern?
 ├─ YES → Grep (fastest, ~20ms)
 └─ NO → What are you looking for?
-         ├─ Meaning/concept → cc-flow search "query"
-         ├─ Function/class definition → rp structure src/
-         ├─ Cross-file understanding → rp context_builder
+         ├─ Code pattern → RP file_search (content + path, ~80% fewer tokens)
+         ├─ Meaning/concept → cc-flow search "query" (Morph semantic)
+         ├─ Function/class definition → RP get_code_structure
+         ├─ Cross-file understanding → RP context_builder
          ├─ Relevance ranking → cc-flow search "query" --rerank
          └─ Dependency chain → Grep for imports + call sites
 ```
 
 ## Tool Matrix
 
-| Task | Best Tool | Fallback | Speed |
-|------|-----------|----------|-------|
-| Broad exploration | `cc-flow search` | Grep + Read | ~2s |
-| Exact string match | Grep (built-in) | — | ~20ms |
-| File name search | Glob / `rp file_search` | — | instant |
-| Code structure | `rp structure src/` | Grep def/class | ~200ms |
-| Deep Q&A | `rp context_builder` | Agent dispatch | ~3s |
-| Quick file edit | `cc-flow apply` | Built-in Edit | ~1s |
-| Multi-file edit | `rp apply_edits` | Sequential Edit | ~2s |
-| Similarity | `cc-flow embed` | — | ~500ms |
-| Relevance sort | `cc-flow search --rerank` | — | ~1s |
+| Task | Best Tool (MCP) | CLI Fallback | Built-in Fallback |
+|------|----------------|-------------|------------------|
+| Code search | `RP file_search` | `cc-flow search` | Grep |
+| Exact string | Grep (built-in) | — | — |
+| File name | `RP file_search(mode="path")` | Glob | — |
+| Code structure | `RP get_code_structure` | `cc-flow rp structure` | Grep def/class |
+| Deep Q&A | `RP context_builder` | `cc-flow rp builder` | Agent dispatch |
+| File edit | `RP apply_edits` | `cc-flow apply` | Edit |
+| Multi-file edit | `RP apply_edits` (batch) | `cc-flow rp edit` | Sequential Edit |
+| Similarity | `cc-flow embed` | — | — |
+| Relevance sort | `cc-flow search --rerank` | — | — |
 | Text compression | `cc-flow compact` | — | ~2s |
 
 ## cc-flow Morph Commands

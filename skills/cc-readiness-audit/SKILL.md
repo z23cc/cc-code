@@ -4,7 +4,9 @@ description: >
   8-pillar project readiness assessment. Checks agent readiness (can Claude work
   here effectively?) and production readiness (is this deployable?).
   Fixes agent-readiness issues only; reports production issues without changing.
-  TRIGGER: 'audit project', 'is this ready', 'readiness check', 'project health', '项目体检'.
+  TRIGGER: 'audit project', 'is this ready', 'readiness check', 'project health',
+  '项目体检', '准备好了吗', '项目审计'.
+  NOT FOR: code review — use cc-review. NOT FOR: security audit — use cc-scout-security.
 ---
 
 # Readiness Audit — 8 Pillars

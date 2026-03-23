@@ -119,11 +119,28 @@ def cmd_done(args):
     save_task(path, data)
     _fire_plugin_hook("on_task_done", task=data)
 
+    # Bridge: save review findings to Supermemory (if review data present)
+    memory_saved = False
+    review = data.get("last_review", {})
+    if review.get("verdict"):
+        try:
+            from cc_flow.bridge import review_to_memory
+            memory_saved = review_to_memory(
+                verdict=review["verdict"],
+                task_id=args.id,
+                findings=review.get("findings", ""),
+                backend=review.get("backend", "agent"),
+            )
+        except (ImportError, Exception):
+            pass
+
     result = {"success": True, "id": args.id, "status": "done"}
     if duration_sec is not None:
         result["duration"] = _format_duration(duration_sec)
     if diff_stats:
         result["diff"] = diff_stats
+    if memory_saved:
+        result["review_saved_to_memory"] = True
     hint = _consolidation_hint()
     if hint:
         result["hint"] = hint

@@ -55,6 +55,21 @@ ROUTE_TABLE = [
      "/debug", "bug-fix", "Incident response (use incident skill)"),
     (["upgrade", "dependency", "依赖", "升级"],
      None, None, "Dependency upgrade (use dependency-upgrade skill)"),
+    (["deep search", "understand code", "how does", "explain code", "analyze code",
+      "深度搜索", "理解代码", "分析代码", "代码怎么工作"],
+     "deep-search", None, "Deep search → Morph find + RP analyze"),
+    (["smart chat", "memory chat", "enhanced chat", "past experience",
+      "智能对话", "记忆对话", "历史经验"],
+     "smart-chat", None, "Memory-enhanced chat (recall + RP)"),
+    (["embed structure", "similar function", "find duplicate", "code similarity",
+      "向量化", "相似函数", "重复代码", "代码相似"],
+     "embed-structure", None, "Code structure → Morph embed (similarity)"),
+    (["past review", "review history", "what went wrong",
+      "过去审查", "审查历史", "以前的问题"],
+     "recall-review", None, "Recall past review findings from memory"),
+    (["bridge", "morph rp supermemory", "system status", "api status",
+      "桥接状态", "系统状态", "连接状态"],
+     "bridge-status", None, "Check Morph × RP × Supermemory status"),
 ]
 
 

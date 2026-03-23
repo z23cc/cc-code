@@ -53,6 +53,17 @@ _COMMANDS = {
     "perf": "perf:cmd_perf", "profile": "config:cmd_profile",
     "forecast": "insights:cmd_forecast", "evolve": "insights:cmd_evolve",
     "health": "insights:cmd_health",
+    # review setup
+    "review-setup": "review_setup:cmd_review_setup",
+    # bridge (Morph × RP × Supermemory)
+    "deep-search": "bridge:cmd_deep_search",
+    "smart-chat": "bridge:cmd_smart_chat",
+    "embed-structure": "bridge:cmd_embed_structure",
+    "recall-review": "bridge:cmd_recall_review",
+    "bridge-status": "bridge:cmd_bridge_status",
+    # worktree state
+    "state-path": "worktree_state:cmd_state_path",
+    "migrate-state": "worktree_state:cmd_migrate_state",
 }
 
 # Subcommands: parent → (attr, {subcmd: "module:function"})
@@ -122,6 +133,7 @@ _SUBCMD_MAP = {
 _SPECIAL = {
     "auto": "auto:cmd_auto",
     "session": "session:cmd_session",
+    "rp": "rp_commands:cmd_rp",
 }
 
 

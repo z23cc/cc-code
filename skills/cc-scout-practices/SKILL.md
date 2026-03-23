@@ -4,7 +4,8 @@ description: >
   Gather modern best practices and pitfalls BEFORE implementing a change.
   Searches official docs, GitHub repos, and community guidance for current year.
   TRIGGER: 'best practices for', 'how should I implement', 'what are the pitfalls',
-  '最佳实践', '有什么坑'.
+  'community guidance', '最佳实践', '有什么坑', '推荐做法'.
+  NOT FOR: existing repo patterns — use cc-scout-repo instead.
 ---
 
 # Practice Scout — Best Practices Before Code

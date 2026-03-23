@@ -1,6 +1,8 @@
 ---
 name: cc-verification
-description: "Use before claiming work is complete — requires running verification commands and confirming output before any success claims. Evidence before assertions."
+description: >
+  Run verification commands and confirm output before any completion claims. Evidence before assertions.
+  TRIGGER: 'verify', 'check', 'done?', 'complete?', '验证', '检查完成'.
 ---
 
 # Verification Before Completion

@@ -3,7 +3,9 @@ name: cc-scout-env
 description: >
   Scan environment setup — .env templates, Docker, devcontainer, setup scripts,
   runtime version pinning. Reports reproducibility score.
-  TRIGGER: 'check env setup', 'environment config', 'how to set up', '环境配置', '怎么搭建环境'.
+  TRIGGER: 'check env setup', 'environment config', 'how to set up', 'docker config',
+  'devcontainer', '环境配置', '怎么搭建环境', '开发环境'.
+  NOT FOR: runtime debugging — use cc-debug instead.
 ---
 
 # Env Scout — Environment Setup Audit

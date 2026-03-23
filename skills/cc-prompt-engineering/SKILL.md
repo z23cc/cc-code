@@ -5,7 +5,8 @@ description: >
   cost optimization. Use when building AI features, writing system prompts,
   or optimizing LLM interactions.
   TRIGGER: 'write a prompt', 'optimize prompt', 'LLM integration', 'AI feature',
-  '写提示词', '优化prompt'.
+  'system prompt', 'chain of thought', '写提示词', '优化prompt', '提示工程'.
+  NOT FOR: using Claude Code itself — this is for building LLM-powered features.
 ---
 
 # Prompt Engineering Patterns

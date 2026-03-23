@@ -1,6 +1,9 @@
 ---
 name: cc-scaffold
-description: "Bootstrap a new Python project with modern tooling — pyproject.toml, ruff, mypy, pytest, CI, Docker."
+description: >
+  Bootstrap a new Python project with modern tooling — pyproject.toml, ruff, mypy, pytest, CI, Docker.
+  TRIGGER: 'new project', 'scaffold', 'bootstrap', 'init project', 'project template', '新项目', '脚手架'
+  NOT FOR: adding features to existing projects, deployment
 ---
 
 # Python Project Scaffold
