@@ -74,6 +74,8 @@ _COMMANDS = {
     "guard": "modes:cmd_guard",
     # context budget
     "context-budget": "context_budget:cmd_context_budget",
+    # help (grouped command overview)
+    "help": "repl:cmd_help",
 }
 
 # Subcommands: parent → (attr, {subcmd: "module:function"})

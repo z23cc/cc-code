@@ -35,21 +35,44 @@ def _repl_help():
 
 def _repl_help_all():
     """Show all commands grouped by category."""
-    categories = {
-        "Project": "init, epic create, task create, dep add, template list",
-        "Views": "dashboard, list, tasks, show, ready, next, progress, export",
-        "Work": "start, done, block, reopen, rollback, diff, bulk",
-        "Quality": "verify, scan, doctor, health, auto deep, evolve",
-        "Search": "find, search, similar, dedupe, suggest, index",
-        "Analytics": "stats, standup, changelog, burndown, report, time, forecast",
-        "Routing": "route, learn, learnings, consolidate, chain list/run/suggest",
-        "Integration": "gh import/export, context brief, session save, memory search",
-        "Ecosystem": "skills find/add, plugin list/create, workflow run, pipeline run",
-        "Config": "config, clean, profile, perf, alias, version",
-    }
-    skin.heading("All Commands")
-    skin.table(["Category", "Commands"], list(categories.items()))
+    groups = [
+        ("Task Management",
+         "init, epic, task, dep, list, show, ready, next, progress, dashboard"),
+        ("Work Execution",
+         "start, done, block, reopen, rollback, diff, bulk, work (via skill)"),
+        ("Quality",
+         "verify, scan, validate, validate-skills, doctor, health, auto"),
+        ("Search & Route",
+         "search, route, learn, learnings, consolidate, find, similar, suggest"),
+        ("Worktree",
+         "worktree create/list/switch/remove/status/info"),
+        ("Safety",
+         "careful, freeze, guard, checkpoint"),
+        ("Bridge (Morph\u00d7RP\u00d7SM)",
+         "deep-search, smart-chat, embed-structure, recall-review, bridge-status"),
+        ("RepoPrompt",
+         "rp check/builder/plan/review/chat/search/tree/structure/git/edit/..."),
+        ("Analytics",
+         "stats, standup, changelog, burndown, report, time, forecast"),
+        ("Session",
+         "session save/restore/list, context-budget"),
+        ("Autonomous",
+         "ralph, auto scan/run/deep/full"),
+        ("Misc",
+         "config, version, clean, graph, export, perf"),
+    ]
     print()
+    for title, cmds in groups:
+        skin.heading(title)
+        print(f"  {cmds}")
+        print()
+    skin.dim("Type a command to run it, or 'quit' to exit.")
+
+
+def cmd_help(_args=None):
+    """Print grouped help (usable from CLI: cc-flow help)."""
+    _repl_help()
+    _repl_help_all()
 
 
 def _show_context():
@@ -77,7 +100,7 @@ _COMPLETIONS = [
     "find", "search", "similar", "suggest", "dedupe", "index", "priority",
     "route", "learn", "learnings", "consolidate",
     "standup", "stats", "changelog", "burndown", "report", "time", "forecast",
-    "ralph", "scan", "validate", "export", "clean", "perf", "health", "evolve",
+    "ralph", "scan", "validate", "validate-skills", "export", "clean", "perf", "health", "evolve",
     "deep-search", "smart-chat", "embed-structure", "recall-review", "bridge-status",
     "review-setup", "state-path",
     "careful", "freeze", "guard", "context-budget",
@@ -108,7 +131,7 @@ _COMPLETIONS = [
     # Flags
     "--json", "--epic", "--fix", "--dry-run", "--semantic",
     # REPL
-    "help", "quit",
+    "help", "help all", "quit",
 ]
 
 

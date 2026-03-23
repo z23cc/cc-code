@@ -8,6 +8,8 @@ user-invocable: true
 argument-hint: [TARGET=<value>]
 ---
 
+# Frontend Performance Optimization
+
 Identify and fix performance issues to create faster, smoother user experiences.
 
 ## Assess Performance Issues

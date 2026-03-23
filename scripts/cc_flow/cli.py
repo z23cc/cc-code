@@ -606,6 +606,7 @@ def _add_misc_commands(sub):
     time_p = sub.add_parser("time", help="Time tracking report (duration per task, averages)")
     time_p.add_argument("--epic", default="")
     sub.add_parser("version", help="Print cc-flow version")
+    sub.add_parser("help", help="Show all commands grouped by category")
     config_p = sub.add_parser("config", help="View/set cc-flow configuration")
     config_p.add_argument("key", nargs="?", default="")
     config_p.add_argument("value", nargs="?", default="")
