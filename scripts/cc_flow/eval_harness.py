@@ -10,6 +10,7 @@ Eval dimensions:
   2. SEARCH  — can find/search locate relevant code?
   3. SPEED   — how fast are commands?
   4. HEALTH  — project health score integration
+  5. BRIDGE  — are bridge integrations (morph/repoprompt/supermemory) reachable?
 
 Each dimension returns a score 0-100 and diagnostic details.
 """
@@ -182,6 +183,76 @@ def eval_health():
     }
 
 
+def eval_bridge():
+    """Are bridge integrations reachable and returning valid JSON?
+
+    Tests bridge-status, deep-search, and recall-review commands.
+    Awards partial credit when APIs are unavailable (connection errors,
+    missing keys, etc.) — only penalises malformed or missing output.
+    """
+    cases = [
+        {
+            "name": "bridge-status",
+            "cmd": "bridge-status",
+            "required_keys": ["morph", "repoprompt", "supermemory"],
+            "timeout": 15,
+        },
+        {
+            "name": "deep-search",
+            "cmd": 'deep-search "test" --type question',
+            "required_keys": ["query", "steps"],
+            "timeout": 30,
+        },
+        {
+            "name": "recall-review",
+            "cmd": 'recall-review "test"',
+            "required_keys": ["success"],
+            "timeout": 30,
+        },
+    ]
+
+    details = []
+    total_score = 0
+
+    for case in cases:
+        out, err, code, ms = _run_cc(case["cmd"], timeout=case["timeout"])
+        data = _parse_json(out)
+
+        # Determine per-case score:
+        #   100 — valid JSON with all required keys
+        #    60 — valid JSON but missing some keys (API partially down)
+        #    40 — command ran but returned non-JSON (API unavailable, graceful msg)
+        #    20 — command returned non-zero but produced some output
+        #     0 — timeout or no output at all
+        if data is not None:
+            present = [k for k in case["required_keys"] if k in data]
+            if len(present) == len(case["required_keys"]):
+                case_score = 100
+            else:
+                # Partial credit: proportion of keys found, floor at 40
+                ratio = len(present) / len(case["required_keys"])
+                case_score = max(40, int(60 + ratio * 40))
+        elif out.strip():
+            # Got output but not JSON — API probably unavailable, partial credit
+            case_score = 40 if code == 0 else 20
+        else:
+            case_score = 0
+
+        total_score += case_score
+        details.append({
+            "name": case["name"],
+            "score": case_score,
+            "ms": ms,
+            "returncode": code,
+            "has_json": data is not None,
+            "keys_found": [k for k in case["required_keys"] if data and k in data],
+            "keys_missing": [k for k in case["required_keys"] if not data or k not in data],
+        })
+
+    score = total_score // len(cases) if cases else 0
+    return {"score": score, "detail": details, "dimension": "bridge"}
+
+
 # ── Eval Runner ──
 
 ALL_EVALS = {
@@ -189,6 +260,7 @@ ALL_EVALS = {
     "search": eval_search,
     "speed": eval_speed,
     "health": eval_health,
+    "bridge": eval_bridge,
 }
 
 

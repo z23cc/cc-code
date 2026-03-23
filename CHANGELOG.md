@@ -1,5 +1,37 @@
 # Changelog
 
+## [5.3.0] - 2026-03-23
+### Added
+- Bridge module (`bridge.py`): 6 Morph×RP×Supermemory collaboration loops
+  - `cc-flow deep-search`: Morph search → RP selection → Builder analysis
+  - `cc-flow smart-chat`: Supermemory recall → RP chat (memory-augmented)
+  - `cc-flow embed-structure`: RP code structure → Morph embed vectors
+  - `cc-flow recall-review`: recall past review findings from Supermemory
+  - `cc-flow bridge-status`: check all 3 system connectivity
+  - Auto: review verdicts → Supermemory on `cc-flow done`
+  - Auto: OODA scan findings → Supermemory on `cc-flow auto deep`
+- RepoPrompt SDK (`rp.py`): unified dual-transport (CLI + MCP auto-routing)
+  - 26 `cc-flow rp` subcommands including `plan`, `review`, `worktree-status`, `worktree-diff`
+  - MCP detection covers plugin-level `discover-agent.json`
+  - `rp_version()` for CLI version reporting
+  - `worktree_git_status()` / `worktree_diff()` via `@main:<branch>` syntax
+- Worktree boundary guard (`worktree-guard.sh`): PreToolUse hook blocks Edit/Write outside assigned worktree
+- Ralph guard enhanced: worktree boundary enforcement in autonomous mode
+- "research" skill chain: deep-search → research → scout repo
+- 15 bridge unit tests (`test_bridge.py`)
+- Route table: 5 new entries (deep-search, smart-chat, embed-structure, recall-review, bridge-status) with Chinese keywords
+### Improved
+- All 58 skill descriptions enhanced with TRIGGER keywords (English + Chinese) and NOT FOR disambiguation
+- Tool priority updated to MCP-first: RP MCP > cc-flow CLI > built-in
+- `chat()` mode parameter now correctly routes to `plan()` / `review()`
+- `review_setup.py` reuses `rp.py` detection for consistent backend availability
+- REPL tab completion: 20+ new entries (bridge, rp, memory, chain commands)
+- `cc-flow rp` help reorganized by category (Explore/Context/Chat/Edit/Git/Setup)
+### Fixed
+- MCP detection missed plugin-level `.mcp.json` discovery — now detects `discover-agent.json`
+- `review_setup.py` checked `which rp` (wrong) instead of `which rp-cli` (correct)
+- `chat()` mode parameter was a no-op (`if mode: pass`) — now routes correctly
+
 ## [5.2.0] - 2026-03-23
 ### Added
 - Skill chains: 7 predefined multi-skill workflows (`chain run feature/bugfix/ui-design/...`)
