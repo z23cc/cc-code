@@ -91,7 +91,9 @@ BASE_COMMIT=$(git rev-parse HEAD)
 
 ### Worktree Boundary Enforcement
 
-When dispatching parallel workers in worktrees, **always set CC_WORKTREE_PATH**:
+Workers run in worktrees by default. The guard auto-detects worktree context —
+no manual `CC_WORKTREE_PATH` needed when `claude` is launched from a worktree.
+For programmatic dispatch, set explicitly:
 
 ```bash
 # Before spawning worker

@@ -11,6 +11,10 @@ description: >
 
 # Worktree Management
 
+Worktree is the **default isolation mode** for `/cc-work` and Ralph. Every task
+gets its own worktree under `.claude/worktrees/<task-id>/`. The worktree-guard
+hook auto-detects worktree context and blocks edits outside it — no configuration needed.
+
 ## Script
 
 All worktree operations go through the manager script:

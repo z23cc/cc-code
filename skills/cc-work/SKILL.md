@@ -27,9 +27,9 @@ start → implement → verify → commit → done.
 
 | Mode | Flag | Behavior |
 |------|------|----------|
-| **Current branch** | `--branch=current` (default) | Work on current branch, sequential commits |
+| **Worktree** | `--branch=worktree` (default) | Create `.claude/worktrees/<task-id>/` per task (max isolation) |
 | **New branch** | `--branch=new` | Create feature branch per epic |
-| **Worktree** | `--branch=worktree` | Create `.claude/worktrees/<task-id>/` per task (max isolation) |
+| **Current branch** | `--branch=current` | Work on current branch, no isolation |
 
 ## Pipeline Phases
 
@@ -224,7 +224,7 @@ $CCFLOW done $TASK --summary "Implemented user auth" \
 ## Config
 
 ```bash
-$CCFLOW config set work.branch_mode current    # default branch mode
+$CCFLOW config set work.branch_mode worktree   # default: worktree (max isolation)
 $CCFLOW config set work.review auto             # default review mode
 $CCFLOW config set work.max_attempts 3          # retries before blocking
 $CCFLOW config set work.plan_sync true          # auto-sync downstream specs

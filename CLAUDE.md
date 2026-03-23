@@ -25,7 +25,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 | Build a new feature | `/cc-brainstorm` → `/cc-plan` → `/cc-work` (or `/cc-tdd`) |
 | Execute a plan end-to-end | `/cc-work epic-1` (worktree + worker + review loop) |
 | Verify epic completion | `/cc-epic-review epic-1` |
-| Run autonomously (unattended) | `/cc-ralph-init` → `bash scripts/ralph/ralph.sh` |
+| Run autonomously (unattended) | `cc-flow ralph` or `cc-flow ralph --goal "all tests pass"` |
 | Configure review backend | `cc-flow config set review.backend rp` |
 | Fix a bug | `/cc-debug` (researcher → fixer → reviewer) |
 | Fix build/lint errors | `/cc-fix` (build-fixer agent) |
