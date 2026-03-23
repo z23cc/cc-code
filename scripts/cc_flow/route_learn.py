@@ -115,6 +115,21 @@ def _calc_confidence(best, past_match, pattern_match, cmd_stats):
     return min(confidence, 99)
 
 
+def _attach_chain(result, query):
+    """Attach matching skill chain to route result."""
+    try:
+        from cc_flow.skill_chains import find_chain
+        chain_name, chain_data = find_chain(query)
+        if chain_name:
+            result["skill_chain"] = {
+                "name": chain_name,
+                "description": chain_data["description"],
+                "steps": [s["skill"] for s in chain_data["skills"]],
+            }
+    except ImportError:
+        pass
+
+
 def cmd_route(args):
     """Analyze user intent and suggest the best command + team."""
 
@@ -153,6 +168,8 @@ def cmd_route(args):
             "reason": best["description"] if best else "Default: start with brainstorming",
         },
     }
+    _attach_chain(result, query)
+
     if past_match:
         result["past_learning"] = past_match
     if pattern_match:

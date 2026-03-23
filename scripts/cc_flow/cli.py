@@ -159,6 +159,15 @@ def _add_workflow_commands(sub):
     mem_recall = mem_sub.add_parser("recall", help="Search learnings for routing")
     mem_recall.add_argument("query", nargs="*")
 
+    # Skill chains
+    chain_p = sub.add_parser("chain", help="Multi-skill workflows (predefined chains)")
+    chain_sub = chain_p.add_subparsers(dest="chain_cmd")
+    chain_sub.add_parser("list", help="List skill chains")
+    chain_show = chain_sub.add_parser("show", help="Show chain details")
+    chain_show.add_argument("name")
+    chain_suggest = chain_sub.add_parser("suggest", help="Suggest best chain for a task")
+    chain_suggest.add_argument("query", nargs="*")
+
 
 def _add_template_commands(sub):
     """Add template management subcommands."""
