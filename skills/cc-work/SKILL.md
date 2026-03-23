@@ -59,8 +59,20 @@ fi
 ```bash
 WORKTREE_SH="${CLAUDE_PLUGIN_ROOT}/scripts/worktree.sh"
 
+# Detect if already inside a worktree — if so, work here directly
+GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
+GIT_COMMON=$(git rev-parse --git-common-dir 2>/dev/null)
+GIT_DIR_REAL=$(cd "$GIT_DIR" 2>/dev/null && pwd -P)
+GIT_COMMON_REAL=$(cd "$GIT_COMMON" 2>/dev/null && pwd -P)
+
+if [[ "$GIT_DIR_REAL" != "$GIT_COMMON_REAL" ]]; then
+  # Already in a worktree — work here, no nesting
+  BRANCH_MODE=current
+  echo "Already in worktree ($(git branch --show-current)). Working here directly."
+fi
+
 case $BRANCH_MODE in
-  current)  # Nothing to do
+  current)  # Nothing to do (or already in worktree)
     ;;
   new)
     git checkout -b "feature/$EPIC_ID"

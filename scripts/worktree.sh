@@ -91,10 +91,26 @@ managed_worktrees() {
   git worktree list --porcelain | sed -n 's/^worktree //p' | grep "^${worktrees_dir}/" || true
 }
 
+# --- Nesting guard ---
+
+assert_not_in_worktree() {
+  local git_dir git_common
+  git_dir="$(git rev-parse --git-dir 2>/dev/null || true)"
+  git_common="$(git rev-parse --git-common-dir 2>/dev/null || true)"
+  [[ -n "$git_dir" && -n "$git_common" ]] || return 0
+  local git_dir_real git_common_real
+  git_dir_real="$(cd "$git_dir" 2>/dev/null && pwd -P)"
+  git_common_real="$(cd "$git_common" 2>/dev/null && pwd -P)"
+  if [[ "$git_dir_real" != "$git_common_real" ]]; then
+    fail "already inside a worktree ($(pwd)). Cannot create nested worktrees. Run from the main checkout instead."
+  fi
+}
+
 # --- Commands ---
 
 do_create() {
   [[ -n "$name" ]] || fail "usage: create <name> [base]"
+  assert_not_in_worktree
   validate_name "$name"
   ensure_dir
 
