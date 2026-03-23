@@ -149,10 +149,15 @@ def _add_workflow_commands(sub):
     mem_save = mem_sub.add_parser("save", help="Save knowledge to Supermemory")
     mem_save.add_argument("--content", required=True)
     mem_save.add_argument("--tags", default="")
-    mem_search = mem_sub.add_parser("search", help="Search knowledge")
+    mem_search = mem_sub.add_parser("search", help="Search knowledge (semantic + rerank)")
     mem_search.add_argument("query", nargs="*")
     mem_search.add_argument("--limit", type=int, default=5)
     mem_sub.add_parser("sync", help="Sync local learnings to Supermemory")
+    mem_forget = mem_sub.add_parser("forget", help="Remove outdated knowledge")
+    mem_forget.add_argument("--content", required=True, help="What to forget")
+    mem_forget.add_argument("--reason", default="outdated")
+    mem_recall = mem_sub.add_parser("recall", help="Search learnings for routing")
+    mem_recall.add_argument("query", nargs="*")
 
 
 def _add_template_commands(sub):

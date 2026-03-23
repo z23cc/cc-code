@@ -84,7 +84,8 @@ _SUBCMD_MAP = {
     }),
     "memory": ("memory_cmd", {
         "save": "memory:cmd_memory_save", "search": "memory:cmd_memory_search",
-        "sync": "memory:cmd_memory_sync",
+        "sync": "memory:cmd_memory_sync", "forget": "memory:cmd_memory_forget",
+        "recall": "memory:cmd_memory_recall",
     }),
     "plugin": ("plugin_cmd", {
         "list": "plugins:cmd_plugin_list", "enable": "plugins:cmd_plugin_enable",
