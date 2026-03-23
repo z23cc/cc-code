@@ -209,7 +209,7 @@ Ralph spawns fresh Claude sessions per iteration, validates completion via recei
 ## Architecture
 
 ```
-cc-flow CLI (51 modules, 136 commands)
+cc-flow CLI (51 modules, 137 commands, 57 slash commands)
 ├── Core: init, epic/task CRUD, deps, templates (atomic writes, cross-platform locks)
 ├── Views: list, dashboard, progress, graph, export
 ├── Work: start, done, block, reopen, diff, bulk, /cc-work pipeline
