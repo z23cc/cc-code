@@ -2,7 +2,7 @@
 name: cc-scout-build
 description: "Analyze build system, scripts, CI/CD configuration, and monorepo setup. Reports build health score."
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: haiku
+model: inherit
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

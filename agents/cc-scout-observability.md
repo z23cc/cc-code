@@ -2,7 +2,7 @@
 name: cc-scout-observability
 description: "Scan logging, tracing, metrics, health endpoints, and error tracking setup. Reports observability coverage percentage."
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: haiku
+model: inherit
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

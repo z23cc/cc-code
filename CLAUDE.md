@@ -16,7 +16,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 - `commands/` — 32 slash commands (all prefixed `/cc-`)
 - `tests/` — 230 tests (128 cc-flow integration + 87 unit + 15 morph)
 - `rules/` — 9 always-on rules: python-style, testing, security, git, docs-sync, agent-orchestration, workflow, performance, tool-priority
-- `hooks/` — 6 hooks: SessionStart (context-aware), PreToolUse (commit-gate + worktree-guard), PostToolUse, PreCompact, Stop
+- `hooks/` — 7 hooks across 6 events: UserPromptSubmit (auto-context), PreToolUse (commit-gate + worktree-guard), PostToolUse, SessionStart, PreCompact, Stop
 
 ## Quick Decision Tree
 
@@ -46,11 +46,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 ## Tool Priority
 
-1. **RP MCP** (auto-connected) → `file_search`, `context_builder`, `apply_edits`, `get_code_structure`, `git` — in-process, fast, structured JSON
-2. **cc-flow CLI** → `search` (Morph semantic), `apply` (Fast Apply), `embed`, `compact` — subprocess, rich features
-3. **Built-in** → Grep, Read, Edit — fallback for exact patterns and targeted operations
-
-When MCP is unavailable (Ralph, scripts): use `cc-flow rp <cmd>` as CLI equivalent.
+**RP MCP → cc-flow CLI → Built-in.** See `rules/tool-priority.md` for full decision matrix.
 
 ## Bridge (Morph × RP × Supermemory)
 

@@ -2,7 +2,7 @@
 name: cc-scout-tooling
 description: "Check linting, formatting, type checking, and pre-commit hook configuration. Reports tooling completeness score."
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: haiku
+model: inherit
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

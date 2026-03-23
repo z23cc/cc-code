@@ -2,7 +2,7 @@
 name: cc-scout-env
 description: "Scan environment setup — .env templates, Docker, devcontainer, setup scripts, runtime version pinning. Reports reproducibility score."
 tools: ["Read", "Grep", "Glob", "Bash"]
-model: haiku
+model: inherit
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

@@ -5,10 +5,16 @@
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('command',''))" 2>/dev/null)
 
-# Only intercept git commit commands
+# Match git commit (handles: git commit, git -c x commit, git  commit)
 case "$COMMAND" in
-  *"git commit"*)
-    echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","decision":"allow","message":"Quality gate: Ensure lint + type check + tests pass before committing. Run verification first if not already done."}}'
+  *git*commit*)
+    # Exclude git log --oneline (contains "commit" in output context) and git show commit
+    case "$COMMAND" in
+      *"git log"*|*"git show"*|*"git rev-parse"*) ;;
+      *)
+        echo '{"hookSpecificOutput":{"hookEventName":"PreToolUse","decision":"allow","message":"Quality gate: Ensure lint + type check + tests pass before committing. Run cc-flow verify first if not already done."}}'
+        ;;
+    esac
     ;;
 esac
 

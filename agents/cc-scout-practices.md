@@ -2,7 +2,7 @@
 name: cc-scout-practices
 description: "Gather modern best practices and pitfalls BEFORE implementing a change. Searches official docs, GitHub repos, and community guidance for current year."
 tools: ["Read", "Grep", "Glob", "Bash", "WebSearch", "WebFetch"]
-model: haiku
+model: inherit
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

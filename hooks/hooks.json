@@ -13,6 +13,19 @@
         "description": "Show skills overview + recent project context at session start"
       }
     ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/prompt-context.sh",
+            "timeout": 3
+          }
+        ],
+        "description": "Auto-inject task/epic context when IDs detected in message"
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Edit|Write",
