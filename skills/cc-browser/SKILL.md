@@ -1,6 +1,6 @@
 ---
 name: cc-browser
-description: "Browser automation — navigate, fill forms, click, screenshot, scrape, E2E test via agent-browser. TRIGGER: 'open website', 'test the site', 'take screenshot', 'fill form', 'scrape page', 'browser test', 'E2E test', '打开网站', '截图', '浏览器测试', '抓取页面'. NOT FOR: API testing (use curl), static analysis, non-browser tasks."
+description: "Browser automation — navigate, fill forms, click, screenshot, scrape, E2E test via agent-browser. FLOWS INTO: cc-qa (full QA testing), cc-qa-report (report-only QA). TRIGGER: 'open website', 'test the site', 'take screenshot', 'fill form', 'scrape page', 'browser test', 'E2E test', '打开网站', '截图', '浏览器测试', '抓取页面'. NOT FOR: API testing (use curl), static analysis, non-browser tasks."
 allowed-tools: Bash(npx agent-browser:*), Bash(agent-browser:*)
 ---
 
@@ -684,3 +684,9 @@ Lightpanda does not support `--extension`, `--profile`, `--state`, or `--allow-f
 ./templates/authenticated-session.sh https://app.example.com/login
 ./templates/capture-workflow.sh https://example.com ./output
 ```
+
+## Related QA Skills
+
+- **cc-qa** — Full QA test + fix: diff-aware page detection, health scoring (0-100), issue taxonomy, auto-fix loop
+- **cc-qa-report** — Report-only QA: same testing methodology, documents bugs with evidence, never modifies code
+- **cc-bridge** — Deep search + memory-enhanced analysis for understanding test failures
