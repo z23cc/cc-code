@@ -40,6 +40,17 @@
         "statusMessage": "Checking worktree boundary..."
       },
       {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/config-protect.sh",
+            "timeout": 3
+          }
+        ],
+        "description": "Warn when modifying linter/formatter/CI config files"
+      },
+      {
         "matcher": "Bash",
         "hooks": [
           {
@@ -50,6 +61,17 @@
         ],
         "description": "Quality gate: remind to verify before git commit",
         "statusMessage": "Checking commit quality..."
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/pre-push-review.sh",
+            "timeout": 5
+          }
+        ],
+        "description": "Review reminder before git push with diff stats"
       }
     ],
     "PostToolUse": [
@@ -64,6 +86,17 @@
         ],
         "description": "After cc-flow done/scan, suggest next steps",
         "statusMessage": "Checking workflow hints..."
+      },
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/post-edit-verify.sh",
+            "timeout": 3
+          }
+        ],
+        "description": "Remind to verify after editing source code files"
       }
     ],
     "PreCompact": [

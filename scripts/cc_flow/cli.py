@@ -267,6 +267,8 @@ def _add_quality_commands(sub):
     doctor_p = sub.add_parser("doctor", help="Health check — environment, tools, tasks")
     doctor_p.add_argument("--format", choices=["text", "json"], default="text")
 
+    sub.add_parser("validate-skills", help="Validate all SKILL.md files (frontmatter, triggers, quality)")
+
     auto_p = sub.add_parser("auto", help="Autoimmune loop integrated with task system")
     auto_sub = auto_p.add_subparsers(dest="auto_cmd")
     auto_sub.add_parser("scan")

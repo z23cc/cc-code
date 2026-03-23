@@ -55,6 +55,8 @@ _COMMANDS = {
     "health": "insights:cmd_health",
     # review setup
     "review-setup": "review_setup:cmd_review_setup",
+    # skill validation
+    "validate-skills": "skill_validate:cmd_validate_skills",
     # bridge (Morph × RP × Supermemory)
     "deep-search": "bridge:cmd_deep_search",
     "smart-chat": "bridge:cmd_smart_chat",

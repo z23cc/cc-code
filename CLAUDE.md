@@ -14,9 +14,9 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
   - **Python pack (12):** python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, scaffold, deploy, task-queues
   - **Scouts (12):** scout-practices, scout-repo, scout-docs, scout-docs-gap, scout-security, scout-testing, scout-tooling, scout-build, scout-env, scout-observability, scout-gaps, scout-context
 - `commands/` — 32 slash commands (all prefixed `/cc-`)
-- `tests/` — 230 tests (128 cc-flow integration + 87 unit + 15 morph)
+- `tests/` — 245 tests (128 cc-flow integration + 87 unit + 15 morph + 15 bridge)
 - `rules/` — 9 always-on rules: python-style, testing, security, git, docs-sync, agent-orchestration, workflow, performance, tool-priority
-- `hooks/` — 7 hooks across 6 events: UserPromptSubmit (auto-context), PreToolUse (commit-gate + worktree-guard), PostToolUse, SessionStart, PreCompact, Stop
+- `hooks/` — 10 hooks across 6 events: UserPromptSubmit (auto-context), PreToolUse (worktree-guard + config-protect + commit-gate + push-review), PostToolUse (task-hint + edit-verify), SessionStart, PreCompact, Stop
 
 ## Quick Decision Tree
 
