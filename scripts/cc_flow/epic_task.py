@@ -134,9 +134,17 @@ def cmd_task_create(args):
     # Validate epic exists
     if not (EPICS_DIR / f"{epic_id}.md").exists():
         error(f"Epic not found: {args.epic} (resolved to: {epic_id}). Run: cc-flow epics")
-    # Find next task number for this epic
-    existing = list(TASKS_SUBDIR.glob(f"{epic_id}.*.json"))
-    next_num = len(existing) + 1
+    # Find next task number (race-safe: atomic file creation)
+    import os
+    next_num = 1
+    while True:
+        task_path = TASKS_SUBDIR / f"{epic_id}.{next_num}.json"
+        try:
+            fd = os.open(str(task_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            os.close(fd)
+            break  # Successfully claimed this number
+        except FileExistsError:
+            next_num += 1
     task_id = f"{epic_id}.{next_num}"
     deps = args.deps.split(",") if args.deps else []
 
