@@ -197,31 +197,60 @@ SKILL_CHAINS = {
             {"skill": "/cc-epic-review", "role": "Verify epic completion", "required": True},
         ],
     },
+    # ── Remaining unchained skills ──
+    "new-project": {
+        "description": "Bootstrap project → design → plan → first feature",
+        "trigger": ["new project", "start from scratch", "scaffold", "bootstrap", "init",
+                     "新项目", "从零开始", "初始化项目"],
+        "skills": [
+            {"skill": "/cc-scaffold", "role": "Generate project skeleton", "required": True},
+            {"skill": "/cc-brainstorm", "role": "Design first feature", "required": True},
+            {"skill": "/cc-plan", "role": "Create implementation plan", "required": True},
+            {"skill": "/cc-tdd", "role": "Implement with TDD", "required": True},
+        ],
+    },
+    "full-audit": {
+        "description": "Comprehensive project health: all scouts + readiness + deep scan",
+        "trigger": ["full audit", "project health", "comprehensive check", "how healthy",
+                     "全面体检", "项目健康", "全面审查"],
+        "skills": [
+            {"skill": "/cc-prime", "role": "Run all 12 scouts in parallel", "required": True},
+            {"skill": "/cc-readiness-audit", "role": "8-pillar readiness assessment", "required": True},
+            {"skill": "/cc-qa-report", "role": "QA report (browser, no fixes)", "required": False},
+            {"skill": "/cc-retro", "role": "Recent work review", "required": False},
+        ],
+    },
+    "deploy": {
+        "description": "Pre-deploy verification → deploy → monitor",
+        "trigger": ["deploy", "production", "go live", "push to prod",
+                     "部署", "上生产", "发布上线"],
+        "skills": [
+            {"skill": "/cc-readiness-audit", "role": "Pre-deploy readiness check", "required": True},
+            {"skill": "/cc-verification", "role": "Full lint + test pass", "required": True},
+            {"skill": "/cc-deploy", "role": "Docker + CI/CD deployment", "required": True},
+            {"skill": "/cc-ship", "role": "Version bump + PR + push", "required": True},
+        ],
+    },
+    "deep-review": {
+        "description": "Multi-layer review: bridge → code review → security → refinement",
+        "trigger": ["thorough review", "deep review", "review everything", "pre-merge",
+                     "深度审查", "全面审查代码", "合并前检查"],
+        "skills": [
+            {"skill": "/cc-bridge", "role": "Recall past review findings (memory-enhanced)", "required": False},
+            {"skill": "/cc-code-review-loop", "role": "Verdict-driven review + auto-fix", "required": True},
+            {"skill": "/cc-security-review", "role": "Security patterns check", "required": True},
+            {"skill": "/cc-refinement", "role": "Edge case hardening", "required": False},
+        ],
+    },
 }
 
 
 def find_chain(query):
     """Find the best matching skill chain for a query."""
-    query_lower = query.lower()
-    words = set(query_lower.split())
-    best_chain = None
-    best_score = 0
-
-    for name, chain in SKILL_CHAINS.items():
-        score = 0
-        for trigger in chain["trigger"]:
-            # Full phrase match (weighted 2x)
-            if trigger in query_lower:
-                score += 2
-            # Word overlap match
-            elif any(w in words for w in trigger.split()):
-                score += 1
-        if score > best_score:
-            best_score = score
-            best_chain = name
-
-    if best_chain and best_score > 0:
-        return best_chain, SKILL_CHAINS[best_chain]
+    ranked = _rank_chains(query)
+    if ranked:
+        name, chain, _score = ranked[0]
+        return name, chain
     return None, None
 
 
@@ -252,14 +281,34 @@ def cmd_chain_show(args):
     }))
 
 
+def _rank_chains(query):
+    """Rank all chains by relevance to query. Returns [(name, chain, score)]."""
+    query_lower = query.lower()
+    words = set(query_lower.split())
+    scored = []
+
+    for name, chain in SKILL_CHAINS.items():
+        score = 0
+        for trigger in chain["trigger"]:
+            if trigger in query_lower:
+                score += 2
+            elif any(w in words for w in trigger.split()):
+                score += 1
+        if score > 0:
+            scored.append((name, chain, score))
+
+    scored.sort(key=lambda x: -x[2])
+    return scored
+
+
 def cmd_chain_suggest(args):
-    """Suggest the best skill chain for a task description."""
+    """Suggest the best skill chain(s) for a task description."""
     query = " ".join(args.query) if args.query else ""
     if not query:
         error("Provide a task description")
 
-    name, chain = find_chain(query)
-    if not chain:
+    ranked = _rank_chains(query)
+    if not ranked:
         print(json.dumps({
             "success": True,
             "suggestion": None,
@@ -267,16 +316,30 @@ def cmd_chain_suggest(args):
         }))
         return
 
-    print(json.dumps({
+    best_name, best_chain, best_score = ranked[0]
+
+    result = {
         "success": True,
-        "chain": name,
-        "description": chain["description"],
+        "chain": best_name,
+        "description": best_chain["description"],
         "steps": [
             f"{'[required]' if s['required'] else '[optional]'} {s['skill']} — {s['role']}"
-            for s in chain["skills"]
+            for s in best_chain["skills"]
         ],
-        "instruction": f"Run skills in order: {' → '.join(s['skill'] for s in chain['skills'])}",
-    }))
+        "instruction": f"Run skills in order: {' → '.join(s['skill'] for s in best_chain['skills'])}",
+    }
+
+    # Show alternatives if close in score
+    if len(ranked) > 1:
+        alts = [
+            {"chain": name, "description": chain["description"], "score": score}
+            for name, chain, score in ranked[1:3]
+            if score >= best_score * 0.5
+        ]
+        if alts:
+            result["alternatives"] = alts
+
+    print(json.dumps(result))
 
 
 def cmd_chain_run(args):
