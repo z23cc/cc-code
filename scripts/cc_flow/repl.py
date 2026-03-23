@@ -80,7 +80,7 @@ _COMPLETIONS = [
     "scan", "validate", "export", "clean", "perf", "health", "evolve",
     "deep-search", "smart-chat", "embed-structure", "recall-review", "bridge-status",
     "review-setup", "state-path",
-    "careful", "freeze", "guard",
+    "careful", "freeze", "guard", "context-budget",
     # Subcommands
     "epic create", "epic close", "epic import", "epic reset",
     "task create", "task update", "task comment", "task reset",
@@ -92,6 +92,7 @@ _COMPLETIONS = [
     "plugin list", "plugin create", "plugin enable", "plugin disable",
     "context save", "context show", "context brief",
     "alias set", "alias list", "alias remove",
+    "checkpoint create", "checkpoint verify", "checkpoint compare", "checkpoint list",
     "eval run", "eval detail", "eval cross", "eval history",
     "gh import", "gh export", "gh status",
     "profile list", "profile apply",

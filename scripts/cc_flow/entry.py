@@ -70,6 +70,8 @@ _COMMANDS = {
     "careful": "modes:cmd_careful",
     "freeze": "modes:cmd_freeze",
     "guard": "modes:cmd_guard",
+    # context budget
+    "context-budget": "context_budget:cmd_context_budget",
 }
 
 # Subcommands: parent → (attr, {subcmd: "module:function"})
@@ -127,6 +129,12 @@ _SUBCMD_MAP = {
     "alias": ("alias_cmd", {
         "list": "aliases:cmd_alias_list", "set": "aliases:cmd_alias_set",
         "remove": "aliases:cmd_alias_remove",
+    }),
+    "checkpoint": ("checkpoint_cmd", {
+        "create": "checkpoint:cmd_checkpoint_create",
+        "verify": "checkpoint:cmd_checkpoint_verify",
+        "compare": "checkpoint:cmd_checkpoint_compare",
+        "list": "checkpoint:cmd_checkpoint_list",
     }),
     "eval": ("eval_cmd", {
         "run": "eval_harness:cmd_eval_run", "detail": "eval_harness:cmd_eval_detail",

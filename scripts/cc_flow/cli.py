@@ -527,6 +527,23 @@ def _add_rp_commands(sub):
     run_p.add_argument("command")
 
 
+def _add_checkpoint_commands(sub):
+    """Add checkpoint subcommands: create/verify/compare/list."""
+    cp_p = sub.add_parser("checkpoint", help="Workflow state snapshots (create/verify/compare/list)")
+    cp_sub = cp_p.add_subparsers(dest="checkpoint_cmd")
+    cp_create = cp_sub.add_parser("create", help="Save a checkpoint snapshot")
+    cp_create.add_argument("name", help="Checkpoint name (e.g. core-done)")
+    cp_verify = cp_sub.add_parser("verify", help="Compare current state vs checkpoint")
+    cp_verify.add_argument("name", help="Checkpoint name to verify against")
+    cp_compare = cp_sub.add_parser("compare", help="Diff two checkpoints")
+    cp_compare.add_argument("name1", help="First checkpoint name")
+    cp_compare.add_argument("name2", help="Second checkpoint name")
+    cp_sub.add_parser("list", help="List all checkpoints")
+
+    # Context budget (standalone command)
+    sub.add_parser("context-budget", help="Analyze token overhead from plugins, rules, skills")
+
+
 def _add_misc_commands(sub):
     """Add misc subcommands: log, summary, archive, stats, perf, insights, version, config."""
     perf_p = sub.add_parser("perf", help="Command performance analytics")
@@ -619,6 +636,8 @@ Command categories:
               read/search/tree/structure/context/prompt/chats/models/
               git/edit/file/setup-review/session/worktree-setup/run
   Safety:     careful, freeze, guard
+  Checkpoint: checkpoint create/verify/compare/list
+  Analysis:   context-budget
   Config:     config, clean, version
   Worktree:   state-path, migrate-state
 """
@@ -650,6 +669,7 @@ def build_parser():
     _add_bridge_commands(sub)
     _add_eval_commands(sub)
     _add_rp_commands(sub)
+    _add_checkpoint_commands(sub)
     _add_misc_commands(sub)
 
     # Let plugins register their own commands
