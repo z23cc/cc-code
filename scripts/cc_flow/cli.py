@@ -129,6 +129,8 @@ def _add_workflow_commands(sub):
     wf_create.add_argument("name")
     wf_create.add_argument("--steps", required=True, help="Comma-separated commands")
     wf_create.add_argument("--description", default="")
+    wf_chain = wf_sub.add_parser("chain", help="Run ad-hoc command chain: 'verify,scan,health'")
+    wf_chain.add_argument("chain", help="Comma-separated commands")
 
 
 def _add_template_commands(sub):

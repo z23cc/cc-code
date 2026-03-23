@@ -76,6 +76,7 @@ _SUBCMD_MAP = {
     "workflow": ("workflow_cmd", {
         "list": "workflow:cmd_workflow_list", "show": "workflow:cmd_workflow_show",
         "run": "workflow:cmd_workflow_run", "create": "workflow:cmd_workflow_create",
+        "chain": "workflow:cmd_workflow_chain",
     }),
     "plugin": ("plugin_cmd", {
         "list": "plugins:cmd_plugin_list", "enable": "plugins:cmd_plugin_enable",

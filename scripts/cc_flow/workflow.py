@@ -39,6 +39,35 @@ BUILTIN_WORKFLOWS = {
             {"name": "stats", "command": "stats"},
         ],
     },
+    # ── Skill orchestration pipelines ──
+    "ui-audit": {
+        "description": "Full UI audit: verify → scan → health → review findings",
+        "steps": [
+            {"name": "verify", "command": "verify"},
+            {"name": "scan", "command": "auto deep"},
+            {"name": "health", "command": "health"},
+            {"name": "report", "command": "report"},
+        ],
+    },
+    "deep-review": {
+        "description": "Deep code + quality review pipeline",
+        "steps": [
+            {"name": "verify", "command": "verify"},
+            {"name": "validate", "command": "validate"},
+            {"name": "scan", "command": "scan"},
+            {"name": "health", "command": "health"},
+            {"name": "evolve", "command": "evolve"},
+        ],
+    },
+    "onboard": {
+        "description": "New project onboarding: init → doctor → scan → dashboard",
+        "steps": [
+            {"name": "init", "command": "init"},
+            {"name": "doctor", "command": "doctor --format json"},
+            {"name": "verify", "command": "verify"},
+            {"name": "dashboard", "command": "dashboard"},
+        ],
+    },
 }
 
 
@@ -144,3 +173,35 @@ def cmd_workflow_create(args):
     (WORKFLOWS_DIR / f"{name}.json").write_text(json.dumps(data, indent=2) + "\n")
 
     print(json.dumps({"success": True, "name": name, "steps": len(steps)}))
+
+
+def cmd_workflow_chain(args):
+    """Run an ad-hoc chain of commands: cc-flow workflow chain "verify,scan,health"."""
+    commands = [c.strip() for c in args.chain.split(",") if c.strip()]
+    if not commands:
+        error("Provide comma-separated commands. Example: workflow chain 'verify,scan,health'")
+
+    results = []
+    for i, command in enumerate(commands):
+        step_name = f"step-{i + 1}"
+        full_cmd = [sys.executable, "-m", "cc_flow", *command.split()]
+
+        result = subprocess.run(full_cmd, check=False, capture_output=True, text=True, timeout=120)
+        passed = result.returncode == 0
+        results.append({
+            "step": step_name, "command": command,
+            "status": "pass" if passed else "fail",
+        })
+        if not passed:
+            break
+
+    all_passed = all(r["status"] == "pass" for r in results)
+    print(json.dumps({
+        "success": all_passed,
+        "chain": commands,
+        "steps": results,
+        "completed": len(results),
+        "total": len(commands),
+    }))
+    if not all_passed:
+        sys.exit(1)
