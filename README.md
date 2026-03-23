@@ -88,6 +88,14 @@ cc-flow skills add owner/repo@skill  # Install a community skill
 cc-flow skills list                  # Show installed
 ```
 
+### Integrated Community Skills
+
+| Skill | Description | Source |
+|-------|-------------|--------|
+| `cc-web-design` | Web Interface Guidelines review | [vercel-labs/agent-skills](https://skills.sh/vercel-labs/agent-skills/web-design-guidelines) |
+| `cc-ui-ux` | 50+ styles, 161 palettes, 57 font pairings, 99 UX guidelines | [nextlevelbuilder/ui-ux-pro-max-skill](https://skills.sh/nextlevelbuilder/ui-ux-pro-max-skill/ui-ux-pro-max) |
+| `cc-browser` | Browser automation — navigate, forms, screenshots, E2E testing | [vercel-labs/agent-browser](https://skills.sh/vercel-labs/agent-browser/agent-browser) |
+
 ## Claude Code Integration
 
 ```
