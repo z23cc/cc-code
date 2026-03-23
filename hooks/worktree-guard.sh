@@ -1,15 +1,32 @@
 #!/usr/bin/env bash
 # cc-code worktree boundary guard — prevents editing files outside assigned worktree.
 #
-# Activated by CC_WORKTREE_PATH env var (set by cc-work when --branch=worktree).
-# Blocks Edit/Write/Bash(cd) operations that target paths outside the worktree.
+# Activation (any of these):
+# 1. CC_WORKTREE_PATH env var (set by cc-work --branch=worktree)
+# 2. Auto-detect: CWD is inside a git worktree (not the main checkout)
 #
-# Usage: Set CC_WORKTREE_PATH=/path/to/worktree before spawning agent.
+# Blocks Edit/Write operations that target paths outside the worktree.
 
 set -euo pipefail
 
-# Only active when worktree boundary is set
+# Check explicit env var first
 WORKTREE_PATH="${CC_WORKTREE_PATH:-}"
+
+# Auto-detect: if CWD is a worktree, use CWD as boundary
+if [[ -z "$WORKTREE_PATH" ]]; then
+  GIT_DIR=$(git rev-parse --git-dir 2>/dev/null || true)
+  GIT_COMMON=$(git rev-parse --git-common-dir 2>/dev/null || true)
+  if [[ -n "$GIT_DIR" && -n "$GIT_COMMON" ]]; then
+    GIT_DIR_REAL=$(cd "$GIT_DIR" 2>/dev/null && pwd -P || echo "$GIT_DIR")
+    GIT_COMMON_REAL=$(cd "$GIT_COMMON" 2>/dev/null && pwd -P || echo "$GIT_COMMON")
+    if [[ "$GIT_DIR_REAL" != "$GIT_COMMON_REAL" ]]; then
+      # We're in a worktree — auto-set boundary to CWD
+      WORKTREE_PATH="$(pwd)"
+    fi
+  fi
+fi
+
+# Not in a worktree → approve everything
 [[ -n "$WORKTREE_PATH" ]] || { echo '{"decision":"approve"}'; exit 0; }
 
 # Normalize worktree path (resolve symlinks)
