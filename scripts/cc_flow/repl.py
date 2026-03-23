@@ -8,22 +8,47 @@ from cc_flow import skin
 
 
 def _repl_help():
-    """Show curated REPL help."""
-    skin.heading("Quick Commands")
-    commands = [
+    """Show curated REPL help — progressive disclosure."""
+    skin.heading("Start Here")
+    start = [
+        ("route <task>", "Don't know what to do? Describe your task"),
         ("dashboard", "One-screen project overview"),
-        ("status", "Task counts (JSON)"),
+        ("verify", "Run lint + tests (auto-detect language)"),
+        ("health", "Project health score (0-100)"),
         ("next", "What to work on next"),
-        ("standup", "Daily standup report"),
-        ("verify", "Run lint + tests"),
-        ("health", "Project health score"),
-        ("find <query>", "Search tasks"),
-        ("search <query>", "Search code (Morph/grep)"),
-        ("route <task>", "Smart command routing"),
     ]
-    skin.table(["Command", "Description"], commands)
+    skin.table(["Command", "Description"], start)
+
+    skin.heading("Skill Chains (multi-step workflows)")
+    chains = [
+        ("chain run feature", "brainstorm → plan → tdd → review → commit"),
+        ("chain run bugfix", "debug → tdd → review → commit"),
+        ("chain run ui-design", "ui-ux → web-design → optimize → browser"),
+        ("chain run release", "refine → security → review → docs → commit"),
+        ("chain list", "Show all 7 chains"),
+    ]
+    skin.table(["Command", "Steps"], chains)
     print()
-    skin.dim("Type any cc-flow subcommand, or 'quit' to exit.")
+    skin.dim("Type 'help all' for full command list, or 'quit' to exit.")
+    print()
+
+
+def _repl_help_all():
+    """Show all commands grouped by category."""
+    categories = {
+        "Project": "init, epic create, task create, dep add, template list",
+        "Views": "dashboard, list, tasks, show, ready, next, progress, export",
+        "Work": "start, done, block, reopen, rollback, diff, bulk",
+        "Quality": "verify, scan, doctor, health, auto deep, evolve",
+        "Search": "find, search, similar, dedupe, suggest, index",
+        "Analytics": "stats, standup, changelog, burndown, report, time, forecast",
+        "Routing": "route, learn, learnings, consolidate, chain list/run/suggest",
+        "Integration": "gh import/export, context brief, session save, memory search",
+        "Ecosystem": "skills find/add, plugin list/create, workflow run, pipeline run",
+        "Config": "config, clean, profile, perf, alias, version",
+    }
+    skin.heading("All Commands")
+    skin.table(["Category", "Commands"], list(categories.items()))
     print()
 
 
@@ -148,6 +173,9 @@ def run_repl():
             if line.lower() in ("quit", "exit", "q"):
                 skin.goodbye()
                 break
+            if line.lower() in ("help all", "commands"):
+                _repl_help_all()
+                continue
             if line.lower() in ("help", "?"):
                 _repl_help()
                 continue
