@@ -45,6 +45,8 @@ ROUTE_TABLE = [
      "/scaffold", None, "New project setup"),
     (["improve", "autoimmune", "自动改进", "自动优化"],
      "/autoimmune", "autoimmune", "Autonomous improvement"),
+    (["onboard", "new to", "接手", "熟悉项目", "了解项目", "first time"],
+     "/cc-prime", None, "Onboard → full project scan"),
     (["audit", "health", "ready", "体检", "审计"],
      "/audit", "audit", "Project health check"),
     (["task", "epic", "progress", "任务", "进度"],

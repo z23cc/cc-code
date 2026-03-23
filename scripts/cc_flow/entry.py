@@ -80,6 +80,7 @@ _SUBCMD_MAP = {
     }),
     "pipeline": ("pipeline_cmd", {
         "list": "pipeline:cmd_pipeline_list", "run": "pipeline:cmd_pipeline_run",
+        "create": "pipeline:cmd_pipeline_create",
     }),
     "plugin": ("plugin_cmd", {
         "list": "plugins:cmd_plugin_list", "enable": "plugins:cmd_plugin_enable",

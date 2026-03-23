@@ -130,20 +130,50 @@ _ACTIONS = {
 # ── Pipeline runner ──
 
 def cmd_pipeline_list(_args):
-    """List available pipelines."""
+    """List available pipelines (built-in + custom)."""
+    pipelines = _all_pipelines()
     result = {}
-    for name, p in BUILTIN_PIPELINES.items():
-        result[name] = {"description": p["description"], "steps": len(p["steps"])}
+    for name, p in pipelines.items():
+        source = "built-in" if name in BUILTIN_PIPELINES else "custom"
+        result[name] = {"description": p["description"], "steps": len(p["steps"]), "source": source}
     print(json.dumps({"success": True, "pipelines": result, "count": len(result)}))
+
+
+PIPELINES_DIR = TASKS_DIR / "pipelines"
+
+
+def _all_pipelines():
+    """Merge built-in and custom pipelines."""
+    pipelines = dict(BUILTIN_PIPELINES)
+    if PIPELINES_DIR.exists():
+        for f in sorted(PIPELINES_DIR.glob("*.json")):
+            data = safe_json_load(f, default=None)
+            if data:
+                pipelines[f.stem] = data
+    return pipelines
+
+
+def cmd_pipeline_create(args):
+    """Create a custom pipeline."""
+    name = args.name
+    steps_raw = [s.strip() for s in args.steps.split(",") if s.strip()]
+    steps = [{"name": s, "command": s, "capture": f"step_{i}"} for i, s in enumerate(steps_raw)]
+    description = args.description or f"Custom pipeline: {name}"
+
+    PIPELINES_DIR.mkdir(parents=True, exist_ok=True)
+    data = {"description": description, "steps": steps, "created": now_iso()}
+    atomic_write(PIPELINES_DIR / f"{name}.json", json.dumps(data, indent=2) + "\n")
+    print(json.dumps({"success": True, "name": name, "steps": len(steps)}))
 
 
 def cmd_pipeline_run(args):
     """Execute a pipeline with context passing between steps."""
     name = args.name
-    if name not in BUILTIN_PIPELINES:
-        error(f"Pipeline not found: {name}. Available: {', '.join(BUILTIN_PIPELINES.keys())}")
+    pipelines = _all_pipelines()
+    if name not in pipelines:
+        error(f"Pipeline not found: {name}. Available: {', '.join(pipelines.keys())}")
 
-    pipeline = BUILTIN_PIPELINES[name]
+    pipeline = pipelines[name]
     ctx = {"steps": {}, "started": now_iso(), "pipeline": name}
     results = []
 

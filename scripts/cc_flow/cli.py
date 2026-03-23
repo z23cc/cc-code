@@ -138,6 +138,10 @@ def _add_workflow_commands(sub):
     pipe_sub.add_parser("list", help="List available pipelines")
     pipe_run = pipe_sub.add_parser("run", help="Execute a pipeline")
     pipe_run.add_argument("name")
+    pipe_create = pipe_sub.add_parser("create", help="Create custom pipeline")
+    pipe_create.add_argument("name")
+    pipe_create.add_argument("--steps", required=True, help="Comma-separated commands")
+    pipe_create.add_argument("--description", default="")
 
 
 def _add_template_commands(sub):
