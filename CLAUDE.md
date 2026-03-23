@@ -4,7 +4,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 ## Architecture
 
-- `scripts/cc_flow/` — Task & workflow CLI package (76+ subcommands, lazy-loaded, atomic writes, cross-platform)
+- `scripts/cc_flow/` — Task & workflow CLI package (90+ subcommands, lazy-loaded, atomic writes, cross-platform)
 - `scripts/morph_client.py` — Pure Python Morph API client (Apply, WarpGrep, Embed, Rerank)
 - `agents/` — 11 general agents + 12 scout agents (read-only specialists), all `model: inherit`
 - `skills/` — 47 skills (all prefixed `cc-`):
@@ -12,7 +12,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
   - **Python pack (12):** python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, scaffold, deploy, task-queues
   - **Scouts (12):** scout-practices, scout-repo, scout-docs, scout-docs-gap, scout-security, scout-testing, scout-tooling, scout-build, scout-env, scout-observability, scout-gaps, scout-context
 - `commands/` — 24 slash commands (all prefixed `/cc-`)
-- `tests/` — 206 tests (125 cc-flow integration + 66 unit + 15 morph)
+- `tests/` — 230 tests (128 cc-flow integration + 87 unit + 15 morph)
 - `rules/` — 9 always-on rules: python-style, testing, security, git, docs-sync, agent-orchestration, workflow, performance, tool-priority
 - `hooks/` — 5 hooks: SessionStart (context-aware), PreToolUse, PostToolUse, PreCompact, Stop
 

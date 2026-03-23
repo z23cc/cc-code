@@ -1,6 +1,6 @@
 # cc-code
 
-Development workflow toolkit for Claude Code — task management, smart routing, OODA autoimmune loop, and embedding-powered search.
+Development workflow toolkit for Claude Code — task management, smart routing, OODA autoimmune loop, embedding-powered search, and skills marketplace integration.
 
 ## Install
 
@@ -16,13 +16,13 @@ cc-flow dashboard
 ## Quick Start
 
 ```bash
-cc-flow                                # Interactive REPL (tab completion!)
+cc-flow                                # Interactive REPL (tab completion + typo correction!)
 cc-flow init                           # Initialize project
 cc-flow epic create --title "Feature"  # Create an epic
-cc-flow task create --epic epic-1-feature --title "Step 1"
-cc-flow start epic-1-feature.1         # Start task
+cc-flow task create --epic epic-1 --title "Step 1"  # Shorthand epic ID works
+cc-flow start epic-1.1                 # Shorthand task ID works too
 cc-flow verify                         # Lint + test (auto-detect language)
-cc-flow done epic-1-feature.1          # Complete task
+cc-flow done epic-1.1                  # Complete task
 cc-flow dashboard                      # Visual overview
 ```
 
@@ -30,10 +30,10 @@ cc-flow dashboard                      # Visual overview
 
 | Feature | Command | Description |
 |---------|---------|-------------|
-| **REPL** | `cc-flow` | Interactive shell with tab completion |
+| **REPL** | `cc-flow` | Interactive shell with tab completion + "did you mean?" |
 | **Dashboard** | `cc-flow dashboard` | Colored one-screen project overview |
-| **Smart Router** | `cc-flow route "fix bug"` | Q-learning command suggestions |
-| **Verify** | `cc-flow verify --fix` | Auto-detect language, lint + test |
+| **Smart Router** | `cc-flow route "fix bug"` | Q-learning command suggestions (中文 supported) |
+| **Verify** | `cc-flow verify --fix` | Auto-detect language + npm scripts |
 | **Deep Scan** | `cc-flow auto deep` | OODA: architecture + tests + docs + deps |
 | **Semantic Search** | `cc-flow find --semantic "auth"` | Morph embedding-powered task search |
 | **Health Score** | `cc-flow health` | 0-100 composite grade (A-F) |
@@ -41,29 +41,32 @@ cc-flow dashboard                      # Visual overview
 | **GitHub Sync** | `cc-flow gh import/export` | Sync with GitHub Issues |
 | **Workflows** | `cc-flow workflow run release` | Multi-step pipelines |
 | **Plugins** | `cc-flow plugin create my-tool` | Extensible plugin system |
+| **Skills Store** | `cc-flow skills find "react"` | Browse skills.sh marketplace |
 | **Eval** | `cc-flow eval run` | Automated capability testing |
+| **Context** | `cc-flow context brief` | One-paragraph session primer |
 
 ## Architecture
 
 ```
-cc-flow CLI (34 modules, 88+ subcommands)
-├── Core: init, epic/task CRUD, deps, templates
+cc-flow CLI (35 modules, 90+ subcommands)
+├── Core: init, epic/task CRUD, deps, templates (atomic writes, cross-platform locks)
 ├── Views: list, dashboard, progress, graph, export
-├── Work: start, done, block, reopen, diff, bulk
+├── Work: start, done, block, reopen, diff, bulk (race-safe task IDs)
 ├── Search: find, similar, dedupe, suggest, index (Morph embed)
-├── Quality: verify, scan, doctor, health, auto deep (OODA)
-├── Analytics: stats, standup, changelog, burndown, report, forecast
-├── Routing: route (Q-learning), learn, consolidate
-├── Integration: gh sync, context, session, workflow, plugins
-└── Eval: self-test (98/100), cross-project (100/100)
+├── Quality: verify, scan, doctor, health, auto deep (OODA loop)
+├── Analytics: stats, standup, changelog, burndown, report, forecast, evolve
+├── Routing: route (Q-learning + embedding + rerank), learn, consolidate
+├── Integration: gh sync, context, session, workflow, plugins, skills.sh
+├── Eval: self-test (100/100), cross-project (100/100), health (100/100)
+└── UX: REPL with tab completion, colored skin, "did you mean?" typo correction
 ```
 
 ## Eval Scores
 
 ```bash
-cc-flow eval run              # Self: 98/100 (A)
+cc-flow eval run              # Self: 100/100 (A)
 cc-flow eval cross --limit 10 # Cross: 100/100 (7 projects)
-cc-flow health                # Health: 93/100 (A)
+cc-flow health                # Health: 100/100 (A)
 ```
 
 ## Plugin System
@@ -76,6 +79,14 @@ cc-flow my-notifier --example hi     # Run plugin command
 ```
 
 See `examples/plugins/` for notify and timer plugins.
+
+## Skills Marketplace
+
+```bash
+cc-flow skills find "code review"    # Search skills.sh
+cc-flow skills add owner/repo@skill  # Install a community skill
+cc-flow skills list                  # Show installed
+```
 
 ## Claude Code Integration
 
@@ -90,6 +101,7 @@ See `examples/plugins/` for notify and timer plugins.
 - Python 3.9+
 - Optional: `prompt_toolkit` (REPL tab completion)
 - Optional: `MORPH_API_KEY` (semantic search, embeddings)
+- Optional: `npx skills` (skills.sh marketplace)
 
 ## License
 

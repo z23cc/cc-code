@@ -4,33 +4,47 @@ Usage:
     cc-flow <command>          (after pip install -e .)
     python -m cc_flow <command>
 
-Package structure (23 modules, 76+ subcommands):
+Package structure (35 modules, 90+ subcommands):
   cc_flow/
     __init__.py      → VERSION
     __main__.py      → python -m cc_flow support
     entry.py         → lazy-loaded command dispatch (only imports needed module)
-    cli.py           → argparse with 10 command categories
-    core.py          → shared constants, atomic writes, cross-platform file locking
-    epic_task.py     → epic/task CRUD, templates, dep management
-    views.py         → list, show, dashboard, progress, find, similar, export, dedupe, suggest
+    cli.py           → argparse with 10+ command categories
+    core.py          → shared constants, atomic writes, cross-platform locks, ID resolution
+    epic_task.py     → epic/task CRUD, dep management (race-safe O_EXCL)
+    views.py         → list, show, ready, next, status + shared helpers
+    views_dashboard.py → dashboard, progress (colored skin output)
+    views_search.py  → find, similar, export, priority, index, dedupe, suggest
     work.py          → start, done, block, rollback, reopen, diff, bulk + plugin hooks
-    route_learn.py   → route, learn, consolidate, rerank + embedding search
+    route_learn.py   → routing logic, ROUTE_TABLE, cmd_route
+    learning.py      → learn, learnings, consolidate, pattern search
     auto.py          → OODA-loop autoimmune (observe/orient/decide/act/learn)
-    quality.py       → validate, scan, verify (auto-detect language)
-    log_cmds.py      → log, summary, stats, standup, changelog, burndown, report, time
+    quality.py       → validate, scan, verify (auto-detect language + npm scripts)
+    log_cmds.py      → log, summary, archive
+    analytics.py     → stats, standup, changelog, burndown, report, time
     config.py        → version, history, config, clean, profiles
     morph_cmds.py    → apply, search, embed, compact, github-search
     embeddings.py    → embedding cache, cosine similarity, semantic search, dedup
+    templates.py     → TASK_TEMPLATES, _generate_spec, template CRUD
     workflow.py      → multi-step workflow pipelines (built-in + custom)
     plugins.py       → plugin system (discover, load, lifecycle hooks)
+    skill_store.py   → skills.sh marketplace (find, add, list)
     scanner.py       → smart scanners (architecture, tests, docs, duplication, deps)
-    qrouter.py       → Q-learning adaptive command routing
+    qrouter.py       → Q-learning adaptive command routing (lr=0.25)
     perf.py          → command performance tracking (PerfTimer + analytics)
+    insights.py      → forecast, evolve, health score (0-100)
+    eval_harness.py  → automated capability evaluation (4 dimensions)
+    cross_project_eval.py → cross-project testing
     session.py       → session save/restore/list
     graph.py         → mermaid, ascii, dot dependency graphs + critical path
-    doctor.py        → 10+ health checks
+    doctor.py        → 10+ health checks (colored skin output)
+    context.py       → project context management (save/show/brief)
+    aliases.py       → command aliases (shortcuts)
+    gh_sync.py       → GitHub Issues import/export
+    repl.py          → interactive REPL (tab completion + "did you mean?")
+    skin.py          → terminal output (colors, tables, progress bars)
   morph_client.py    → pure Python Morph API client (5 APIs)
   cc-flow.py         → backward-compatible shim
 """
 
-VERSION = "5.0.0"
+VERSION = "5.1.0"

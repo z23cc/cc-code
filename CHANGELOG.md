@@ -1,5 +1,29 @@
 # Changelog
 
+## [5.1.0] - 2026-03-23
+### Added
+- Skills marketplace: `cc-flow skills find/add/list` (skills.sh integration)
+- "Did you mean?" typo correction in REPL
+- REPL tab completion for all 90+ commands
+- Interactive REPL mode (`cc-flow` with no args)
+- Terminal skin: colored output (✓ ✗ ⚠ ●), tables, progress bars
+- Example plugins: notify (desktop notifications) + timer (pomodoro)
+### Fixed
+- Race-safe task ID allocation (`O_CREAT|O_EXCL`)
+- Epic/task ID shorthand (`epic-1.3` → full ID)
+- Node.js verify: auto-detect package.json scripts
+- Node.js verify: skip missing tools, detect missing node_modules
+- Slugify strips `#()!@` from epic IDs
+- Chinese route keywords expanded (新增/添加/修复/崩溃 etc.)
+- Epic validation on task create (prevents orphan tasks)
+- Q-learning rate 0.1→0.25 for faster adaptation
+
+## [5.0.0] - 2026-03-22
+### Added
+- Interactive REPL with prompt_toolkit
+- Terminal skin module (skin.py)
+- Dashboard uses skin for colored output
+
 ## [4.2.0] - 2026-03-22
 ### Fixed
 - CRITICAL: Atomic file writes (temp + os.replace) prevent data corruption
