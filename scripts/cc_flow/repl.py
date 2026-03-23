@@ -77,7 +77,7 @@ _COMPLETIONS = [
     "find", "search", "similar", "suggest", "dedupe", "index", "priority",
     "route", "learn", "learnings", "consolidate",
     "standup", "stats", "changelog", "burndown", "report", "time", "forecast",
-    "scan", "validate", "export", "clean", "perf", "health", "evolve",
+    "ralph", "scan", "validate", "export", "clean", "perf", "health", "evolve",
     "deep-search", "smart-chat", "embed-structure", "recall-review", "bridge-status",
     "review-setup", "state-path",
     "careful", "freeze", "guard", "context-budget",

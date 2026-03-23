@@ -269,6 +269,12 @@ def _add_quality_commands(sub):
 
     sub.add_parser("validate-skills", help="Validate all SKILL.md files (frontmatter, triggers, quality)")
 
+    ralph_p = sub.add_parser("ralph", help="Autonomous execution (one command, unattended)")
+    ralph_p.add_argument("--goal", default="", help="Goal to achieve (enables goal-driven mode)")
+    ralph_p.add_argument("--max", type=int, default=25, help="Max iterations (default: 25)")
+    ralph_p.add_argument("--no-yolo", action="store_true", default=False, help="Require permission prompts")
+    ralph_p.add_argument("--watch", action="store_true", default=False, help="Watch mode (stream output)")
+
     auto_p = sub.add_parser("auto", help="Autoimmune loop integrated with task system")
     auto_sub = auto_p.add_subparsers(dest="auto_cmd")
     auto_sub.add_parser("scan")
