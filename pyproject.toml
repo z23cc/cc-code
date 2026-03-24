@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cc-code"
-version = "5.22.0"
+version = "5.23.0"
 description = "Development workflow toolkit for Claude Code"
 requires-python = ">=3.9"
 license = "MIT"
