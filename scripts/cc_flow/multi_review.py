@@ -96,21 +96,30 @@ def _build_review_context():
 # ── Engine Runners ──
 
 def _run_codex(context, timeout=120):
-    """Run codex review CLI."""
+    """Run codex review via exec (non-interactive, captures output)."""
     prompt = (
-        "Review these code changes. For each issue, output a markdown table with columns: "
-        "Severity (critical/high/medium/low), File, Description. "
-        "End with verdict: SHIP, NEEDS_WORK, or MAJOR_RETHINK.\n\n"
-        f"Changed files: {', '.join(context['files'])}"
+        "Review these code changes. Output findings as a markdown table:\n"
+        "| Severity | File | Description |\n"
+        "End with a line: Verdict: SHIP or NEEDS_WORK or MAJOR_RETHINK\n\n"
+        f"Changed files: {', '.join(context['files'])}\n\n"
+        f"Diff:\n```\n{context['diff'][:30000]}\n```"
     )
     try:
-        # Use --uncommitted for codex to review working tree
+        # Use 'codex exec' for non-interactive structured output
         r = subprocess.run(
-            ["codex", "review", "--uncommitted", prompt],
+            ["codex", "exec", "--approval-mode", "never", "-q", prompt],
             check=False, capture_output=True, text=True, timeout=timeout,
-            input=context["diff"][:30000],  # pass diff via stdin
         )
-        return {"success": True, "output": r.stdout, "stderr": r.stderr, "exit_code": r.returncode}
+        output = r.stdout
+        # Codex exec outputs stream with headers — extract the actual content
+        # Filter out MCP/session lines
+        lines = []
+        for line in output.split("\n"):
+            if any(skip in line for skip in ["mcp:", "session id:", "--------", "workdir:", "model:", "provider:", "approval:", "sandbox:", "reasoning"]):
+                continue
+            lines.append(line)
+        clean_output = "\n".join(lines).strip()
+        return {"success": True, "output": clean_output, "stderr": r.stderr, "exit_code": r.returncode}
     except subprocess.TimeoutExpired:
         return {"success": False, "error": f"Codex timed out after {timeout}s"}
     except OSError as e:
@@ -143,14 +152,29 @@ def _run_gemini(context, timeout=120):
 
 
 def _run_rp(context, timeout=120):
-    """Run RepoPrompt review via cc-flow rp."""
+    """Run RepoPrompt review via builder (auto-selects files + deep analysis)."""
     try:
-        summary = f"Review changes: {context.get('last_commit', 'recent changes')}"
+        files_str = ", ".join(context.get("files", [])[:10])
+        summary = (
+            f"Review recent changes ({context.get('last_commit', 'HEAD')}). "
+            f"Changed files: {files_str}. "
+            "Check for: correctness, security, design patterns, edge cases. "
+            "Output findings as severity (critical/high/medium/low): description. "
+            "End with verdict: SHIP or NEEDS_WORK."
+        )
         r = subprocess.run(
-            ["cc-flow", "rp", "review", summary],
+            ["cc-flow", "rp", "builder", summary, "--type", "review"],
             check=False, capture_output=True, text=True, timeout=timeout,
         )
-        return {"success": True, "output": r.stdout, "stderr": r.stderr, "exit_code": r.returncode}
+        # RP builder output is JSON with a "response" field
+        output = r.stdout
+        try:
+            data = json.loads(output)
+            # Extract the actual review text from RP response
+            response = data.get("response", data.get("text", output))
+            return {"success": True, "output": str(response), "exit_code": r.returncode}
+        except (json.JSONDecodeError, TypeError):
+            return {"success": True, "output": output, "exit_code": r.returncode}
     except subprocess.TimeoutExpired:
         return {"success": False, "error": f"RP timed out after {timeout}s"}
     except OSError as e:
@@ -203,14 +227,23 @@ ENGINE_RUNNERS = {
 # ── Result Parser ──
 
 def _parse_verdict(text):
-    """Extract verdict from engine output."""
+    """Extract verdict from engine output. Handles multiple formats."""
     text_upper = text.upper()
+    # Explicit verdict markers
     if "MAJOR_RETHINK" in text_upper:
         return "MAJOR_RETHINK"
-    if "NEEDS_WORK" in text_upper:
+    if "NEEDS_WORK" in text_upper or "NEEDS WORK" in text_upper:
         return "NEEDS_WORK"
-    if "SHIP" in text_upper:
+    # SHIP must not be a substring (e.g., "relationship")
+    if re.search(r'\bSHIP\b', text_upper):
         return "SHIP"
+    # Fallback: common review phrases
+    if any(phrase in text_upper for phrase in ["LGTM", "LOOKS GOOD", "APPROVED", "NO ISSUES", "ALL GOOD"]):
+        return "SHIP"
+    if any(phrase in text_upper for phrase in ["ISSUES FOUND", "CHANGES NEEDED", "FIX REQUIRED", "RECOMMEND CHANGES"]):
+        return "NEEDS_WORK"
+    if any(phrase in text_upper for phrase in ["REJECT", "BLOCK", "DO NOT MERGE", "FUNDAMENTAL"]):
+        return "MAJOR_RETHINK"
     return "UNKNOWN"
 
 
