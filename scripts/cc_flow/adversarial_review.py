@@ -1,80 +1,69 @@
-"""cc-flow adversarial review — Ship Advocate vs Quality Gate debate.
+"""cc-flow adversarial review — 3-engine debate (Claude × Codex × Gemini).
 
-Two agents with opposing mandates review the same code, then see each
-other's arguments and respond. Produces a balanced verdict that avoids
-one-sided "all SHIP" or "all NEEDS_WORK" bias.
+Three AI engines independently review the same code, then see each other's
+arguments and debate. Each engine has a unique lens and mandate.
 
 Architecture:
-  Round 1: Independent — advocate finds reasons to ship, gate finds reasons to block
-  Round 2: Rebuttal — each sees the other's argument and responds
-  Round 3: Verdict — weight surviving arguments, produce final decision
+  Round 1: Independent review — 3 engines in parallel, each with different lens
+  Round 2: Debate — each engine sees the other two's arguments, responds
+  Round 3: Verdict — majority vote + surviving issues from debate
 """
 
 import json
+import re
+import shutil
 import subprocess
 import sys
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 from cc_flow.core import TASKS_DIR, atomic_write, now_iso
 
+# ── Engine Config ──
+
+ENGINE_CONFIG = {
+    "claude": {
+        "label": "Claude (Anthropic)",
+        "lens": "code correctness, security, edge cases",
+        "detect": lambda: shutil.which("claude") is not None,
+        "run": lambda prompt, timeout: _exec_claude(prompt, timeout),
+    },
+    "codex": {
+        "label": "Codex (OpenAI)",
+        "lens": "architecture, performance, error handling",
+        "detect": lambda: shutil.which("codex") is not None,
+        "run": lambda prompt, timeout: _exec_codex(prompt, timeout),
+    },
+    "gemini": {
+        "label": "Gemini (Google)",
+        "lens": "scalability, best practices, design patterns",
+        "detect": lambda: shutil.which("gemini") is not None or shutil.which("gemini-cli") is not None,
+        "run": lambda prompt, timeout: _exec_gemini(prompt, timeout),
+    },
+}
+
+
 # ── Prompts ──
 
-ADVOCATE_R1_PROMPT = """\
-You are the **Ship Advocate** in an adversarial code review. Your job is to find
-reasons WHY this code should be shipped. You must argue FOR approval.
+R1_PROMPT = """\
+You are **{label}** in a 3-engine adversarial code review debate.
+Your unique lens: **{lens}**.
 
-Review these changes and build the strongest case for shipping:
-1. What does this code do well?
-2. Why is the design sound?
-3. What risks are acceptable and why?
-4. Why delaying this would be worse than shipping now?
+Review these changes thoroughly from YOUR perspective. Be specific — cite files,
+functions, line patterns. Output:
 
-Be specific — cite files, functions, patterns. Don't be blindly positive;
-acknowledge tradeoffs but argue they're acceptable.
-
-Output format:
 ## Strengths
-- [strength 1]
-- [strength 2]
+- [what this code does well from your lens]
 
-## Acceptable Risks
-- [risk]: [why it's acceptable]
-
-## Ship Argument
-[Your 2-3 sentence case for shipping this code NOW]
-
-## Verdict: SHIP
-
-Changed files: {files}
-
-Diff:
-```
-{diff}
-```"""
-
-GATE_R1_PROMPT = """\
-You are the **Quality Gate** in an adversarial code review. Your job is to find
-reasons WHY this code should NOT be shipped yet. You must argue AGAINST approval.
-
-Review these changes and build the strongest case for blocking:
-1. What could break in production?
-2. What edge cases are unhandled?
-3. What security/performance risks exist?
-4. What design decisions will cause pain later?
-
-Be specific — cite files, lines, concrete scenarios. Don't be blindly negative;
-focus on real risks, not style preferences.
-
-Output format:
-## Issues Found
+## Issues
 | Severity | File | Issue |
 |----------|------|-------|
 | critical/high/medium/low | file | description |
 
-## Block Argument
-[Your 2-3 sentence case for NOT shipping this code yet]
+## Position
+[2-3 sentences: your overall assessment]
 
-## Verdict: NEEDS_WORK
+## Verdict: [SHIP / NEEDS_WORK / MAJOR_RETHINK]
 
 Changed files: {files}
 
@@ -83,110 +72,118 @@ Diff:
 {diff}
 ```"""
 
-ADVOCATE_R2_PROMPT = """\
-You are the **Ship Advocate**. The Quality Gate has argued AGAINST shipping.
-Read their argument below, then REBUT their concerns point by point.
+R2_PROMPT = """\
+You are **{label}** in round 2 of a 3-engine adversarial code review.
+Your lens: **{lens}**.
 
-For each issue they raised:
-- Accept it (if valid) and explain why it's still OK to ship
-- Reject it (if overblown) with evidence from the code
-- Propose a mitigation that doesn't require blocking the ship
+Two other engines have reviewed the same code. Read their arguments below,
+then respond:
 
-Quality Gate's argument:
+1. For each issue they found: **Agree** (confirm from your lens) or **Disagree** (explain why)
+2. For strengths they praised: **Confirm** or **Challenge**
+3. Any issues THEY MISSED that you found?
+4. Has their reasoning changed your position?
+
 ---
-{gate_argument}
+**{other1_label}** ({other1_lens}):
+{other1_text}
+
 ---
+**{other2_label}** ({other2_lens}):
+{other2_text}
 
-Your rebuttal:
-## Rebuttals
-For each issue:
-- **[Issue]**: [Accept/Reject] — [Your response]
-
-## Final Position
-[Updated case for shipping, accounting for valid concerns]
-
-## Verdict: [SHIP or NEEDS_WORK]"""
-
-GATE_R2_PROMPT = """\
-You are the **Quality Gate**. The Ship Advocate has argued FOR shipping.
-Read their argument below, then CHALLENGE their reasoning.
-
-For each strength they cited:
-- Agree (if solid) but note any caveats
-- Challenge (if they're glossing over real risks) with specific scenarios
-
-Ship Advocate's argument:
----
-{advocate_argument}
 ---
 
-Your challenge:
-## Challenges
-For each strength/risk:
-- **[Point]**: [Agree/Challenge] — [Your response]
+Your response:
+## Agreements
+- [issues you confirm from other engines]
 
-## Updated Issues
-Any NEW concerns based on the advocate's reasoning?
+## Disagreements
+- [points you challenge, with evidence]
 
-## Final Position
-[Updated case for blocking, accounting for valid strengths]
+## Missed by Others
+- [issues only you caught]
 
-## Verdict: [NEEDS_WORK or SHIP]"""
+## Final Verdict: [SHIP / NEEDS_WORK / MAJOR_RETHINK]
+[Has your position changed? Why/why not?]"""
 
 
-# ── Runner ──
+# ── Engine Executors ──
 
-def _run_prompt(prompt, engine="gemini", timeout=300):
-    """Run a prompt through an AI engine and return the response."""
-    cmd = None
-    if engine == "gemini":
-        cmd_path = subprocess.run(["which", "gemini"], check=False, capture_output=True, text=True).stdout.strip()
-        if not cmd_path:
-            cmd_path = subprocess.run(["which", "gemini-cli"], check=False, capture_output=True, text=True).stdout.strip()
-        if cmd_path:
-            cmd = [cmd_path, "-p", prompt]
-    elif engine == "codex":
-        cmd = ["codex", "exec", "--approval-mode", "never", prompt]
-    elif engine == "claude":
-        cmd = ["claude", "-p", "--output-format", "text", prompt]
+def _filter_noise(text):
+    """Remove MCP/session/header noise from engine output."""
+    return "\n".join(
+        line for line in text.split("\n")
+        if not any(skip in line for skip in [
+            "mcp:", "session id:", "--------", "workdir:", "model:",
+            "provider:", "approval:", "sandbox:", "reasoning",
+            "OpenAI Codex", "tokens used",
+        ])
+    ).strip()
 
-    if not cmd:
-        return {"success": False, "error": f"Engine {engine} not found"}
 
+def _exec_claude(prompt, timeout=300):
     try:
-        r = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=timeout)
-        output = r.stdout.strip()
-        # Filter noise
-        lines = [l for l in output.split("\n") if not any(
-            skip in l for skip in ["mcp:", "session id:", "--------", "workdir:", "model:", "provider:", "OpenAI Codex"]
-        )]
-        return {"success": True, "output": "\n".join(lines).strip()}
+        r = subprocess.run(
+            ["claude", "-p", "--output-format", "text", prompt],
+            check=False, capture_output=True, text=True, timeout=timeout,
+        )
+        return {"success": True, "output": r.stdout.strip()}
     except subprocess.TimeoutExpired:
-        return {"success": False, "error": f"Timeout after {timeout}s"}
+        return {"success": False, "error": f"Claude timed out ({timeout}s)"}
     except OSError as e:
         return {"success": False, "error": str(e)}
 
 
+def _exec_codex(prompt, timeout=600):
+    try:
+        r = subprocess.run(
+            ["codex", "exec", "--approval-mode", "never", prompt],
+            check=False, capture_output=True, text=True, timeout=timeout,
+        )
+        return {"success": True, "output": _filter_noise(r.stdout)}
+    except subprocess.TimeoutExpired:
+        return {"success": False, "error": f"Codex timed out ({timeout}s)"}
+    except OSError as e:
+        return {"success": False, "error": str(e)}
+
+
+def _exec_gemini(prompt, timeout=300):
+    cmd = shutil.which("gemini") or shutil.which("gemini-cli")
+    if not cmd:
+        return {"success": False, "error": "gemini not found"}
+    try:
+        r = subprocess.run(
+            [cmd, "-p", prompt],
+            check=False, capture_output=True, text=True, timeout=timeout,
+        )
+        return {"success": True, "output": _filter_noise(r.stdout)}
+    except subprocess.TimeoutExpired:
+        return {"success": False, "error": f"Gemini timed out ({timeout}s)"}
+    except OSError as e:
+        return {"success": False, "error": str(e)}
+
+
+# ── Parsers ──
+
 def _parse_verdict(text):
-    """Extract verdict from debate output."""
+    """Extract verdict from engine output."""
     upper = text.upper()
-    if "VERDICT: SHIP" in upper or "VERDICT:SHIP" in upper:
-        return "SHIP"
-    if "VERDICT: NEEDS_WORK" in upper or "VERDICT:NEEDS_WORK" in upper or "VERDICT: NEEDS WORK" in upper:
-        return "NEEDS_WORK"
-    if "VERDICT: MAJOR_RETHINK" in upper:
+    if "MAJOR_RETHINK" in upper:
         return "MAJOR_RETHINK"
-    # Fallback
-    if "SHIP" in upper and "NEEDS_WORK" not in upper:
-        return "SHIP"
-    if "NEEDS_WORK" in upper:
+    if re.search(r"VERDICT[:\s]*NEEDS[_ ]WORK", upper):
         return "NEEDS_WORK"
+    if re.search(r"VERDICT[:\s]*SHIP\b", upper):
+        return "SHIP"
+    if "NEEDS_WORK" in upper or "NEEDS WORK" in upper:
+        return "NEEDS_WORK"
+    if re.search(r"\bSHIP\b", upper):
+        return "SHIP"
     return "UNKNOWN"
 
 
-def _parse_issues_from_table(text):
-    """Extract issues from markdown table in gate output."""
-    import re
+def _parse_issues(text):
+    """Extract issues from markdown table."""
     findings = []
     for match in re.finditer(
         r"\|\s*\*{0,2}(critical|high|medium|low)\*{0,2}\s*\|\s*[`]?([^|`]*)[`]?\s*\|\s*([^|]*)\|",
@@ -202,134 +199,167 @@ def _parse_issues_from_table(text):
 
 # ── Verdict Engine ──
 
-def _final_verdict(advocate_r1, gate_r1, advocate_r2, gate_r2):
-    """Determine final verdict from the debate.
+SEVERITY_WEIGHT = {"critical": 10, "high": 5, "medium": 2, "low": 1}
+
+
+def _compute_verdict(engine_results):
+    """Compute final verdict from 3-engine debate.
 
     Rules:
-    - If advocate concedes (R2 verdict = NEEDS_WORK) → NEEDS_WORK (advocate convinced)
-    - If gate concedes (R2 verdict = SHIP) → SHIP (gate convinced)
-    - If both hold positions → weight by issue severity
-    - Tie → NEEDS_WORK (err on caution)
+    - Majority vote (2/3 agree = that verdict)
+    - If split 3 ways → NEEDS_WORK (err on caution)
+    - Position changes in R2 count more (someone was convinced)
+    - Critical/high issues that survive R2 debate = blocking
     """
-    adv_r1_v = _parse_verdict(advocate_r1)
-    gate_r1_v = _parse_verdict(gate_r1)
-    adv_r2_v = _parse_verdict(advocate_r2)
-    gate_r2_v = _parse_verdict(gate_r2)
+    r1_verdicts = {e: r["r1_verdict"] for e, r in engine_results.items()}
+    r2_verdicts = {e: r["r2_verdict"] for e, r in engine_results.items()}
 
-    verdicts = {
-        "advocate_r1": adv_r1_v,
-        "gate_r1": gate_r1_v,
-        "advocate_r2": adv_r2_v,
-        "gate_r2": gate_r2_v,
-    }
+    # Count R2 verdicts (post-debate = more informed)
+    r2_counts = {}
+    for v in r2_verdicts.values():
+        if v != "UNKNOWN":
+            r2_counts[v] = r2_counts.get(v, 0) + 1
 
-    # If advocate concedes after seeing gate's argument → strong signal
-    if adv_r2_v == "NEEDS_WORK":
-        return "NEEDS_WORK", "Advocate conceded after seeing Gate's arguments", verdicts
+    # Majority in R2
+    for verdict, count in sorted(r2_counts.items(), key=lambda x: -x[1]):
+        if count >= 2:
+            # Check who changed their mind
+            changers = [e for e in engine_results if r1_verdicts[e] != r2_verdicts[e] and r2_verdicts[e] != "UNKNOWN"]
+            reason = f"Majority ({count}/3) after debate"
+            if changers:
+                labels = [ENGINE_CONFIG[e]["label"] for e in changers]
+                reason += f". {', '.join(labels)} changed position"
+            return verdict, reason
 
-    # If gate concedes after seeing advocate's argument → strong signal
-    if gate_r2_v == "SHIP":
-        return "SHIP", "Gate conceded after seeing Advocate's arguments", verdicts
-
-    # Both hold → check issue severity from gate
-    issues = _parse_issues_from_table(gate_r1)
-    critical_high = sum(1 for i in issues if i["severity"] in ("critical", "high"))
+    # No majority — collect all issues across all engines
+    all_issues = []
+    for r in engine_results.values():
+        all_issues.extend(r.get("issues", []))
+    critical_high = sum(1 for i in all_issues if i.get("severity") in ("critical", "high"))
 
     if critical_high > 0:
-        return "NEEDS_WORK", f"Gate holds with {critical_high} critical/high issues unresolved", verdicts
+        return "NEEDS_WORK", f"No majority, but {critical_high} critical/high issues found"
 
-    # No critical issues, both hold → slight lean to SHIP
-    if len(issues) <= 2:
-        return "SHIP", "Gate's remaining concerns are low severity, Advocate's case is stronger", verdicts
-
-    return "NEEDS_WORK", f"Gate holds with {len(issues)} unresolved issues", verdicts
+    return "NEEDS_WORK", "No majority — defaulting to caution"
 
 
-# ── Main ──
+# ── Main Runner ──
 
-def run_adversarial_review(context, advocate_engine="gemini", gate_engine="gemini", timeout=300, dry_run=False):
-    """Run a full adversarial review debate."""
+def run_debate(context, engines=None, timeout=300, dry_run=False):
+    """Run 3-engine adversarial debate."""
+    # Detect available engines
+    if engines:
+        active = {e: ENGINE_CONFIG[e] for e in engines if e in ENGINE_CONFIG and ENGINE_CONFIG[e]["detect"]()}
+    else:
+        active = {e: c for e, c in ENGINE_CONFIG.items() if c["detect"]()}
+
+    if len(active) < 2:
+        return {"success": False, "error": f"Need 2+ engines. Available: {list(active.keys())}"}
+
+    engine_names = list(active.keys())
     files_str = ", ".join(context.get("files", [])[:15])
     diff = context.get("diff", "")[:30000]
 
     if dry_run:
         return {
-            "success": True,
-            "dry_run": True,
-            "advocate_engine": advocate_engine,
-            "gate_engine": gate_engine,
+            "success": True, "dry_run": True,
+            "engines": engine_names,
+            "engine_details": {e: {"label": c["label"], "lens": c["lens"]} for e, c in active.items()},
             "files": context.get("files", []),
             "diff_bytes": len(diff),
             "instruction": (
-                f"Adversarial Review Debate:\n"
-                f"  Ship Advocate ({advocate_engine}) vs Quality Gate ({gate_engine})\n"
-                f"  Round 1: Independent arguments\n"
-                f"  Round 2: Rebuttals after seeing opponent's case\n"
-                f"  Round 3: Final verdict from surviving arguments\n"
+                "3-Engine Adversarial Debate:\n"
+                + "\n".join(f"  {c['label']} — {c['lens']}" for c in active.values())
+                + f"\n  Round 1: Independent review (parallel)\n"
+                f"  Round 2: See each other's arguments, debate (parallel)\n"
+                f"  Round 3: Majority vote + surviving issues\n"
                 f"  Reviewing {len(context.get('files', []))} files"
             ),
         }
 
     start = time.time()
-    debate = {"rounds": []}
+    engine_results = {}
 
-    # ── Round 1: Independent arguments (PARALLEL) ──
-    print(json.dumps({"status": "round1", "message": "Independent arguments..."}), file=sys.stderr)
+    # ── Round 1: Independent (PARALLEL) ──
+    print(json.dumps({"status": "round1", "engines": engine_names}), file=sys.stderr)
 
-    from concurrent.futures import ThreadPoolExecutor
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        adv_future = pool.submit(
-            _run_prompt,
-            ADVOCATE_R1_PROMPT.format(files=files_str, diff=diff),
-            advocate_engine, timeout,
-        )
-        gate_future = pool.submit(
-            _run_prompt,
-            GATE_R1_PROMPT.format(files=files_str, diff=diff),
-            gate_engine, timeout,
-        )
-        advocate_r1 = adv_future.result()
-        gate_r1 = gate_future.result()
+    with ThreadPoolExecutor(max_workers=len(active)) as pool:
+        futures = {}
+        for name, config in active.items():
+            prompt = R1_PROMPT.format(
+                label=config["label"], lens=config["lens"],
+                files=files_str, diff=diff,
+            )
+            futures[pool.submit(config["run"], prompt, timeout)] = name
 
-    adv_r1_text = advocate_r1.get("output", "") if advocate_r1.get("success") else f"[FAILED: {advocate_r1.get('error')}]"
-    gate_r1_text = gate_r1.get("output", "") if gate_r1.get("success") else f"[FAILED: {gate_r1.get('error')}]"
+        for future in futures:
+            name = futures[future]
+            try:
+                result = future.result()
+            except Exception as e:
+                result = {"success": False, "error": str(e)}
 
-    debate["rounds"].append({
-        "round": 1,
-        "advocate": {"verdict": _parse_verdict(adv_r1_text), "text": adv_r1_text[:3000]},
-        "gate": {"verdict": _parse_verdict(gate_r1_text), "text": gate_r1_text[:3000]},
-    })
+            text = result.get("output", "") if result.get("success") else ""
+            engine_results[name] = {
+                "r1_text": text[:4000],
+                "r1_verdict": _parse_verdict(text),
+                "r1_success": result.get("success", False),
+                "issues": _parse_issues(text),
+            }
 
-    # ── Round 2: Rebuttals (PARALLEL — each sees the other's R1) ──
-    print(json.dumps({"status": "round2", "message": "Rebuttals..."}), file=sys.stderr)
+    print(json.dumps({
+        "status": "round1_done",
+        "verdicts": {e: r["r1_verdict"] for e, r in engine_results.items()},
+    }), file=sys.stderr)
 
-    with ThreadPoolExecutor(max_workers=2) as pool:
-        adv_r2_future = pool.submit(
-            _run_prompt,
-            ADVOCATE_R2_PROMPT.format(gate_argument=gate_r1_text[:5000]),
-            advocate_engine, timeout,
-        )
-        gate_r2_future = pool.submit(
-            _run_prompt,
-            GATE_R2_PROMPT.format(advocate_argument=adv_r1_text[:5000]),
-            gate_engine, timeout,
-        )
-        advocate_r2 = adv_r2_future.result()
-        gate_r2 = gate_r2_future.result()
+    # ── Round 2: Debate (PARALLEL — each sees the other two) ──
+    print(json.dumps({"status": "round2", "engines": engine_names}), file=sys.stderr)
 
-    adv_r2_text = advocate_r2.get("output", "") if advocate_r2.get("success") else f"[FAILED: {advocate_r2.get('error')}]"
-    gate_r2_text = gate_r2.get("output", "") if gate_r2.get("success") else f"[FAILED: {gate_r2.get('error')}]"
+    with ThreadPoolExecutor(max_workers=len(active)) as pool:
+        futures = {}
+        for name, config in active.items():
+            others = [(e, c) for e, c in active.items() if e != name]
+            other1_name, other1_config = others[0]
+            other2_name = others[1][0] if len(others) > 1 else other1_name
+            other2_config = others[1][1] if len(others) > 1 else other1_config
 
-    debate["rounds"].append({
-        "round": 2,
-        "advocate": {"verdict": _parse_verdict(adv_r2_text), "text": adv_r2_text[:3000]},
-        "gate": {"verdict": _parse_verdict(gate_r2_text), "text": gate_r2_text[:3000]},
-    })
+            prompt = R2_PROMPT.format(
+                label=config["label"], lens=config["lens"],
+                other1_label=other1_config["label"], other1_lens=other1_config["lens"],
+                other1_text=engine_results[other1_name]["r1_text"][:3000],
+                other2_label=other2_config["label"], other2_lens=other2_config["lens"],
+                other2_text=engine_results[other2_name]["r1_text"][:3000],
+            )
+            futures[pool.submit(config["run"], prompt, timeout)] = name
 
-    # ── Round 3: Final verdict ──
-    final_verdict, reason, all_verdicts = _final_verdict(adv_r1_text, gate_r1_text, adv_r2_text, gate_r2_text)
+        for future in futures:
+            name = futures[future]
+            try:
+                result = future.result()
+            except Exception as e:
+                result = {"success": False, "error": str(e)}
 
-    issues = _parse_issues_from_table(gate_r1_text)
+            text = result.get("output", "") if result.get("success") else ""
+            engine_results[name]["r2_text"] = text[:4000]
+            engine_results[name]["r2_verdict"] = _parse_verdict(text)
+            engine_results[name]["r2_success"] = result.get("success", False)
+            # Merge R2 issues
+            engine_results[name]["issues"].extend(_parse_issues(text))
+
+    # ── Round 3: Compute verdict ──
+    final_verdict, reason = _compute_verdict(engine_results)
+
+    # Collect all unique issues
+    all_issues = []
+    seen = set()
+    for r in engine_results.values():
+        for issue in r.get("issues", []):
+            key = issue.get("file", "") + issue.get("description", "")[:50]
+            if key not in seen:
+                seen.add(key)
+                all_issues.append(issue)
+    all_issues.sort(key=lambda x: SEVERITY_WEIGHT.get(x.get("severity", "low"), 1), reverse=True)
+
     elapsed = round(time.time() - start, 1)
 
     # Save artifacts
@@ -340,13 +370,17 @@ def run_adversarial_review(context, advocate_engine="gemini", gate_engine="gemin
         "timestamp": now_iso(),
         "verdict": final_verdict,
         "reason": reason,
-        "verdicts": all_verdicts,
-        "issues": issues,
-        "debate": debate,
+        "engines": {e: {
+            "label": ENGINE_CONFIG[e]["label"],
+            "r1_verdict": r["r1_verdict"],
+            "r2_verdict": r["r2_verdict"],
+            "issues": r["issues"][:5],
+            "changed_position": r["r1_verdict"] != r["r2_verdict"] and r["r2_verdict"] != "UNKNOWN",
+        } for e, r in engine_results.items()},
+        "all_issues": all_issues[:10],
         "elapsed_seconds": elapsed,
-        "engines": {"advocate": advocate_engine, "gate": gate_engine},
     }
-    report_path = review_dir / f"adversarial-{ts}.json"
+    report_path = review_dir / f"debate-{ts}.json"
     atomic_write(report_path, json.dumps(report, indent=2, ensure_ascii=False) + "\n")
 
     return {
@@ -354,47 +388,42 @@ def run_adversarial_review(context, advocate_engine="gemini", gate_engine="gemin
         "verdict": final_verdict,
         "reason": reason,
         "elapsed_seconds": elapsed,
-        "verdicts": all_verdicts,
-        "issues_found": len(issues),
-        "issues": issues[:5],
-        "debate_summary": {
-            "round1": {
-                "advocate": debate["rounds"][0]["advocate"]["verdict"],
-                "gate": debate["rounds"][0]["gate"]["verdict"],
-            },
-            "round2": {
-                "advocate": debate["rounds"][1]["advocate"]["verdict"],
-                "gate": debate["rounds"][1]["gate"]["verdict"],
-            },
-        },
+        "engines": {e: {
+            "label": ENGINE_CONFIG[e]["label"],
+            "r1": r["r1_verdict"],
+            "r2": r["r2_verdict"],
+            "changed": r["r1_verdict"] != r["r2_verdict"] and r["r2_verdict"] != "UNKNOWN",
+            "issues_found": len(r["issues"]),
+        } for e, r in engine_results.items()},
+        "total_issues": len(all_issues),
+        "top_issues": all_issues[:5],
         "report": str(report_path),
-        "instruction": _build_instruction(final_verdict, reason, issues, debate),
+        "instruction": _build_instruction(final_verdict, reason, engine_results, all_issues),
     }
 
 
-def _build_instruction(verdict, reason, issues, debate):
-    """Build human-readable debate summary."""
-    lines = [
-        f"# Adversarial Review: {verdict}",
-        f"Reason: {reason}",
-        "",
-        "## Debate Timeline",
-        f"  Round 1: Advocate={debate['rounds'][0]['advocate']['verdict']}, Gate={debate['rounds'][0]['gate']['verdict']}",
-        f"  Round 2: Advocate={debate['rounds'][1]['advocate']['verdict']}, Gate={debate['rounds'][1]['gate']['verdict']}",
-        "",
-    ]
+def _build_instruction(verdict, reason, engine_results, issues):
+    """Build debate summary."""
+    lines = [f"# 3-Engine Debate: {verdict}", f"Reason: {reason}", ""]
+
+    lines.append("## Timeline")
+    for e, r in engine_results.items():
+        label = ENGINE_CONFIG[e]["label"]
+        changed = " → CHANGED" if r["r1_verdict"] != r["r2_verdict"] and r["r2_verdict"] != "UNKNOWN" else ""
+        lines.append(f"  {label}: R1={r['r1_verdict']} → R2={r['r2_verdict']}{changed}")
+    lines.append("")
+
     if issues:
-        lines.append("## Gate's Issues")
-        for i, issue in enumerate(issues[:5], 1):
+        lines.append(f"## Issues ({len(issues)} total)")
+        for i, issue in enumerate(issues[:7], 1):
             lines.append(f"  {i}. [{issue['severity'].upper()}] {issue.get('file', '')}: {issue['description'][:80]}")
         lines.append("")
 
     if verdict == "SHIP":
-        lines.append("Advocate's case survived the debate. Safe to ship.")
-        lines.append("Next: `/cc-commit`")
+        lines.append("Debate concluded: safe to ship. Next: `/cc-commit`")
     else:
-        lines.append("Gate's concerns survived the debate. Fix issues before shipping.")
-        lines.append("Next: Fix the issues above, then re-run `cc-flow adversarial-review`")
+        lines.append("Debate concluded: fix issues before shipping.")
+        lines.append("Next: Fix issues, then `cc-flow adversarial-review`")
 
     return "\n".join(lines)
 
@@ -402,26 +431,22 @@ def _build_instruction(verdict, reason, issues, debate):
 # ── CLI ──
 
 def cmd_adversarial_review(args):
-    """Run adversarial code review: Ship Advocate vs Quality Gate."""
+    """Run 3-engine adversarial debate review."""
     from cc_flow.multi_review import _build_review_context
 
     dry_run = getattr(args, "dry_run", False)
-    advocate_engine = getattr(args, "advocate", "gemini")
-    gate_engine = getattr(args, "gate", "gemini")
     timeout = getattr(args, "timeout", 300)
     diff_range = getattr(args, "range", "") or ""
     paths = getattr(args, "path", None)
+
+    # Parse engines
+    engines_arg = getattr(args, "engines", "") or ""
+    engines = [e.strip() for e in engines_arg.split(",") if e.strip()] if engines_arg else None
 
     context = _build_review_context(diff_range=diff_range, paths=paths)
     if not context["diff"]:
         print(json.dumps({"success": False, "error": "No changes to review"}))
         return
 
-    result = run_adversarial_review(
-        context,
-        advocate_engine=advocate_engine,
-        gate_engine=gate_engine,
-        timeout=timeout,
-        dry_run=dry_run,
-    )
+    result = run_debate(context, engines=engines, timeout=timeout, dry_run=dry_run)
     print(json.dumps(result))

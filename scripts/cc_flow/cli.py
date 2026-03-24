@@ -729,9 +729,8 @@ def _add_misc_commands(sub):
     mr_p.add_argument("--dry-run", action="store_true", help="Show plan without running")
 
     # Adversarial review
-    ar_p = sub.add_parser("adversarial-review", help="Ship Advocate vs Quality Gate debate review")
-    ar_p.add_argument("--advocate", default="gemini", help="Engine for Ship Advocate (gemini/codex/claude)")
-    ar_p.add_argument("--gate", default="gemini", help="Engine for Quality Gate (gemini/codex/claude)")
+    ar_p = sub.add_parser("adversarial-review", help="3-engine debate: Claude × Codex × Gemini review with battle")
+    ar_p.add_argument("--engines", default="", help="Engines: claude,codex,gemini (default: all available)")
     ar_p.add_argument("--timeout", type=int, default=300, help="Per-round timeout in seconds")
     ar_p.add_argument("--range", default="", help="Git diff range: main..HEAD, HEAD~5")
     ar_p.add_argument("--path", nargs="*", default=None, help="Limit to paths: scripts/ tests/")
