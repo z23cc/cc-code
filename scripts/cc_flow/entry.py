@@ -74,6 +74,8 @@ _COMMANDS = {
     "guard": "modes:cmd_guard",
     # context budget
     "context-budget": "context_budget:cmd_context_budget",
+    # go (unified entry point)
+    "go": "go:cmd_go",
     # help (grouped command overview)
     "help": "repl:cmd_help",
 }

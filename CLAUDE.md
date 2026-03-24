@@ -4,7 +4,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 ## Architecture
 
-- `scripts/cc_flow/` — Task & workflow CLI package (52 modules, lazy-loaded, atomic writes, cross-platform)
+- `scripts/cc_flow/` — Task & workflow CLI package (53 modules, lazy-loaded, atomic writes, cross-platform)
 - `scripts/morph_client.py` — Pure Python Morph API client (Apply, WarpGrep, Embed, Rerank)
 - `scripts/worktree.sh` — Git worktree manager (create/list/switch/remove/cleanup/status + nesting guard)
 - `agents/` — 11 general agents + 12 scout agents (read-only specialists), all `model: inherit`
@@ -23,6 +23,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 | You want to... | Start with |
 |----------------|------------|
+| **Anything (auto-routed)** | **`cc-flow go "describe your goal"`** |
 | Build a new feature | `/cc-brainstorm` → `/cc-plan` → `/cc-work` (or `/cc-tdd`) |
 | Execute a plan end-to-end | `/cc-work epic-1` (worktree + worker + review loop) |
 | Verify epic completion | `/cc-epic-review epic-1` |
@@ -71,6 +72,8 @@ cc-flow rp review "check recent changes"       # RP code review
 # After: pip install -e .  →  cc-flow <command>
 # Or:    python -m cc_flow <command>  (from scripts/)
 
+cc-flow go "describe your goal"                # ONE COMMAND — auto-routes + executes
+cc-flow go "fix login bug" --dry-run           # preview plan without executing
 cc-flow dashboard                              # one-screen overview
 cc-flow search "auth flow" --rerank            # semantic search + rerank
 cc-flow route "fix login bug"                  # smart routing

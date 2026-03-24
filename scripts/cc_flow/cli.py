@@ -606,6 +606,17 @@ def _add_skill_flow_commands(sub):
     ctx_clear.add_argument("--all", action="store_true", default=False, help="Clear all context, not just current")
 
 
+def _add_go_command(sub):
+    """Add the unified 'go' entry point."""
+    go_p = sub.add_parser("go", help="One command — describe goal, everything runs automatically")
+    go_p.add_argument("goal", nargs="+", help="What you want to achieve")
+    go_p.add_argument("--mode", choices=["auto", "chain", "ralph"], default="",
+                       help="Force execution mode")
+    go_p.add_argument("--max", type=int, default=25, help="Max iterations (ralph mode)")
+    go_p.add_argument("--dry-run", action="store_true", default=False,
+                       help="Show plan without executing")
+
+
 def _add_misc_commands(sub):
     """Add misc subcommands: log, summary, archive, stats, perf, insights, version, config."""
     perf_p = sub.add_parser("perf", help="Command performance analytics")
@@ -735,6 +746,7 @@ def build_parser():
     _add_rp_commands(sub)
     _add_checkpoint_commands(sub)
     _add_skill_flow_commands(sub)
+    _add_go_command(sub)
     _add_misc_commands(sub)
 
     # Let plugins register their own commands

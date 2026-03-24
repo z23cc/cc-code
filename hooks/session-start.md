@@ -1,5 +1,7 @@
 ## cc-code — Development Workflow Toolkit (Team-First)
 
+**One command to do anything: `cc-flow go "describe your goal"`** — auto-routes to the right strategy.
+
 **Don't know which command to use? → `/cc-route` (smart routing with learning)**
 
 **All commands default to team dispatch (researcher → specialist → reviewer):**
