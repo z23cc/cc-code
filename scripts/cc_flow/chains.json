@@ -335,7 +335,16 @@
       "理解",
       "怎么工作",
       "深度分析",
-      "调研"
+      "调研",
+      "what does",
+      "what is",
+      "trace",
+      "explore",
+      "analyze code",
+      "understand this",
+      "code analysis",
+      "代码分析",
+      "看看这段代码"
     ],
     "skills": [
       {
@@ -487,7 +496,11 @@
       "profile",
       "性能优化",
       "太慢",
-      "加速"
+      "加速",
+      "api slow",
+      "why slow",
+      "why is",
+      "bottleneck"
     ],
     "skills": [
       {
@@ -841,7 +854,13 @@
       "pipeline",
       "ci",
       "cd",
-      "流水线"
+      "流水线",
+      "docker",
+      "Docker",
+      "Dockerfile",
+      "container",
+      "set up docker",
+      "容器"
     ],
     "skills": [
       {
@@ -1274,7 +1293,10 @@
       "graceful degradation",
       "错误处理",
       "异常处理",
-      "重试"
+      "重试",
+      "add error",
+      "error handling",
+      "improve error"
     ],
     "skills": [
       {

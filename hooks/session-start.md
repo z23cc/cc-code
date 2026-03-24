@@ -1,27 +1,31 @@
-## cc-code — Development Workflow Toolkit (Team-First)
+## cc-code v5.24 — One Command Does Everything
 
-**One command to do anything: `cc-flow go "describe your goal"`** — auto-routes to the right strategy.
+**`cc-flow go "describe your goal"`** — auto-routes to chain/ralph/auto mode.
 
-**Don't know which command to use? → `/cc-route` (smart routing with learning)**
+### Quick Reference
 
-**All commands default to team dispatch (researcher → specialist → reviewer):**
-- New feature → `/cc-brainstorm` *(feature-dev team)* → `/cc-plan` → `/cc-tdd` → `/cc-refine` → `/cc-review` *(review team)* → `/cc-commit`
-- Bug/error → `/cc-debug` *(bug-fix team: researcher → fixer → reviewer)*
-- Code quality → `/cc-simplify` *(refactor team)* | `/cc-perf` *(profiler team)*
-- Health check → `/cc-audit` *(audit team)* | `/cc-prime` *(all 12 scouts)*
-- Big project → `/cc-blueprint` | `/cc-interview` → `/cc-plan`
-- Unfamiliar code → `/cc-research` *(research team)*
+| Goal | Command |
+|------|---------|
+| **Anything** | `cc-flow go "your goal"` |
+| New feature | `/cc-brainstorm` → `/cc-plan` → `/cc-work` |
+| Fix a bug | `/cc-debug` → `/cc-tdd` → `/cc-commit` |
+| Quick fix | `/cc-fix` or `cc-flow go "fix typo"` |
+| Code review | `/cc-review` |
+| Deploy | `/cc-ship` or `cc-flow go "deploy"` |
+| Understand code | `/cc-research` |
+| Project health | `/cc-audit` or `/cc-prime` (12 scouts) |
+| Not sure | `/cc-route "describe task"` |
 
-**Team dispatch = higher quality:** researcher finds context → specialist implements → reviewer verifies.
+### 39 Workflow Chains
 
-**Scouts:** `/cc-scout [type]` — practices, repo, docs, gaps, security, testing, tooling, build, env, observability
-**Autonomous:** `/cc-autoimmune` *(auto-learns + auto-session-save)*
-**Tasks:** `/cc-tasks` | `cc-flow dashboard` | `cc-flow graph`
+`cc-flow chain suggest "your task"` — finds the best chain.
+`cc-flow chain list` — shows all 39 chains.
 
-**Auto-learning:** commands auto-record learnings → `/cc-route` gets smarter over time
-**Session:** `cc-flow session save/restore` — persist work across sessions
+Top chains: feature, bugfix, hotfix, deploy, security-audit, performance, testing, refactor, idea-to-ship, ci-cd, architecture, prd-to-ship.
 
-**Gates:**
-- DO NOT implement without design (`/cc-brainstorm` first)
-- DO NOT commit without verification (`/cc-commit` runs lint+typecheck)
-- DO NOT claim success without evidence (cc-verification skill)
+### Tools
+
+- `cc-flow verify` — lint + test
+- `cc-flow dashboard` — project overview
+- `cc-flow doctor` — health check
+- `cc-flow help` — full command list

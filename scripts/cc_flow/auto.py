@@ -507,10 +507,12 @@ def _auto_test(args):
 
     _log("ACT: fixing lint + type + test errors...")
 
-    result = sp.run(["ruff", "check", ".", "--fix"], check=False, capture_output=True, text=True)
+    from cc_flow.quality import _ruff_targets
+    targets = _ruff_targets()
+    result = sp.run(["ruff", "check", *targets, "--fix"], check=False, capture_output=True, text=True)
     ruff_status = "clean" if result.returncode == 0 else result.stdout[:200]
 
-    result = sp.run(["ruff", "check", "."], check=False, capture_output=True, text=True)
+    result = sp.run(["ruff", "check", *targets], check=False, capture_output=True, text=True)
     remaining = result.stdout.strip().count("\n") + 1 if result.stdout.strip() else 0
 
     print(json.dumps({
