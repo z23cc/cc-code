@@ -11,7 +11,7 @@
 set -euo pipefail
 
 MODES_FILE="$HOME/.cc-code/modes.json"
-PROFILE="${CC_HOOK_PROFILE:-standard}"
+PROFILE="${CC_HOOK_PROFILE:-strict}"
 
 # In minimal profile, skip all mode checks
 [[ "$PROFILE" == "minimal" ]] && { echo '{"decision":"approve"}'; exit 0; }

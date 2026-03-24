@@ -10,7 +10,7 @@
 INPUT=$(cat)
 COMMAND=$(echo "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('command',''))" 2>/dev/null)
 
-PROFILE="${CC_HOOK_PROFILE:-standard}"
+PROFILE="${CC_HOOK_PROFILE:-strict}"
 
 # Match git commit (handles: git commit, git -c x commit, git  commit)
 case "$COMMAND" in
