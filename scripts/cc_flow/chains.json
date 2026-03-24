@@ -2005,5 +2005,166 @@
         "phase": "gate"
       }
     ]
+  },
+  "multi-engine": {
+    "description": "Full 3-engine pipeline: multi-plan → work → adversarial-review → commit",
+    "trigger": [
+      "multi engine",
+      "3 engine",
+      "full pipeline",
+      "multi plan and review",
+      "三引擎",
+      "全流程",
+      "多引擎流程",
+      "三引擎流程"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-multi-plan",
+        "role": "3-engine collaborative plan (Claude→Codex→Gemini)",
+        "required": true,
+        "phase": "design",
+        "outputs": [
+          "plan_file",
+          "verdict"
+        ]
+      },
+      {
+        "skill": "/cc-work",
+        "role": "Execute the plan (worktree + worker + verify)",
+        "required": true,
+        "phase": "mutate",
+        "reads": [
+          "plan_file"
+        ]
+      },
+      {
+        "skill": "/cc-adversarial-review",
+        "role": "3-engine debate review (Claude×Codex×Gemini)",
+        "required": true,
+        "phase": "verify",
+        "outputs": [
+          "review_verdict",
+          "issues"
+        ]
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit if debate verdict = SHIP",
+        "required": true,
+        "phase": "gate",
+        "reads": [
+          "review_verdict"
+        ]
+      }
+    ]
+  },
+  "multi-plan": {
+    "description": "3-engine collaborative plan: Claude designs → Codex critiques → Gemini synthesizes",
+    "trigger": [
+      "multi plan",
+      "3 engine plan",
+      "collaborative plan",
+      "multi-engine plan",
+      "多引擎规划",
+      "三引擎规划",
+      "协作规划"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-multi-plan",
+        "role": "3-engine plan",
+        "required": true,
+        "phase": "design",
+        "outputs": [
+          "plan_file",
+          "verdict"
+        ]
+      }
+    ]
+  },
+  "adversarial": {
+    "description": "3-engine adversarial debate: Claude × Codex × Gemini battle review",
+    "trigger": [
+      "adversarial",
+      "debate review",
+      "battle review",
+      "3 engine review",
+      "对抗审查",
+      "辩论审查",
+      "三引擎审查",
+      "adversarial review",
+      "debate",
+      "battle"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-adversarial-review",
+        "role": "3-engine debate",
+        "required": true,
+        "phase": "verify",
+        "outputs": [
+          "verdict",
+          "issues"
+        ]
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit if verdict = SHIP",
+        "required": true,
+        "phase": "gate",
+        "reads": [
+          "verdict"
+        ]
+      }
+    ]
+  },
+  "multi-engine-ship": {
+    "description": "Full lifecycle with multi-engine: plan → work → debate → ship",
+    "trigger": [
+      "multi engine ship",
+      "premium pipeline",
+      "best quality",
+      "最高质量",
+      "全流程多引擎"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-multi-plan",
+        "role": "3-engine plan",
+        "required": true,
+        "phase": "design",
+        "outputs": [
+          "plan_file"
+        ]
+      },
+      {
+        "skill": "/cc-work",
+        "role": "Execute plan",
+        "required": true,
+        "phase": "mutate",
+        "reads": [
+          "plan_file"
+        ]
+      },
+      {
+        "skill": "/cc-adversarial-review",
+        "role": "3-engine debate review",
+        "required": true,
+        "phase": "verify",
+        "outputs": [
+          "review_verdict"
+        ]
+      },
+      {
+        "skill": "/cc-ship",
+        "role": "Version bump + PR + release",
+        "required": true,
+        "phase": "gate",
+        "reads": [
+          "review_verdict"
+        ]
+      }
+    ]
   }
 }
