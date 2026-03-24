@@ -42,11 +42,11 @@ def _route(query):
         return {"command": None, "score": 0}
 
 
-def _find_chain(query):
-    """Find the best matching skill chain."""
+def _find_chain(query, complexity=None):
+    """Find the best matching skill chain. Scale-adaptive: prefers -light for simple tasks."""
     try:
         from cc_flow.skill_chains import find_chain
-        name, data = find_chain(query)
+        name, data = find_chain(query, complexity=complexity)
         return name, data
     except ImportError:
         return None, None
@@ -128,46 +128,94 @@ def analyze_intent(query):
     }
 
 
-COMPLEX_KEYWORDS = {"architecture", "system", "platform", "redesign", "rewrite",
-                     "multi-service", "microservice", "monorepo", "migrate",
-                     "架构", "系统", "平台", "重写", "微服务"}
+# ── Scale-Adaptive Planning (blast radius based) ──
+
+# Zero blast radius → one-shot (light chain or hotfix)
+ZERO_BLAST_SIGNALS = {
+    "typo", "rename", "comment", "config", "bump", "revert", "format",
+    "readme", "changelog", "docs", "lint", "import", "spelling",
+    "拼写", "改名", "格式化", "文档", "配置",
+} | HOTFIX_KEYWORDS
+
+# High blast radius → full planning depth
+HIGH_BLAST_SIGNALS = {
+    "architecture", "system", "platform", "redesign", "rewrite",
+    "multi-service", "microservice", "monorepo", "migrate", "auth",
+    "payment", "database schema", "breaking change", "public api",
+    "security", "permissions", "rbac", "multi-tenant", "database", "schema",
+    "production", "deploy", "infra", "kubernetes", "k8s",
+    "架构", "系统", "平台", "重写", "微服务", "迁移", "权限", "支付", "数据库", "生产",
+}
+
+# Multi-goal separators
+_GOAL_SEPARATORS = {"and", "then", "also", "plus", "另外", "然后", "还要", "以及", "同时"}
+
+
+def _count_goals(query):
+    """Count distinct goals in a query. >1 suggests multi-goal complexity."""
+    words = query.lower().split()
+    separators = sum(1 for w in words if w in _GOAL_SEPARATORS)
+    return 1 + separators
 
 
 def _estimate_complexity(query, chain_data):
-    """Estimate task complexity: simple, medium, complex.
+    """Estimate task complexity using blast-radius scoring.
 
-    Signals:
-      simple  — short query, hotfix keywords, chain ≤ 3 steps
-      medium  — standard chain (3-5 steps), specific task
-      complex — long query, architecture keywords, no chain match, multi-system
+    Blast radius = "could this change cause unintended consequences elsewhere?"
+
+    Levels:
+      simple  — zero blast radius, single file/config change, no dependencies
+      medium  — contained blast radius, single component, clear boundaries
+      complex — cross-system blast radius, multiple components, breaking changes
+
+    Scoring: blast_score 0-10
+      0-2: simple, 3-6: medium, 7+: complex
     """
     words = set(query.lower().split())
     word_count = len(words)
+    blast_score = 0
 
-    # Hotfix keywords → simple
-    if words & HOTFIX_KEYWORDS:
+    # Signal 1: Zero-blast keywords → clamp to simple
+    if words & ZERO_BLAST_SIGNALS:
         return "simple"
 
-    # Complex keywords → complex
-    if words & COMPLEX_KEYWORDS:
-        return "complex"
+    # Signal 2: High-blast keywords → +3 per match (substring check for multi-word)
+    high_matches = 0
+    query_lower = query.lower()
+    for signal in HIGH_BLAST_SIGNALS:
+        if signal in query_lower:
+            high_matches += 1
+    blast_score += high_matches * 3
 
-    # Long queries (>10 words) tend to be complex
+    # Signal 3: Multi-goal → +2 per extra goal
+    goals = _count_goals(query)
+    if goals > 1:
+        blast_score += (goals - 1) * 2
+
+    # Signal 4: File/path mentions → +1 (touches specific code)
+    if any(c in query for c in ["/", ".", "src", "lib", "app"]):
+        blast_score += 1
+
+    # Signal 5: Long query → +1 (more context = more scope)
     if word_count > 10:
-        return "complex"
+        blast_score += 2
+    elif word_count > 6:
+        blast_score += 1
 
-    # Short queries with chain match → medium
+    # Signal 6: Chain step count (if matched)
     if chain_data:
         required = sum(1 for s in chain_data.get("skills", []) if s.get("required"))
-        if required <= 3:
-            return "simple"
+        if required <= 2:
+            blast_score = max(0, blast_score - 2)  # Small chain = lower blast
+        elif required >= 5:
+            blast_score += 1  # Many steps = higher blast
+
+    # Map score to complexity
+    if blast_score <= 2:
+        return "simple"
+    if blast_score <= 5:
         return "medium"
-
-    # No chain match + moderate length → complex
-    if word_count > 5:
-        return "complex"
-
-    return "medium"
+    return "complex"
 
 
 def decide_mode(query, route_result, chain_name, chain_data, force_mode=""):
@@ -545,13 +593,22 @@ def cmd_go(args):
     # 1. Analyze intent (AI-first routing)
     intent_analysis = analyze_intent(query)
 
-    # 2. Route
-    route_result = _route(query)
-    chain_name, chain_data = _find_chain(query)
+    # 2. Pre-estimate complexity (before chain selection) for scale-adaptive routing
+    pre_complexity = _estimate_complexity(query, None)
 
-    # 3. Decide
+    # 3. Route — find_chain uses pre_complexity to prefer -light variants for simple tasks
+    route_result = _route(query)
+    chain_name, chain_data = _find_chain(query, complexity=pre_complexity)
+
+    # 4. Refine complexity with chain data (post-chain selection)
     complexity = _estimate_complexity(query, chain_data)
     mode = decide_mode(query, route_result, chain_name, chain_data, force_mode)
+
+    # 5. Multi-goal advisory
+    goals = _count_goals(query)
+    if goals > 1:
+        intent_analysis["multi_goal"] = True
+        intent_analysis["goal_count"] = goals
 
     # 4. Execute (pass complexity + intent for output)
     if mode == "chain" and chain_data:

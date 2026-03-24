@@ -1642,5 +1642,124 @@
         "required": true
       }
     ]
+  },
+  "feature-light": {
+    "description": "Quick feature — skip brainstorm/plan, go straight to TDD",
+    "trigger": [],
+    "skills": [
+      {
+        "skill": "/cc-tdd",
+        "role": "Implement with tests",
+        "required": true,
+        "outputs": [
+          "test_results",
+          "files_changed"
+        ]
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Quick review",
+        "required": true,
+        "reads": [
+          "files_changed"
+        ],
+        "outputs": [
+          "verdict"
+        ]
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit",
+        "required": true,
+        "reads": [
+          "verdict"
+        ]
+      }
+    ]
+  },
+  "bugfix-light": {
+    "description": "Quick bugfix — skip debug phase, straight to fix + test",
+    "trigger": [],
+    "skills": [
+      {
+        "skill": "/cc-tdd",
+        "role": "Fix + regression test",
+        "required": true,
+        "outputs": [
+          "test_results",
+          "files_changed"
+        ]
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit fix",
+        "required": true
+      }
+    ]
+  },
+  "refactor-light": {
+    "description": "Quick refactor — skip research, straight to simplify + review",
+    "trigger": [],
+    "skills": [
+      {
+        "skill": "/cc-simplify",
+        "role": "Apply refactoring",
+        "required": true,
+        "outputs": [
+          "files_changed"
+        ]
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Verify behavior preserved",
+        "required": true
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit",
+        "required": true
+      }
+    ]
+  },
+  "release-light": {
+    "description": "Quick release — skip security scan, straight to review + ship",
+    "trigger": [],
+    "skills": [
+      {
+        "skill": "/cc-review",
+        "role": "Final review",
+        "required": true
+      },
+      {
+        "skill": "/cc-docs",
+        "role": "Update changelog",
+        "required": true
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Tag and commit",
+        "required": true
+      }
+    ]
+  },
+  "testing-light": {
+    "description": "Quick test addition — skip strategy, straight to TDD + verify",
+    "trigger": [],
+    "skills": [
+      {
+        "skill": "/cc-tdd",
+        "role": "Write tests",
+        "required": true,
+        "outputs": [
+          "test_results",
+          "coverage"
+        ]
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit tests",
+        "required": true
+      }
+    ]
   }
 }

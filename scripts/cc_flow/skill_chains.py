@@ -25,13 +25,25 @@ def _load_skill_chains():
 SKILL_CHAINS = _load_skill_chains()
 
 
-def find_chain(query):
-    """Find the best matching skill chain for a query."""
+def find_chain(query, complexity=None):
+    """Find the best matching skill chain for a query.
+
+    Scale-adaptive: when complexity is "simple" and a -light variant exists,
+    prefer the lighter chain. This skips brainstorm/plan phases for simple tasks.
+    """
     ranked = _rank_chains(query)
-    if ranked:
-        name, chain, _score = ranked[0]
-        return name, chain
-    return None, None
+    if not ranked:
+        return None, None
+
+    name, chain, _score = ranked[0]
+
+    # Scale-adaptive: prefer light variant for simple tasks
+    if complexity == "simple":
+        light_name = f"{name}-light"
+        if light_name in SKILL_CHAINS:
+            return light_name, SKILL_CHAINS[light_name]
+
+    return name, chain
 
 
 def cmd_chain_list(_args):
