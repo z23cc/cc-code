@@ -167,22 +167,6 @@ def available_transports() -> dict:
 
 # --- MCP transport helpers ---
 
-def mcp_tool_call(tool: str, params: dict) -> str:
-    """Generate an MCP tool call instruction for Claude Code.
-
-    When transport is MCP, operations return instructions that Claude Code
-    should execute via its native MCP tool system. This enables persistent
-    tab binding and structured JSON responses.
-
-    In practice, Claude Code skill/command layers should check transport
-    and call MCP tools directly when transport is "mcp".
-    """
-    return json.dumps({
-        "mcp_tool": f"repoprompt__{tool}",
-        "params": params,
-        "hint": "Call this MCP tool directly via Claude Code's tool system",
-    })
-
 
 # MCP tool name mapping (RP MCP tool names)
 MCP_TOOLS = {
@@ -337,12 +321,6 @@ def get_window_tab() -> tuple[Optional[int], Optional[str]]:
     s = load_session()
     return s.get("window"), s.get("tab")
 
-
-def set_window_tab(window: int, tab: str, **extra) -> None:
-    """Save window and tab to session state."""
-    s = load_session()
-    s.update({"window": window, "tab": tab, **extra})
-    save_session(s)
 
 
 # --- Repo root detection ---

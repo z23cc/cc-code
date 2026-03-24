@@ -86,20 +86,6 @@ def save_task_state(task_id, state):
     atomic_write(state_file, json.dumps(state, indent=2) + "\n")
 
 
-def load_task_merged(task_id):
-    """Load task with spec (from .tasks/) merged with runtime state (from shared dir).
-
-    Spec fields: id, epic, title, depends_on, size, tags, priority
-    Runtime fields: status, assignee, started, completed, duration_sec, summary, diff
-    """
-    task_file = TASKS_SUBDIR / f"{task_id}.json"
-    spec = safe_json_load(task_file, default=None)
-    if spec is None:
-        return None
-    runtime = load_task_state(task_id)
-    # Runtime fields override spec fields (runtime is source of truth for state)
-    merged = {**spec, **runtime}
-    return merged
 
 DEFAULT_CONFIG = {
     "auto_consolidate": True,

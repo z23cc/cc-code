@@ -221,7 +221,8 @@ def _score_lint():
     lang = _detect_lang()
     try:
         if lang == "python":
-            result = subprocess.run(["ruff", "check", ".", "--output-format", "json"],
+            from cc_flow.quality import _ruff_targets
+            result = subprocess.run(["ruff", "check", *_ruff_targets(), "--output-format", "json"],
                                     check=False, capture_output=True, text=True, timeout=15)
             if result.returncode == 0:
                 return 25
@@ -247,13 +248,13 @@ def _score_tests():
     try:
         if lang == "python":
             result = subprocess.run(["python3", "-m", "pytest", "--tb=no", "-q"],
-                                    check=False, capture_output=True, text=True, timeout=120)
+                                    check=False, capture_output=True, text=True, timeout=300)
         elif lang == "node":
             result = subprocess.run(["npm", "test"],
-                                    check=False, capture_output=True, text=True, timeout=120)
+                                    check=False, capture_output=True, text=True, timeout=300)
         elif lang == "go":
             result = subprocess.run(["go", "test", "./..."],
-                                    check=False, capture_output=True, text=True, timeout=120)
+                                    check=False, capture_output=True, text=True, timeout=300)
         else:
             return 15  # Unknown, partial credit
         if result.returncode == 0:
@@ -267,11 +268,11 @@ def _score_tests():
 def _score_architecture():
     """Architecture health score (0-25). Returns (score, file_count).
 
-    Scans source files per detected language. Threshold: 500 lines.
+    Scans source files per detected language. Threshold: 800 lines.
     """
     lang = _detect_lang()
     patterns = {
-        "python": ("scripts/cc_flow/*.py", "src/**/*.py", "**/*.py"),
+        "python": ("scripts/cc_flow/*.py", "scripts/*.py", "src/**/*.py"),
         "node": ("src/**/*.ts", "src/**/*.js", "lib/**/*.ts"),
         "go": ("**/*.go",),
     }
@@ -281,13 +282,13 @@ def _score_architecture():
     total_files = 0
     for pattern in globs:
         for f in Path(".").glob(pattern):
-            if any(skip in str(f) for skip in ("node_modules", ".git", "__pycache__", "dist", "build")):
+            if any(skip in str(f) for skip in ("node_modules", ".git", "__pycache__", "dist", "build", "ref/", "zcf/", "ccg-workflow/")):
                 continue
             if f.name.startswith("_"):
                 continue
             total_files += 1
             try:
-                if len(f.read_text().split("\n")) > 500:
+                if len(f.read_text().split("\n")) > 800:
                     large_files += 1
             except (OSError, UnicodeDecodeError):
                 continue

@@ -435,16 +435,6 @@ def record_chain_complete(chain_name, steps_completed, total_steps):
     atomic_write(CHAIN_METRICS_FILE, json.dumps(metrics, indent=2) + "\n")
 
 
-def record_chain_failure(chain_name, step_failed):
-    """Record chain failure."""
-    metrics = _load_metrics()
-    if chain_name in metrics["chains"]:
-        metrics["chains"][chain_name]["failures"] += 1
-        metrics["chains"][chain_name]["last_failure"] = now_iso()
-        metrics["chains"][chain_name]["last_failure_step"] = step_failed
-        CHAIN_METRICS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        atomic_write(CHAIN_METRICS_FILE, json.dumps(metrics, indent=2) + "\n")
-
 
 def cmd_chain_stats(args):
     """Show chain execution metrics."""
