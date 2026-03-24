@@ -1,5 +1,35 @@
 # Changelog
 
+## [5.25.0] - 2026-03-25
+### Added
+- **Real multi-engine code review** (`cc-flow multi-review`) — parallel subprocess dispatch:
+  - 4 engines: Agent (Claude lint), Gemini (`gemini -p`), Codex (`codex review`), RP (`rp builder --type review`)
+  - ThreadPoolExecutor parallel execution with per-engine timeouts (Codex/RP: 1000s)
+  - Consensus engine: worst-verdict-wins, severity-weighted scoring, cross-engine deduplication
+  - Multi-format findings parser: text markers, markdown tables, numbered lists
+  - Per-engine JSON artifacts + consensus report saved to `.tasks/reviews/`
+  - 20 tests covering verdict parsing, finding extraction, consensus logic
+- **Scale-adaptive planning** — blast-radius complexity scoring:
+  - Zero-blast (typo, rename, config) → simple → light chain variants (2-3 steps)
+  - High-blast (auth, payment, database, production) → medium/complex → full chains
+  - Multi-goal detection, file path mentions, query length signals
+  - 5 light chain variants: feature-light, bugfix-light, refactor-light, release-light, testing-light
+- **Phase-based parallel execution** — chain steps annotated with phases:
+  - observe/design steps run in PARALLEL (multiple Agent tool calls)
+  - mutate steps run sequentially, verify steps can parallelize
+  - Dependency-aware: respects reads/outputs, won't parallelize dependent steps
+  - 185 chain steps annotated across 45 chains
+- **3 new chains** (45 total): ci-cd, prd-review, architecture, multi-review, + 5 light variants
+- **Gemini CLI** detected as review backend (`gemini`/`gemini-cli`)
+- **`multi` virtual backend** — available when 2+ review engines detected
+
+### Fixed
+- Chinese routing: 代码审查→deep-review, 写单元测试→testing, 理解代码→research (28/29 EN+CN)
+- Codex review: native `codex review` mode (auto-reads git diff), filter MCP/session noise
+- RP review: `rp builder --type review` with nested JSON response extraction
+- Verdict parser: handles LGTM, APPROVED, BLOCK + word-boundary matching
+- Session-start.md: concise table format, `go` as #1 entry
+
 ## [5.24.0] - 2026-03-24
 ### Added
 - **3 new chains** (39 total):

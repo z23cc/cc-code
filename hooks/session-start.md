@@ -1,4 +1,4 @@
-## cc-code v5.24 — One Command Does Everything
+## cc-code v5.25 — One Command Does Everything
 
 **`cc-flow go "describe your goal"`** — auto-routes to chain/ralph/auto mode.
 
@@ -21,7 +21,11 @@
 `cc-flow chain suggest "your task"` — finds the best chain.
 `cc-flow chain list` — shows all 39 chains.
 
-Top chains: feature, bugfix, hotfix, deploy, security-audit, performance, testing, refactor, idea-to-ship, ci-cd, architecture, prd-to-ship.
+Top chains: feature, bugfix, hotfix, deploy, security-audit, performance, testing, refactor, idea-to-ship, ci-cd, architecture, prd-to-ship, multi-review.
+
+### Multi-Engine Review
+
+`cc-flow multi-review` — 4 engines parallel (Codex + Gemini + RP + Agent) → consensus.
 
 ### Tools
 

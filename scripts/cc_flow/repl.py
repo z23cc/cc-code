@@ -26,7 +26,7 @@ def _repl_help():
     ]
     skin.table(["Command", "Description"], start)
 
-    skin.heading("Skill Chains (39 workflows)")
+    skin.heading("Skill Chains (45 workflows)")
     chains = [
         ("chain run feature", "brainstorm → plan → tdd → review → commit"),
         ("chain run bugfix", "debug → tdd → review → commit"),
@@ -35,7 +35,7 @@ def _repl_help():
         ("chain run deploy", "readiness → verify → deploy → ship"),
         ("chain run security-audit", "scout-security → security-review → commit"),
         ("chain suggest <task>", "Find best chain for your task"),
-        ("chain list", "Show all 39 chains"),
+        ("chain list", "Show all 45 chains"),
     ]
     skin.table(["Command", "Steps"], chains)
     print()
