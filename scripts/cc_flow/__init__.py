@@ -55,4 +55,4 @@ Package structure (53 modules, 145 commands):
   cc-flow.py         → backward-compatible shim
 """
 
-VERSION = "5.18.0"
+VERSION = "5.19.0"

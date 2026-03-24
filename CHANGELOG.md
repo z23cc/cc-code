@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.19.0] - 2026-03-24
+### Added (Ruflo inspired)
+- **Infinite Context Autopilot** — survives context compaction:
+  - PreCompact hook saves critical state to `.tasks/compaction_context.json`: active chain, current skill, recent skill contexts (last 3), wisdom (last 5 per category), git state, active tasks, chain metrics
+  - SessionStart hook restores and displays: `# RESTORED CONTEXT (from pre-compaction save)`
+  - Shows: branch, last commit, active chain + step, current skill, in-progress tasks, recent wisdom, skill context keys
+  - Zero config — works automatically on every compaction event
+
 ## [5.18.0] - 2026-03-24
 ### Added (gmickel flow-next inspired)
 - **`/cc-deps`** — dependency graph skill: blocking chains, parallel execution phases, critical path analysis, ready-to-start recommendations. Answers "what should I work on next?" (78 skills, 67 commands)

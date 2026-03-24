@@ -40,7 +40,65 @@ if [ "$IS_WORKTREE" = "1" ]; then
   echo "Only edit files within this worktree. The worktree-guard hook enforces this."
 fi
 
-# 3. Smart project state detection + recommendations
+# 3. Infinite Context Autopilot — restore from compaction
+CONTEXT_FILE=".tasks/compaction_context.json"
+if [ -f "$CONTEXT_FILE" ] && command -v python3 >/dev/null 2>&1; then
+  RESTORED=$(python3 -c "
+import json
+from pathlib import Path
+ctx = json.loads(Path('$CONTEXT_FILE').read_text())
+sections = ctx.get('sections', {})
+lines = []
+lines.append('# [cc-code] RESTORED CONTEXT (from pre-compaction save)')
+lines.append(f'Saved at: {ctx.get(\"saved_at\", \"?\")}')
+lines.append('')
+
+# Git state
+git = sections.get('git', {})
+if git:
+    lines.append(f'Branch: {git.get(\"branch\",\"?\")} | Last commit: {git.get(\"last_commit\",\"?\")}')
+    if git.get('uncommitted'): lines.append(f'Uncommitted: {git[\"uncommitted\"]}')
+
+# Active chain
+chain = sections.get('chain', {})
+if chain:
+    lines.append(f'Active chain: {chain.get(\"chain\",\"?\")} (step {chain.get(\"current_step\",0)+1}/{chain.get(\"total_steps\",0)})')
+
+# Current skill
+cur = sections.get('current_skill', {})
+if cur:
+    lines.append(f'Current skill: {cur.get(\"skill\",\"?\")}')
+
+# Active tasks
+tasks = sections.get('active_tasks', [])
+for t in tasks:
+    lines.append(f'In progress: {t.get(\"id\",\"\")} — {t.get(\"title\",\"\")}')
+
+# Recent wisdom
+wisdom = sections.get('wisdom', {})
+for cat, entries in wisdom.items():
+    if entries:
+        latest = entries[-1]
+        content = latest.get('content', latest.get('chain', ''))
+        if content: lines.append(f'Wisdom ({cat}): {str(content)[:80]}')
+
+# Skill contexts
+skill_ctxs = sections.get('skill_contexts', {})
+for name, data in skill_ctxs.items():
+    keys = [k for k in data.keys() if k not in ('skill','timestamp')]
+    if keys: lines.append(f'Context [{name}]: {', '.join(keys[:5])}')
+
+print('\n'.join(lines))
+" 2>/dev/null)
+
+  if [ -n "$RESTORED" ]; then
+    echo ""
+    echo "$RESTORED"
+    echo ""
+  fi
+fi
+
+# 4. Smart project state detection + recommendations
 if command -v python3 >/dev/null 2>&1 && [ -f "$CCFLOW" ]; then
   echo ""
   echo "# [cc-code] recent context, $(date '+%Y-%m-%d %I:%M%p %Z')"
