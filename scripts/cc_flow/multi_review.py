@@ -151,7 +151,7 @@ def _run_gemini(context, timeout=120):
         return {"success": False, "error": str(e)}
 
 
-def _run_rp(context, timeout=120):
+def _run_rp(context, timeout=180):
     """Run RepoPrompt review via builder (auto-selects files + deep analysis)."""
     try:
         files_str = ", ".join(context.get("files", [])[:10])
