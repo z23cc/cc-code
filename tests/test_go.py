@@ -149,37 +149,24 @@ class TestAutoMode:
         assert "instruction" in data
 
 
-class TestDecideModePure:
-    """Unit tests for decide_mode function."""
+class TestAIRouterIntegration:
+    """Test that AI router is used for routing decisions."""
 
-    def test_auto_keywords(self):
-        from cc_flow.go import decide_mode
-        assert decide_mode("improve code", {}, None, None) == "auto"
-        assert decide_mode("scan for issues", {}, None, None) == "auto"
-        assert decide_mode("autoimmune run", {}, None, None) == "auto"
+    def test_analyze_intent(self):
+        from cc_flow.go import analyze_intent
+        result = analyze_intent("fix a bug in auth")
+        assert result["intent"] == "FIX"
+        assert "security" in result["domains"]
 
-    def test_chain_mode_small(self):
-        from cc_flow.go import decide_mode
-        chain_data = {"skills": [
-            {"required": True}, {"required": True}, {"required": False},
-        ]}
-        assert decide_mode("fix bug", {}, "bugfix", chain_data) == "chain"
+    def test_analyze_intent_build(self):
+        from cc_flow.go import analyze_intent
+        result = analyze_intent("add new feature")
+        assert result["intent"] == "BUILD"
 
-    def test_multi_engine_mode_no_chain(self):
-        from cc_flow.go import decide_mode
-        # No chain data + complex query → multi-engine
-        assert decide_mode("redesign the entire platform from scratch", {}, None, None) == "multi-engine"
-
-    def test_force_mode(self):
-        from cc_flow.go import decide_mode
-        assert decide_mode("anything", {}, "x", {}, force_mode="ralph") == "ralph"
-        assert decide_mode("anything", {}, "x", {}, force_mode="auto") == "auto"
-
-    def test_hotfix_keywords(self):
-        from cc_flow.go import decide_mode
-        assert decide_mode("hotfix typo", {}, None, None) == "chain"
-        assert decide_mode("urgent fix needed", {}, None, None) == "chain"
-        assert decide_mode("revert last commit", {}, None, None) == "chain"
+    def test_intent_ship(self):
+        from cc_flow.go import analyze_intent
+        result = analyze_intent("deploy to production")
+        assert result["intent"] == "SHIP"
 
 
 class TestHotfixChain:

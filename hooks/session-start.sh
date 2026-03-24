@@ -203,4 +203,18 @@ if recommendations:
     print('')
     print('Or just: cc-flow go \"describe what you want\"')
 " 2>/dev/null
+
+  # 5. Pre-warm AI router cache (background, non-blocking)
+  python3 -c "
+from pathlib import Path
+import sys
+sys.path.insert(0, str(Path('scripts')))
+try:
+    from cc_flow.ai_router import ai_route
+    # Warm cache for common queries
+    for q in ['fix a bug', 'add feature', 'refactor', 'write tests', 'deploy']:
+        ai_route(q)
+except Exception:
+    pass
+" >/dev/null 2>&1 &
 fi

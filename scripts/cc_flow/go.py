@@ -1,11 +1,9 @@
 """cc-flow go — one command, full automation.
 
-Unified entry point: describe your goal → system routes, decides mode, executes.
+Unified entry point: describe your goal → AI routes → execute.
 
-Modes:
-  chain  — lightweight skill sequence (≤ 4 required steps), auto-executed
-  ralph  — autonomous goal-driven execution (complex goals, creates tasks)
-  auto   — OODA improvement loop (scan → fix → test)
+Routing: AI router (gemini/claude) selects best chain + complexity.
+Modes: chain (simple/medium), multi-engine/autopilot (complex), auto (scan/improve).
 """
 
 import json
@@ -15,54 +13,7 @@ import sys
 
 from cc_flow.core import error
 
-# ── Routing ──
-
-def _route(query):
-    """Route a query to the best command. Returns route result dict."""
-    try:
-        from cc_flow.route_learn import ROUTE_TABLE
-        query_lower = query.lower()
-        words = set(query_lower.split())
-
-        best = None
-        best_score = 0
-        for keywords, cmd, team, desc in ROUTE_TABLE:
-            score = 0
-            for kw in keywords:
-                if kw in query_lower:
-                    score += 2
-                elif any(w in words for w in kw.split()):
-                    score += 1
-            if score > best_score:
-                best_score = score
-                best = {"command": cmd, "team": team, "description": desc, "score": score}
-
-        return best or {"command": None, "team": None, "description": "No route match", "score": 0}
-    except ImportError:
-        return {"command": None, "score": 0}
-
-
-def _find_chain(query, complexity=None):
-    """Find the best matching skill chain. Scale-adaptive: prefers -light for simple tasks."""
-    try:
-        from cc_flow.skill_chains import find_chain
-        name, data = find_chain(query, complexity=complexity)
-        return name, data
-    except ImportError:
-        return None, None
-
-
-# ── Mode decision ──
-
-AUTO_KEYWORDS = {"improve", "autoimmune", "auto", "scan", "lint", "quality",
-                 "改进", "自动", "扫描", "质量"}
-
-HOTFIX_KEYWORDS = {"hotfix", "typo", "trivial", "one-liner", "urgent", "revert",
-                   "quick fix", "config change", "bump version", "emergency",
-                   "紧急", "快速修复", "小改动", "回滚"}
-
-
-# ── Intent analysis ──
+# ── Intent analysis (lightweight, for output metadata only) ──
 
 INTENT_PATTERNS = {
     "BUILD": {"keywords": {"feature", "add", "create", "implement", "build", "new", "新增", "创建", "实现"},
@@ -96,12 +47,11 @@ DOMAIN_DETECTORS = {
 
 
 def analyze_intent(query):
-    """AI-assisted intent analysis: classify query and suggest supporting skills."""
+    """Lightweight intent classification for output metadata."""
     query_lower = query.lower()
     words = set(query_lower.split())
 
-    # Classify primary intent
-    intent = "BUILD"  # default
+    intent = "BUILD"
     best_score = 0
     for intent_name, config in INTENT_PATTERNS.items():
         score = len(words & config["keywords"])
@@ -109,7 +59,6 @@ def analyze_intent(query):
             best_score = score
             intent = intent_name
 
-    # Detect domains touched
     domains = []
     auto_skills = []
     for domain, config in DOMAIN_DETECTORS.items():
@@ -117,7 +66,6 @@ def analyze_intent(query):
             domains.append(domain)
             auto_skills.append(config["auto_add"])
 
-    # Get supporting skills for the intent
     supporting = INTENT_PATTERNS.get(intent, {}).get("supporting", [])
 
     return {
@@ -128,142 +76,6 @@ def analyze_intent(query):
     }
 
 
-# ── Scale-Adaptive Planning (blast radius based) ──
-
-# Zero blast radius → one-shot (light chain or hotfix)
-ZERO_BLAST_SIGNALS = {
-    "typo", "rename", "comment", "config", "bump", "revert", "format",
-    "readme", "changelog", "docs", "lint", "import", "spelling",
-    "拼写", "改名", "格式化", "文档", "配置",
-} | HOTFIX_KEYWORDS
-
-# High blast radius → full planning depth
-HIGH_BLAST_SIGNALS = {
-    "architecture", "system", "platform", "redesign", "rewrite",
-    "multi-service", "microservice", "monorepo", "migrate", "auth",
-    "payment", "database schema", "breaking change", "public api",
-    "security", "permissions", "rbac", "multi-tenant", "database", "schema",
-    "production", "deploy", "infra", "kubernetes", "k8s",
-    "架构", "系统", "平台", "重写", "微服务", "迁移", "权限", "支付", "数据库", "生产",
-}
-
-# Multi-goal separators
-_GOAL_SEPARATORS = {"and", "then", "also", "plus", "另外", "然后", "还要", "以及", "同时"}
-
-
-def _count_goals(query):
-    """Count distinct goals in a query. >1 suggests multi-goal complexity."""
-    words = query.lower().split()
-    separators = sum(1 for w in words if w in _GOAL_SEPARATORS)
-    return 1 + separators
-
-
-def _estimate_complexity(query, chain_data):
-    """Estimate task complexity using blast-radius scoring.
-
-    Blast radius = "could this change cause unintended consequences elsewhere?"
-
-    Levels:
-      simple  — zero blast radius, single file/config change, no dependencies
-      medium  — contained blast radius, single component, clear boundaries
-      complex — cross-system blast radius, multiple components, breaking changes
-
-    Scoring: blast_score 0-10
-      0-2: simple, 3-6: medium, 7+: complex
-    """
-    words = set(query.lower().split())
-    word_count = len(words)
-    blast_score = 0
-
-    # Signal 1: Zero-blast keywords → clamp to simple
-    if words & ZERO_BLAST_SIGNALS:
-        return "simple"
-
-    # Signal 2: High-blast keywords → +3 per match (substring check for multi-word)
-    high_matches = 0
-    query_lower = query.lower()
-    for signal in HIGH_BLAST_SIGNALS:
-        if signal in query_lower:
-            high_matches += 1
-    blast_score += high_matches * 3
-
-    # Signal 3: Multi-goal → +2 per extra goal
-    goals = _count_goals(query)
-    if goals > 1:
-        blast_score += (goals - 1) * 2
-
-    # Signal 4: File/path mentions → +1 (touches specific code)
-    if any(c in query for c in ["/", ".", "src", "lib", "app"]):
-        blast_score += 1
-
-    # Signal 5: Long query → +1 (more context = more scope)
-    if word_count > 10:
-        blast_score += 2
-    elif word_count > 6:
-        blast_score += 1
-
-    # Signal 6: Chain step count (if matched)
-    if chain_data:
-        required = sum(1 for s in chain_data.get("skills", []) if s.get("required"))
-        if required <= 2:
-            blast_score = max(0, blast_score - 2)  # Small chain = lower blast
-        elif required >= 5:
-            blast_score += 1  # Many steps = higher blast
-
-    # Map score to complexity
-    if blast_score <= 2:
-        return "simple"
-    if blast_score <= 5:
-        return "medium"
-    return "complex"
-
-
-def decide_mode(query, route_result, chain_name, chain_data, force_mode=""):
-    """Decide execution mode based on complexity-adaptive routing.
-
-    Simple  → light chain (2-3 steps, skip brainstorm/plan)
-    Medium  → standard chain (matched chain, ≤5 steps)
-    Complex → multi-engine chain (multi-plan → work → review → commit)
-    Very complex (no chain match) → Ralph (autonomous)
-    Auto    → OODA loop (scan/improve keywords)
-    """
-    if force_mode:
-        return force_mode
-
-    query_lower = query.lower()
-    words = set(query_lower.split())
-
-    # 1. Auto mode for improvement/scan keywords
-    route_cmd = (route_result or {}).get("command", "") or ""
-    if route_cmd in ("/autoimmune", "auto") or words & AUTO_KEYWORDS:
-        return "auto"
-
-    # 2. Estimate complexity
-    complexity = _estimate_complexity(query, chain_data)
-
-    # 3. Route by complexity
-    if complexity == "simple":
-        return "chain"
-
-    if complexity == "medium" and chain_data:
-        required = sum(1 for s in chain_data.get("skills", []) if s.get("required"))
-        if required <= 5:
-            return "chain"
-
-    if complexity == "complex":
-        if chain_data:
-            required = sum(1 for s in chain_data.get("skills", []) if s.get("required"))
-            if required <= 5:
-                return "chain"
-        # Complex without matching chain → use multi-engine chain
-        return "multi-engine"
-
-    # Fallback: chain if available, multi-engine otherwise
-    if chain_data:
-        return "chain"
-    return "multi-engine"
-
-
 # ── Phase-based parallel execution ──
 
 def _group_into_phases(steps):
@@ -272,15 +84,6 @@ def _group_into_phases(steps):
     Same-phase consecutive steps run in PARALLEL (via Agent tool) ONLY IF:
     1. They share the same phase type (observe/design/verify)
     2. The later step does NOT have `reads` that reference the earlier step's `outputs`
-
-    Phase types:
-      observe — read-only analysis (parallel safe)
-      design  — produce specs, no code changes (parallel safe)
-      verify  — check code state (parallel safe)
-      mutate  — change code (sequential)
-      gate    — commit/ship (sequential, always last)
-
-    Returns: list of phases, each phase = {"phase": str, "parallel": bool, "steps": [...]}
     """
     if not steps:
         return []
@@ -291,7 +94,6 @@ def _group_into_phases(steps):
     for s in steps[1:]:
         phase = s.get("phase", "mutate")
         reads = set(s.get("reads", []))
-        # Check if this step reads from any output in the current group
         has_dependency = False
         if reads:
             for prev in current["steps"]:
@@ -307,7 +109,6 @@ def _group_into_phases(steps):
 
     phases.append(current)
 
-    # Mark parallel phases
     for p in phases:
         p["parallel"] = len(p["steps"]) > 1 and p["phase"] in ("observe", "design", "verify")
 
@@ -315,18 +116,10 @@ def _group_into_phases(steps):
 
 
 def _build_auto_exec_instruction(chain_name, chain_data, query, steps):
-    """Build phase-based execution instruction with parallel dispatch.
-
-    Key optimization: consecutive observe/design/verify steps are grouped
-    into parallel phases. Claude dispatches them as multiple Agent tool
-    calls in a single message, then waits for all to complete before
-    proceeding to the next phase.
-    """
+    """Build phase-based execution instruction with parallel dispatch."""
     phases = _group_into_phases(steps)
     total_phases = len(phases)
     total_steps = len(steps)
-
-    # Count parallelizable steps
     parallel_count = sum(len(p["steps"]) for p in phases if p["parallel"])
     is_parallel = parallel_count > 0
 
@@ -350,14 +143,12 @@ def _build_auto_exec_instruction(chain_name, chain_data, query, steps):
         phase_label = phase["phase"].upper()
 
         if phase["parallel"]:
-            # Parallel phase
             lines.append(f"## Phase {pi+1}/{total_phases}: PARALLEL [{phase_label}] — {len(phase['steps'])} agents simultaneously")
             lines.append("")
             lines.append("**Launch ALL of these in a single message (multiple Agent tool calls):**")
             lines.append("")
             for s in phase["steps"]:
                 step_num += 1
-                skill_name = s["skill"].lstrip("/").strip()
                 required_tag = "REQUIRED" if s["required"] else "OPTIONAL"
                 lines.append(f"- **{s['skill']}** [{required_tag}]: {s['role']}")
             lines.append("")
@@ -373,7 +164,6 @@ def _build_auto_exec_instruction(chain_name, chain_data, query, steps):
             lines.append("Then advance: `cc-flow chain advance`")
             lines.append("")
         else:
-            # Sequential step(s)
             for s in phase["steps"]:
                 step_num += 1
                 skill_name = s["skill"].lstrip("/").strip()
@@ -408,7 +198,7 @@ def _build_auto_exec_instruction(chain_name, chain_data, query, steps):
 # ── Resume logic ──
 
 def _check_resume():
-    """Check if there's an interrupted chain to resume. Returns state or None."""
+    """Check if there's an interrupted chain to resume."""
     try:
         from cc_flow.skill_flow import CHAIN_STATE_FILE, load_chain_state
         if not CHAIN_STATE_FILE.exists():
@@ -422,40 +212,28 @@ def _check_resume():
 
 
 def _execute_resume(state):
-    """Resume an interrupted chain from the current step."""
-    from cc_flow.skill_chains import SKILL_CHAINS
-    from cc_flow.skill_flow import load_skill_ctx, set_current
-
+    """Resume an interrupted chain."""
     chain_name = state.get("chain", "")
     current_step = state.get("current_step", 0)
     total_steps = state.get("total_steps", 0)
-    state.get("steps", [])
 
+    from cc_flow.skill_chains import SKILL_CHAINS
     chain_data = SKILL_CHAINS.get(chain_name)
+
     if not chain_data:
-        print(json.dumps({
-            "success": False,
-            "error": f"Chain '{chain_name}' not found. Clear with: cc-flow skill ctx clear",
-        }))
-        return
+        error(f"Cannot resume: chain '{chain_name}' not found")
 
-    steps = chain_data["skills"]
-    remaining = steps[current_step:]
+    remaining = chain_data["skills"][current_step:]
+    instruction = _build_auto_exec_instruction(chain_name, chain_data, f"resume {chain_name}", remaining)
 
-    # Set current skill
-    if remaining:
-        skill_name = remaining[0]["skill"].lstrip("/").strip()
-        set_current(skill_name, chain_name=chain_name)
-
-    # Load previous step context if available
     prev_ctx = None
     if current_step > 0:
-        prev_skill = steps[current_step - 1]["skill"].lstrip("/").strip()
-        prev_ctx = load_skill_ctx(prev_skill)
-
-    instruction = _build_auto_exec_instruction(
-        chain_name, chain_data, f"(resumed from step {current_step + 1})", remaining,
-    )
+        try:
+            from cc_flow.skill_flow import load_skill_ctx
+            prev_skill = chain_data["skills"][current_step - 1]["skill"].lstrip("/").strip()
+            prev_ctx = load_skill_ctx(prev_skill)
+        except (ImportError, Exception):
+            pass
 
     result = {
         "success": True,
@@ -480,7 +258,6 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="med
     """Execute a skill chain with full auto-execution protocol."""
     steps = chain_data["skills"]
 
-    # Set up chain state via skill_flow
     try:
         from cc_flow.skill_flow import (
             load_skill_ctx,
@@ -498,7 +275,6 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="med
         if record_chain_start:
             record_chain_start(chain_name)
 
-    # Build step list with context
     execute_steps = []
     for i, s in enumerate(steps):
         step_info = {
@@ -511,8 +287,6 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="med
             step_info["outputs"] = s["outputs"]
         if "reads" in s:
             step_info["reads"] = s["reads"]
-
-        # Load prev context
         if i > 0 and load_skill_ctx:
             prev_skill = steps[i - 1]["skill"].lstrip("/").strip()
             prev_ctx = load_skill_ctx(prev_skill)
@@ -521,10 +295,7 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="med
 
         execute_steps.append(step_info)
 
-    # Build auto-execution instruction
     instruction = _build_auto_exec_instruction(chain_name, chain_data, query, steps)
-
-    # Phase analysis for parallel execution
     phases = _group_into_phases(steps)
     parallel_count = sum(len(p["steps"]) for p in phases if p["parallel"])
 
@@ -544,7 +315,6 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="med
         "instruction": instruction,
     }
 
-    # Add AI intent analysis
     if intent:
         result["intent"] = intent.get("intent", "")
         if intent.get("domains"):
@@ -553,12 +323,17 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="med
             result["recommended_additions"] = intent["auto_add_skills"]
         if intent.get("supporting_skills"):
             result["supporting_skills"] = intent["supporting_skills"]
+        if intent.get("ai_routed"):
+            result["ai_routed"] = True
+            result["ai_engine"] = intent.get("ai_engine", "")
+            if intent.get("ai_reason"):
+                result["ai_reason"] = intent["ai_reason"]
 
     print(json.dumps(result))
 
 
 def _execute_ralph(query, max_iterations=25, dry_run=False):
-    """Launch Ralph in goal-driven autonomous mode."""
+    """Execute Ralph autonomous loop."""
     if dry_run:
         print(json.dumps({
             "success": True,
@@ -577,7 +352,6 @@ def _execute_ralph(query, max_iterations=25, dry_run=False):
         }))
         return
 
-    # Delegate to ralph_cmd
     try:
         from cc_flow.ralph_cmd import _find_ralph_sh, _init_ralph
     except ImportError:
@@ -606,10 +380,7 @@ def _execute_ralph(query, max_iterations=25, dry_run=False):
         "max_iterations": max_iterations,
         "instruction": (
             f"Launching Ralph autonomous execution for: {query}\n"
-            f"Ralph will create tasks and execute until goal achieved or {max_iterations} iterations.\n"
-            f"Monitor: tail -f scripts/ralph/runs/latest/progress.log\n"
-            f"Pause: touch scripts/ralph/PAUSE\n"
-            f"Stop: touch scripts/ralph/STOP"
+            f"Ralph will create tasks and execute until goal achieved or {max_iterations} iterations."
         ),
     }))
 
@@ -639,7 +410,6 @@ def _execute_auto(query, dry_run=False):
         }))
         return
 
-    # Delegate to auto full
     cmd = [sys.executable, "-m", "cc_flow", "auto", "full"]
     print(json.dumps({
         "starting": True,
@@ -652,6 +422,7 @@ def _execute_auto(query, dry_run=False):
         result = subprocess.run(cmd, check=False, cwd=os.getcwd())
         sys.exit(result.returncode)
     except KeyboardInterrupt:
+        print("\nAuto interrupted.")
         sys.exit(130)
 
 
@@ -665,7 +436,7 @@ def cmd_go(args):
     dry_run = getattr(args, "dry_run", False)
     resume = getattr(args, "resume", False)
 
-    # Resume mode: continue interrupted chain
+    # Resume mode
     if resume:
         state = _check_resume()
         if state:
@@ -675,7 +446,6 @@ def cmd_go(args):
         return
 
     if not query:
-        # Check for interrupted chain even without --resume
         state = _check_resume()
         if state:
             chain = state.get("chain", "?")
@@ -688,19 +458,22 @@ def cmd_go(args):
             return
         error("Describe your goal: cc-flow go \"what you want to achieve\"")
 
-    # 1. AI router — LLM selects the best chain + complexity
+    # Route via AI or forced mode
     from cc_flow.ai_router import ai_route
     from cc_flow.skill_chains import SKILL_CHAINS
 
     if force_mode:
-        # Forced mode — skip AI, use keyword routing
+        # Forced mode — direct dispatch
         intent_analysis = analyze_intent(query)
-        pre_complexity = _estimate_complexity(query, None)
-        route_result = _route(query)
-        chain_name, chain_data = _find_chain(query, complexity=pre_complexity)
-        complexity = _estimate_complexity(query, chain_data)
-        mode = decide_mode(query, route_result, chain_name, chain_data, force_mode)
+        mode = force_mode
+        chain_name, chain_data = None, None
+        complexity = "medium"
+        if force_mode == "chain":
+            # Find best chain via keyword for forced chain mode
+            from cc_flow.skill_chains import find_chain
+            chain_name, chain_data = find_chain(query)
     else:
+        # AI router — single routing path
         ai_result = ai_route(query)
         ai_chain = ai_result["chain"] if ai_result else None
 
@@ -716,7 +489,6 @@ def cmd_go(args):
             chain_name = ai_chain
             chain_data = SKILL_CHAINS[ai_chain]
             complexity = ai_result.get("complexity", "medium")
-            # Scale-adaptive: prefer -light for simple
             if complexity == "simple":
                 light_name = f"{ai_chain}-light"
                 if light_name in SKILL_CHAINS:
@@ -724,44 +496,28 @@ def cmd_go(args):
                     chain_data = SKILL_CHAINS[light_name]
             mode = "chain"
         else:
-            # AI returned unknown chain → default to multi-engine for safety
             mode = "multi-engine"
             chain_name, chain_data = None, None
             complexity = "complex"
 
         intent_analysis = analyze_intent(query)
-        route_result = {"command": ai_chain or "autopilot", "score": 10, "ai_routed": True}
         if ai_result:
             intent_analysis["ai_routed"] = True
             intent_analysis["ai_engine"] = ai_result.get("router_engine", "")
             intent_analysis["ai_reason"] = ai_result.get("reason", "")
             intent_analysis["from_cache"] = ai_result.get("from_cache", False)
 
-    # 5. Multi-goal advisory
-    goals = _count_goals(query)
-    if goals > 1:
-        intent_analysis["multi_goal"] = True
-        intent_analysis["goal_count"] = goals
-
-    # 6. Execute
+    # Execute
     if mode == "chain" and chain_data:
         _execute_chain(chain_name, chain_data, query, dry_run, complexity=complexity,
                        intent=intent_analysis)
     elif mode == "multi-engine":
-        # Complex task → autopilot (3-engine guided execution)
         from cc_flow.autopilot import run_autopilot
         result = run_autopilot(query, timeout=300, dry_run=dry_run)
         if result.get("success"):
             print(json.dumps(result))
         else:
-            # Fallback to multi-engine chain
-            from cc_flow.skill_chains import SKILL_CHAINS
-            me_chain = SKILL_CHAINS.get("multi-engine")
-            if me_chain:
-                _execute_chain("multi-engine", me_chain, query, dry_run, complexity="complex",
-                               intent=intent_analysis)
-            else:
-                _execute_ralph(query, max_iter, dry_run)
+            _execute_ralph(query, max_iter, dry_run)
     elif mode == "auto":
         _execute_auto(query, dry_run)
     else:
