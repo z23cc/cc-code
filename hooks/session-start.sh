@@ -1,5 +1,6 @@
 #!/bin/bash
-# SessionStart hook: show skills overview + recent context + worktree detection.
+# SessionStart hook: show skills overview + smart project state detection.
+# Detects: interrupted chains, pending tasks, lint status, recent activity.
 
 CCFLOW="${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 HOOK_DIR="${CLAUDE_PLUGIN_ROOT}/hooks"
@@ -39,31 +40,110 @@ if [ "$IS_WORKTREE" = "1" ]; then
   echo "Only edit files within this worktree. The worktree-guard hook enforces this."
 fi
 
-# 3. Dynamic context: recent activity
-if [ -d ".tasks" ] && command -v python3 >/dev/null 2>&1 && [ -f "$CCFLOW" ]; then
+# 3. Smart project state detection + recommendations
+if command -v python3 >/dev/null 2>&1 && [ -f "$CCFLOW" ]; then
   echo ""
   echo "# [cc-code] recent context, $(date '+%Y-%m-%d %I:%M%p %Z')"
   echo ""
 
-  ACTIVE=$(python3 "$CCFLOW" status 2>/dev/null | python3 -c "
-import sys,json
+  python3 -c "
+import json, sys, os
+from pathlib import Path
+
+recommendations = []
+context_lines = []
+
+# --- Detect interrupted chain ---
+chain_state = Path('.tasks/skill_ctx/_chain_state.json')
+if chain_state.exists():
+    try:
+        state = json.loads(chain_state.read_text())
+        chain = state.get('chain', '?')
+        step = state.get('current_step', 0) + 1
+        total = state.get('total_steps', 0)
+        context_lines.append(f'Interrupted chain: {chain} (step {step}/{total})')
+        recommendations.append(f'Resume chain: cc-flow go --resume')
+    except Exception:
+        pass
+
+# --- Detect task status ---
+tasks_dir = Path('.tasks/tasks')
+if tasks_dir.exists():
+    in_progress = 0
+    blocked = 0
+    todo = 0
+    done = 0
+    for f in tasks_dir.glob('*.json'):
+        try:
+            t = json.loads(f.read_text())
+            s = t.get('status', '')
+            if s == 'in_progress': in_progress += 1
+            elif s == 'blocked': blocked += 1
+            elif s == 'todo': todo += 1
+            elif s == 'done': done += 1
+        except Exception:
+            pass
+    if in_progress > 0:
+        context_lines.append(f'Active: {in_progress} task(s) in progress')
+        recommendations.append('Continue: cc-flow next')
+    if blocked > 0:
+        context_lines.append(f'Blocked: {blocked} task(s)')
+    if todo > 0:
+        context_lines.append(f'Ready: {todo} task(s) waiting')
+        if not in_progress:
+            recommendations.append(f'Start next task: cc-flow start')
+    if done > 0:
+        context_lines.append(f'Done: {done} completed')
+
+# --- Detect recent git activity ---
 try:
-    d = json.load(sys.stdin)
-    ip = d.get('in_progress', 0)
-    bl = d.get('blocked', 0)
-    todo = d.get('todo', 0)
-    done = d.get('done', 0)
-    if ip > 0: print(f'Active: {ip} task(s) in progress')
-    if bl > 0: print(f'Blocked: {bl} task(s)')
-    if todo > 0: print(f'Ready: {todo} task(s) todo')
-    if done > 0: print(f'Done: {done} completed')
+    import subprocess
+    result = subprocess.run(['git', 'log', '--oneline', '-1', '--format=%ar'],
+                          capture_output=True, text=True, timeout=3)
+    if result.returncode == 0:
+        last_commit = result.stdout.strip()
+        context_lines.append(f'Last commit: {last_commit}')
 except Exception:
     pass
-" 2>/dev/null)
 
-  if [ -n "$ACTIVE" ]; then
-    echo "$ACTIVE"
-  else
-    echo "No previous sessions found for this project yet."
-  fi
+# --- Detect uncommitted changes ---
+try:
+    import subprocess
+    result = subprocess.run(['git', 'diff', '--stat', '--shortstat'],
+                          capture_output=True, text=True, timeout=3)
+    if result.returncode == 0 and result.stdout.strip():
+        context_lines.append(f'Uncommitted changes: {result.stdout.strip().split(chr(10))[-1].strip()}')
+        recommendations.append('Review changes: git diff')
+except Exception:
+    pass
+
+# --- Detect lint issues (quick check) ---
+try:
+    import subprocess
+    result = subprocess.run(['python3', '-m', 'ruff', 'check', '.', '--statistics', '-q'],
+                          capture_output=True, text=True, timeout=10, cwd=os.getcwd())
+    if result.returncode != 0 and result.stdout.strip():
+        lines = result.stdout.strip().split('\n')
+        total_issues = len(lines)
+        if total_issues > 0:
+            context_lines.append(f'Lint: {total_issues} issue type(s) found')
+            recommendations.append('Fix lint: cc-flow verify --fix')
+except Exception:
+    pass
+
+# --- Output ---
+if context_lines:
+    for line in context_lines:
+        print(line)
+else:
+    print('No previous sessions found for this project yet.')
+
+if recommendations:
+    print('')
+    print('Recommended next steps:')
+    for i, rec in enumerate(recommendations, 1):
+        print(f'  {i}. {rec}')
+    print('')
+    print('Or just: cc-flow go \"describe what you want\"')
+" 2>/dev/null
 fi

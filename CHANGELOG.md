@@ -1,5 +1,20 @@
 # Changelog
 
+## [5.9.0] - 2026-03-24
+### Added
+- **Metrics-boosted chain suggest** — `cc-flow chain suggest` now factors in historical success rates. Chains with higher completion rates get a score bonus (up to +3 points). Output includes run history and success rate.
+- **Smart session start** — SessionStart hook now detects and reports:
+  - Interrupted chains → recommends `cc-flow go --resume`
+  - Active/blocked/ready tasks → recommends next action
+  - Uncommitted changes → recommends `git diff`
+  - Lint issues → recommends `cc-flow verify --fix`
+  - Last commit time
+  - All recommendations shown as numbered list with `cc-flow go` as fallback
+
+### Improved
+- `chain suggest` output now includes `score`, `history` (runs/success_rate/last_completed), and updated `instruction` pointing to `cc-flow go`
+- Session start transitions from static display to dynamic project-aware recommendations
+
 ## [5.8.0] - 2026-03-24
 ### Added
 - **Chain auto-execution** — `cc-flow go` chain mode now outputs `# AUTO-EXECUTE` instruction with explicit "Do NOT stop between steps" directive, per-step context save/advance commands, and schema hints (outputs/reads)

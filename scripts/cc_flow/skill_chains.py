@@ -308,20 +308,48 @@ def cmd_chain_show(args):
     }))
 
 
+def _load_chain_metrics():
+    """Load chain metrics for ranking boost. Returns {chain_name: metrics_dict}."""
+    try:
+        from cc_flow.skill_flow import _load_metrics
+        metrics = _load_metrics()
+        return metrics.get("chains", {})
+    except (ImportError, Exception):
+        return {}
+
+
 def _rank_chains(query):
-    """Rank all chains by relevance to query. Returns [(name, chain, score)]."""
+    """Rank all chains by relevance to query, boosted by historical success.
+
+    Scoring: keyword match (0-N) + metrics bonus (0-3).
+    Metrics bonus = success_rate/100 * 3 (max 3 points for 100% success rate).
+    Chains with ≥3 runs get full bonus; fewer runs get proportional bonus.
+    """
     query_lower = query.lower()
     words = set(query_lower.split())
+    metrics = _load_chain_metrics()
     scored = []
 
     for name, chain in SKILL_CHAINS.items():
         score = 0
+        # Keyword matching
         for trigger in chain["trigger"]:
             if trigger in query_lower:
                 score += 2
             elif any(w in words for w in trigger.split()):
                 score += 1
+
         if score > 0:
+            # Metrics boost: success_rate * confidence_factor * 3
+            m = metrics.get(name, {})
+            runs = m.get("runs", 0)
+            success_rate = m.get("success_rate", 0)
+            if runs > 0:
+                # Confidence grows with runs: 0.33 at 1 run, 0.67 at 2, 1.0 at 3+
+                confidence = min(runs / 3.0, 1.0)
+                bonus = (success_rate / 100.0) * confidence * 3.0
+                score += bonus
+
             scored.append((name, chain, score))
 
     scored.sort(key=lambda x: -x[2])
@@ -345,24 +373,39 @@ def cmd_chain_suggest(args):
 
     best_name, best_chain, best_score = ranked[0]
 
+    # Include metrics for best chain
+    metrics = _load_chain_metrics()
+    best_metrics = metrics.get(best_name, {})
+
     result = {
         "success": True,
         "chain": best_name,
         "description": best_chain["description"],
+        "score": round(best_score, 1),
         "steps": [
             f"{'[required]' if s['required'] else '[optional]'} {s['skill']} — {s['role']}"
             for s in best_chain["skills"]
         ],
-        "instruction": f"Run skills in order: {' → '.join(s['skill'] for s in best_chain['skills'])}",
+        "instruction": f"Run: cc-flow go \"{query}\"  (or: cc-flow chain run {best_name})",
     }
+
+    if best_metrics:
+        result["history"] = {
+            "runs": best_metrics.get("runs", 0),
+            "success_rate": best_metrics.get("success_rate", 0),
+            "last_completed": best_metrics.get("last_completed", ""),
+        }
 
     # Show alternatives if close in score
     if len(ranked) > 1:
-        alts = [
-            {"chain": name, "description": chain["description"], "score": score}
-            for name, chain, score in ranked[1:3]
-            if score >= best_score * 0.5
-        ]
+        alts = []
+        for name, chain, score in ranked[1:3]:
+            if score >= best_score * 0.5:
+                alt = {"chain": name, "description": chain["description"], "score": round(score, 1)}
+                m = metrics.get(name, {})
+                if m:
+                    alt["success_rate"] = m.get("success_rate", 0)
+                alts.append(alt)
         if alts:
             result["alternatives"] = alts
 
