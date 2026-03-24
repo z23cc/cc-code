@@ -25,5 +25,5 @@ Activate the cc-plan-sync skill.
 ## Auto Mode
 
 ```bash
-cc-flow config set work.plan_sync true   # Enable auto-sync after each task in /cc-work
+cc-flow config work.plan_sync true   # Enable auto-sync after each task in /cc-work
 ```

@@ -1,70 +1,47 @@
 # cc-code
 
-Development workflow toolkit for Claude Code — task management, smart routing, multi-backend review, autonomous execution (Ralph), worktree isolation, OODA autoimmune loop, embedding-powered search, and skills marketplace integration.
+Development workflow toolkit for Claude Code — one command does everything. 3-engine collaborative planning (Claude × Codex × Gemini), adversarial debate review, autopilot guided execution, scale-adaptive routing, and 78 skills with phase-based parallel dispatch.
 
 ## Install
 
 ```bash
-# As Claude Code plugin
-claude plugin add z23cc/cc-code
-
-# Or standalone CLI
 pip install -e .
-cc-flow dashboard
+cc-flow doctor     # verify setup
 ```
 
-## Quick Start
+## One Command
 
 ```bash
-cc-flow                                # Interactive REPL (tab completion + typo correction!)
-cc-flow init                           # Initialize project
-cc-flow epic create --title "Feature"  # Create an epic
-cc-flow task create --epic epic-1 --title "Step 1"
-cc-flow start epic-1.1                 # Start task
-cc-flow verify                         # Lint + test (auto-detect language)
-cc-flow done epic-1.1                  # Complete task
-cc-flow dashboard                      # Visual overview
+cc-flow go "describe your goal"
 ```
 
-## First-Time Setup
+Auto-detects complexity and routes:
+- **Simple** (typo, config) → light chain (2-3 steps)
+- **Medium** (feature, bugfix) → standard chain (4-7 steps, parallel phases)
+- **Complex** (redesign, platform) → autopilot (3-engine plan → execute → checkpoint → review)
 
-### 1. Initialize Project
+## Key Commands
 
 ```bash
-cc-flow init                           # Creates .tasks/ directory
+cc-flow go "build user auth"           # auto-route + execute
+cc-flow review                         # auto 3-engine debate review
+cc-flow autopilot "redesign payment"   # 3-engine guided execution
+cc-flow multi-plan "design API"        # 3-engine collaborative plan
+cc-flow verify                         # lint + test
+cc-flow dashboard                      # project overview
+cc-flow doctor                         # health check
 ```
 
-### 2. Configure Review Backend
-
-cc-code supports multiple review backends. Run detection first:
+## Review (auto-escalates)
 
 ```bash
-cc-flow review-setup                   # Detect available backends
+cc-flow review                         # auto-selects best mode:
 ```
+- 3 engines (Claude + Codex + Gemini) → adversarial debate
+- 2 engines → multi-engine consensus
+- 1 engine → agent lint review
 
-Output shows which backends are available on your system:
-
-```
-agent  ✓  Built-in cc-code reviewer agents (no setup needed)
-rp     ✓  RepoPrompt GUI — deep file context via Builder (macOS)
-codex  ✓  OpenAI Codex CLI — multi-model terminal review
-export ✓  Export context markdown for external LLM
-```
-
-Set your preferred default:
-
-```bash
-# Option A: Use built-in agents (default, no setup needed)
-cc-flow review-setup --set agent
-
-# Option B: Use RepoPrompt for deeper reviews (requires RepoPrompt app)
-cc-flow review-setup --set rp
-
-# Option C: Use Codex CLI for multi-model reviews
-cc-flow review-setup --set codex
-```
-
-You can also configure **per review type**:
+## Setup
 
 ```bash
 cc-flow review-setup --set rp --scope plan          # Plan reviews via RepoPrompt
