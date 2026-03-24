@@ -57,7 +57,9 @@ def _repl_help_all():
         ("Session",
          "session save/restore/list, context-budget"),
         ("Autonomous",
-         "ralph, auto scan/run/deep/full"),
+         "go, ralph, auto scan/run/deep/full"),
+        ("Skill Flow",
+         "skill next/graph/graph-build/ctx, chain list/show/suggest/run/advance"),
         ("Misc",
          "config, version, clean, graph, export, perf"),
     ]
@@ -127,7 +129,10 @@ _COMPLETIONS = [
     "worktree create", "worktree list", "worktree switch", "worktree remove",
     "worktree cleanup", "worktree status", "worktree info",
     "memory save", "memory search", "memory sync", "memory recall",
-    "chain list", "chain show", "chain suggest", "chain run",
+    "chain list", "chain show", "chain suggest", "chain run", "chain advance",
+    "skill next", "skill graph", "skill graph-build",
+    "skill ctx save", "skill ctx load", "skill ctx current", "skill ctx clear",
+    "go",
     # Flags
     "--json", "--epic", "--fix", "--dry-run", "--semantic",
     # REPL

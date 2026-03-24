@@ -709,6 +709,9 @@ Command categories:
   RepoPrompt: rp check/windows/workspace/tabs/select/builder/chat/
               read/search/tree/structure/context/prompt/chats/models/
               git/edit/file/setup-review/session/worktree-setup/run
+  Go:         go "your goal" (auto-route to chain/ralph/auto)
+  Skill Flow: skill next/graph/graph-build/ctx save/load/current/clear
+  Chains:     chain list/show/suggest/run/advance
   Safety:     careful, freeze, guard
   Checkpoint: checkpoint create/verify/compare/list
   Analysis:   context-budget

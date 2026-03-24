@@ -4,7 +4,7 @@ Usage:
     cc-flow <command>          (after pip install -e .)
     python -m cc_flow <command>
 
-Package structure (51 modules, 136 commands):
+Package structure (53 modules, 145 commands):
   cc_flow/
     __init__.py      → VERSION
     __main__.py      → python -m cc_flow support
@@ -48,6 +48,8 @@ Package structure (51 modules, 136 commands):
     rp_commands.py   → cc-flow rp <subcommand> (24 subcommands)
     review_setup.py  → multi-backend review detection and configuration
     worktree_state.py → cross-worktree state management
+    skill_flow.py    → skill flow graph, context protocol, next-skill queries
+    go.py            → unified entry point (route → decide mode → execute)
   morph_client.py    → pure Python Morph API client (5 APIs)
   cc-flow.py         → backward-compatible shim
 """

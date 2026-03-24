@@ -1,5 +1,38 @@
 # Changelog
 
+## [5.6.0] - 2026-03-24
+### Added
+- **`cc-flow go`** — one command full automation: describe your goal, system auto-routes to chain/ralph/auto mode
+  - `cc-flow go "fix login bug"` → chain mode (bugfix chain)
+  - `cc-flow go "implement user auth"` → ralph mode (autonomous)
+  - `cc-flow go "improve code quality"` → auto mode (OODA loop)
+  - `--dry-run` to preview without executing, `--mode` to force strategy
+- `/cc-go` slash command + skill (69 skills, 58 commands total)
+- 19 tests for go module (routing, mode decision, force mode, output format)
+
+## [5.5.0] - 2026-03-24
+### Added
+- **Skill flow graph** — parses FLOWS INTO / DEPENDS ON from all 69 SKILL.md files into queryable graph
+  - `cc-flow skill graph` — show full graph (21 connected / 69 total skills)
+  - `cc-flow skill graph --for cc-plan` — show one skill's connections
+  - `cc-flow skill next --skill cc-brainstorm` — query what comes next
+- **Skill context protocol** — pass data between skills
+  - `cc-flow skill ctx save <name> --data '{}'` — save output context
+  - `cc-flow skill ctx load <name>` — load predecessor's context
+  - `cc-flow skill ctx current` — show active skill
+- **Context-aware chain execution** — `cc-flow chain run` now loads previous step's context per step
+  - `cc-flow chain advance --data '{}'` — save context + advance to next step
+  - Chain state persisted for resume across sessions
+- **Smart post-task hints** — PostToolUse hook calls `cc-flow skill next` for context-aware suggestions
+- **On Completion protocol** — 12 key SKILL.md files updated with standardized completion sections
+- `skill_flow.py` module (graph extraction, context protocol, 6 CLI commands)
+- 22 tests for skill flow (graph parsing, caching, context, normalization, CLI)
+- Skill context protocol documented in `rules/workflow.md`
+
+### Improved
+- Post-task-hint hook: detects `cc-flow skill ctx save` and `cc-flow chain advance` for smart next-step suggestions
+- Chain run output includes `on_completion` instructions per step and `prev_context` from predecessor
+
 ## [5.4.0] - 2026-03-23
 ### Added
 - Safety modes: `cc-flow careful/freeze/guard` — session-scoped safety guards
