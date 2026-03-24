@@ -344,7 +344,10 @@
       "understand this",
       "code analysis",
       "代码分析",
-      "看看这段代码"
+      "看看这段代码",
+      "理解代码",
+      "看懂代码",
+      "代码怎么工作"
     ],
     "skills": [
       {
@@ -894,7 +897,11 @@
       "pre-merge",
       "深度审查",
       "全面审查代码",
-      "合并前检查"
+      "合并前检查",
+      "代码审查",
+      "审查代码",
+      "code review",
+      "review my code"
     ],
     "skills": [
       {
@@ -974,7 +981,6 @@
     "trigger": [
       "review pr",
       "review pull request",
-      "check this pr",
       "pr review",
       "审查PR",
       "看看PR",
@@ -1212,7 +1218,11 @@
       "testing",
       "写测试",
       "加测试",
-      "测试覆盖"
+      "测试覆盖",
+      "单元测试",
+      "写单元测试",
+      "unit test",
+      "unit tests"
     ],
     "skills": [
       {
