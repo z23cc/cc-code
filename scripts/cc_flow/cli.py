@@ -724,6 +724,8 @@ def _add_misc_commands(sub):
     mr_p = sub.add_parser("multi-review", help="Multi-engine code review with consensus (codex+gemini+rp+agent)")
     mr_p.add_argument("--engines", default="", help="Comma-separated engines: codex,gemini,rp,agent")
     mr_p.add_argument("--timeout", type=int, default=1000, help="Per-engine timeout in seconds")
+    mr_p.add_argument("--range", default="", help="Git diff range: main..HEAD, HEAD~5, commit-sha")
+    mr_p.add_argument("--path", nargs="*", default=None, help="Limit review to paths: scripts/ tests/")
     mr_p.add_argument("--dry-run", action="store_true", help="Show plan without running")
 
     # Safety modes

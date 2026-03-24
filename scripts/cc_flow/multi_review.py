@@ -62,34 +62,61 @@ def _detect_rp():
 
 # ── Context Builder ──
 
-def _build_review_context():
-    """Build shared review context from git state."""
+def _build_review_context(diff_range="", paths=None):
+    """Build shared review context from git state.
+
+    Args:
+        diff_range: Git diff range (e.g., "main..feature", "HEAD~5..HEAD", "abc123")
+                    If empty, auto-detects: uncommitted → staged → HEAD~1
+        paths: List of path filters (e.g., ["scripts/", "tests/"])
+    """
     def _git(args, default=""):
         try:
-            r = subprocess.run(["git", *args], check=False, capture_output=True, text=True, timeout=10)
+            r = subprocess.run(["git", *args], check=False, capture_output=True, text=True, timeout=15)
             return r.stdout.strip() if r.returncode == 0 else default
         except (subprocess.TimeoutExpired, OSError):
             return default
 
-    diff = _git(["diff", "HEAD~1..HEAD"])
-    if not diff:
-        diff = _git(["diff", "--staged"])
-    if not diff:
-        diff = _git(["diff"])
+    path_args = ["--", *paths] if paths else []
 
-    files = _git(["diff", "--name-only", "HEAD~1..HEAD"])
-    if not files:
-        files = _git(["diff", "--name-only", "--staged"])
+    # Determine diff range
+    if diff_range:
+        # Explicit range: "main..HEAD", "HEAD~5", "abc123..def456"
+        if ".." not in diff_range:
+            diff_range = f"{diff_range}..HEAD"
+        diff = _git(["diff", diff_range, *path_args])
+        files = _git(["diff", "--name-only", diff_range, *path_args])
+        stats = _git(["diff", "--shortstat", diff_range, *path_args])
+    else:
+        # Auto-detect: try uncommitted → staged → last commit
+        diff = _git(["diff", *path_args])
+        files = _git(["diff", "--name-only", *path_args])
+        if not diff:
+            diff = _git(["diff", "--staged", *path_args])
+            files = _git(["diff", "--name-only", "--staged", *path_args])
+        if not diff:
+            diff = _git(["diff", "HEAD~1..HEAD", *path_args])
+            files = _git(["diff", "--name-only", "HEAD~1..HEAD", *path_args])
+        stats = _git(["diff", "--shortstat", *path_args]) or _git(["diff", "--shortstat", "HEAD~1..HEAD", *path_args])
 
     branch = _git(["branch", "--show-current"])
     last_commit = _git(["log", "--oneline", "-1"])
 
+    # Smart diff cap: prioritize Python/JS source, trim test output
+    diff_cap = 50000  # 50K chars (enough for most PRs)
+    if len(diff) > diff_cap:
+        diff = diff[:diff_cap] + f"\n\n... [truncated at {diff_cap} chars, {len(diff)} total] ..."
+
+    file_list = [f for f in files.split("\n") if f] if files else []
+
     return {
-        "diff": diff[:15000],  # cap at 15K chars
-        "files": files.split("\n") if files else [],
+        "diff": diff,
+        "files": file_list,
         "branch": branch,
         "last_commit": last_commit,
-        "diff_stats": _git(["diff", "--shortstat", "HEAD~1..HEAD"]),
+        "diff_stats": stats,
+        "file_count": len(file_list),
+        "diff_bytes": len(diff),
     }
 
 
@@ -469,7 +496,9 @@ def cmd_multi_review(args):
     """Run multi-engine code review with consensus."""
     dry_run = getattr(args, "dry_run", False)
     engines_arg = getattr(args, "engines", "") or ""
-    timeout = getattr(args, "timeout", 120)
+    timeout = getattr(args, "timeout", 1000)
+    diff_range = getattr(args, "range", "") or ""
+    paths = getattr(args, "path", None)
 
     # 1. Detect available engines
     available = {name: config for name, config in ENGINES.items() if config["detect"]()}
@@ -484,25 +513,33 @@ def cmd_multi_review(args):
         all_names = [n for n, c in ENGINES.items() if c["detect"]()]
         error(f"Need 2+ engines for multi-review. Available: {', '.join(all_names)}. Selected: {', '.join(names)}")
 
-    # 2. Build context
-    context = _build_review_context()
+    # 2. Build context with optional range and path filters
+    context = _build_review_context(diff_range=diff_range, paths=paths)
     if not context["diff"]:
         print(json.dumps({"success": False, "error": "No changes to review (no diff found)"}))
         return
 
     # 3. Dry run — just show plan
     if dry_run:
+        scope = diff_range or "auto (uncommitted → staged → HEAD~1)"
         print(json.dumps({
             "success": True,
             "dry_run": True,
             "engines": list(available.keys()),
             "engine_details": {n: {"label": c["label"], "lens": c["lens"]} for n, c in available.items()},
+            "scope": scope,
+            "path_filter": paths,
             "files_to_review": context["files"],
-            "diff_size": len(context["diff"]),
+            "file_count": context.get("file_count", len(context["files"])),
+            "diff_bytes": context.get("diff_bytes", len(context["diff"])),
+            "diff_stats": context.get("diff_stats", ""),
             "instruction": (
                 f"Will run {len(available)} engines in parallel:\n"
                 + "\n".join(f"  - {c['label']} ({c['lens']})" for c in available.values())
-                + f"\nReviewing {len(context['files'])} files, {len(context['diff'])} chars diff"
+                + f"\nScope: {scope}"
+                + (f"\nPath filter: {paths}" if paths else "")
+                + f"\nReviewing {context.get('file_count', len(context['files']))} files, {context.get('diff_bytes', len(context['diff']))} chars"
+                + (f"\n{context.get('diff_stats', '')}" if context.get('diff_stats') else "")
             ),
         }))
         return
