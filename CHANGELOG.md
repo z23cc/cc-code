@@ -1,5 +1,9 @@
 # Changelog
 
+## [5.18.0] - 2026-03-24
+### Added (gmickel flow-next inspired)
+- **`/cc-deps`** — dependency graph skill: blocking chains, parallel execution phases, critical path analysis, ready-to-start recommendations. Answers "what should I work on next?" (78 skills, 67 commands)
+
 ## [5.17.0] - 2026-03-24
 ### Added (Everything Claude Code inspired)
 - **`/cc-product-lens`** — product thinking before building: founder review, PMF scoring (0-50), user journey audit, RICE prioritization. BUILD/VALIDATE/DEFER decision.
