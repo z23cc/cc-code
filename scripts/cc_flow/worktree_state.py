@@ -6,7 +6,6 @@ from cc_flow.core import (
     TASKS_SUBDIR,
     all_tasks,
     atomic_write,
-    load_task,
     safe_json_load,
     save_task_state,
     state_dir,

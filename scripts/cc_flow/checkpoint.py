@@ -24,7 +24,7 @@ def _git_sha() -> str:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
-            capture_output=True, text=True, timeout=5,
+            check=False, capture_output=True, text=True, timeout=5,
         )
         return result.stdout.strip() if result.returncode == 0 else "unknown"
     except (OSError, subprocess.TimeoutExpired):
@@ -36,7 +36,7 @@ def _git_branch() -> str:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--abbrev-ref", "HEAD"],
-            capture_output=True, text=True, timeout=5,
+            check=False, capture_output=True, text=True, timeout=5,
         )
         return result.stdout.strip() if result.returncode == 0 else "unknown"
     except (OSError, subprocess.TimeoutExpired):
@@ -48,7 +48,7 @@ def _count_files() -> int:
     try:
         result = subprocess.run(
             ["git", "ls-files"],
-            capture_output=True, text=True, timeout=10,
+            check=False, capture_output=True, text=True, timeout=10,
         )
         if result.returncode == 0:
             return len([l for l in result.stdout.strip().splitlines() if l])
@@ -62,7 +62,7 @@ def _count_tests() -> int:
     try:
         result = subprocess.run(
             ["python", "-m", "cc_flow", "validate", "--json"],
-            capture_output=True, text=True, timeout=15,
+            check=False, capture_output=True, text=True, timeout=15,
         )
         if result.returncode == 0 and result.stdout.strip():
             data = json.loads(result.stdout.strip())
@@ -71,7 +71,7 @@ def _count_tests() -> int:
         pass
     # Fallback: count test_*.py files
     count = 0
-    for root, _dirs, files in os.walk("tests"):
+    for _root, _dirs, files in os.walk("tests"):
         for f in files:
             if f.startswith("test_") and f.endswith(".py"):
                 count += 1
@@ -85,7 +85,7 @@ def _files_changed_since(ref_sha: str) -> list[str]:
     try:
         result = subprocess.run(
             ["git", "diff", "--name-only", ref_sha, "HEAD"],
-            capture_output=True, text=True, timeout=10,
+            check=False, capture_output=True, text=True, timeout=10,
         )
         if result.returncode == 0:
             return [l for l in result.stdout.strip().splitlines() if l]

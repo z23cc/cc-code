@@ -21,12 +21,10 @@ Usage:
 """
 
 import json
-import os
 import uuid
 from pathlib import Path
 
-from cc_flow.core import TASKS_DIR, atomic_write, error, now_iso, safe_json_load
-
+from cc_flow.core import atomic_write, error, now_iso, safe_json_load
 
 WORKFLOWS_DIR = Path(".vscode/workflows")
 
@@ -132,7 +130,7 @@ def _describe_node(node):
 
     elif ntype == "skill":
         skill_name = data.get("name", "")
-        skill_path = data.get("skillPath", "")
+        data.get("skillPath", "")
         exec_mode = data.get("executionMode", "execute")
         exec_prompt = data.get("executionPrompt", "")
         return {
@@ -315,7 +313,7 @@ def cmd_wf_run(args):
     connections = workflow.get("connections", [])
 
     # Topological sort
-    ordered_ids, node_map, adj = _topo_sort(nodes, connections)
+    ordered_ids, node_map, _adj = _topo_sort(nodes, connections)
 
     # Build execution plan
     steps = []
@@ -390,7 +388,7 @@ def cmd_wf_show(args):
 
     nodes = workflow.get("nodes", [])
     connections = workflow.get("connections", [])
-    ordered_ids, node_map, adj = _topo_sort(nodes, connections)
+    ordered_ids, node_map, _adj = _topo_sort(nodes, connections)
 
     node_summary = []
     for nid in ordered_ids:

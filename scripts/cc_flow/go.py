@@ -13,8 +13,7 @@ import os
 import subprocess
 import sys
 
-from cc_flow.core import error, now_iso
-
+from cc_flow.core import error
 
 # ── Routing ──
 
@@ -256,7 +255,7 @@ def _build_auto_exec_instruction(chain_name, chain_data, query, steps):
         else:
             lines.append(f"On completion: `cc-flow skill ctx save {skill_name} --data '{{\"done\": true}}'`")
 
-        lines.append(f"Then advance: `cc-flow chain advance`")
+        lines.append("Then advance: `cc-flow chain advance`")
         lines.append("")
 
     lines.append("## On Chain Complete")
@@ -271,7 +270,7 @@ def _build_auto_exec_instruction(chain_name, chain_data, query, steps):
 def _check_resume():
     """Check if there's an interrupted chain to resume. Returns state or None."""
     try:
-        from cc_flow.skill_flow import load_chain_state, load_skill_ctx, CHAIN_STATE_FILE
+        from cc_flow.skill_flow import CHAIN_STATE_FILE, load_chain_state
         if not CHAIN_STATE_FILE.exists():
             return None
         state = load_chain_state()
@@ -284,13 +283,13 @@ def _check_resume():
 
 def _execute_resume(state):
     """Resume an interrupted chain from the current step."""
-    from cc_flow.skill_flow import set_current, load_skill_ctx
     from cc_flow.skill_chains import SKILL_CHAINS
+    from cc_flow.skill_flow import load_skill_ctx, set_current
 
     chain_name = state.get("chain", "")
     current_step = state.get("current_step", 0)
     total_steps = state.get("total_steps", 0)
-    step_skills = state.get("steps", [])
+    state.get("steps", [])
 
     chain_data = SKILL_CHAINS.get(chain_name)
     if not chain_data:
@@ -315,7 +314,7 @@ def _execute_resume(state):
         prev_ctx = load_skill_ctx(prev_skill)
 
     instruction = _build_auto_exec_instruction(
-        chain_name, chain_data, f"(resumed from step {current_step + 1})", remaining
+        chain_name, chain_data, f"(resumed from step {current_step + 1})", remaining,
     )
 
     result = {
@@ -344,7 +343,10 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="med
     # Set up chain state via skill_flow
     try:
         from cc_flow.skill_flow import (
-            save_chain_state, set_current, load_skill_ctx, record_chain_start,
+            load_skill_ctx,
+            record_chain_start,
+            save_chain_state,
+            set_current,
         )
     except ImportError:
         save_chain_state = set_current = load_skill_ctx = record_chain_start = None
@@ -466,7 +468,7 @@ def _execute_ralph(query, max_iterations=25, dry_run=False):
     }))
 
     try:
-        result = subprocess.run(["bash", str(ralph_sh)], env=env, cwd=os.getcwd())
+        result = subprocess.run(["bash", str(ralph_sh)], check=False, env=env, cwd=os.getcwd())
         sys.exit(result.returncode)
     except KeyboardInterrupt:
         print("\nRalph interrupted.")
@@ -501,7 +503,7 @@ def _execute_auto(query, dry_run=False):
     }))
 
     try:
-        result = subprocess.run(cmd, cwd=os.getcwd())
+        result = subprocess.run(cmd, check=False, cwd=os.getcwd())
         sys.exit(result.returncode)
     except KeyboardInterrupt:
         sys.exit(130)

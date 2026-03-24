@@ -6,10 +6,9 @@ Wraps worktree.sh + state detection + task association + dashboard.
 import json
 import os
 import subprocess
-import sys
 from pathlib import Path
 
-from cc_flow.core import error, now_iso
+from cc_flow.core import error
 
 
 def _worktree_sh():
@@ -30,8 +29,8 @@ def _run_wt(cmd, *extra_args):
     sh = _worktree_sh()
     if not sh:
         error("worktree.sh not found")
-    args = ["bash", sh, cmd] + list(extra_args)
-    result = subprocess.run(args, capture_output=True, text=True)
+    args = ["bash", sh, cmd, *list(extra_args)]
+    result = subprocess.run(args, check=False, capture_output=True, text=True)
     if result.returncode != 0:
         return None, result.stderr.strip()
     return result.stdout.strip(), None
@@ -125,10 +124,10 @@ def _cmd_create(args):
 
 def _cmd_list(args):
     """List all worktrees with status."""
-    out, err = _run_wt("list")
+    _out, _err = _run_wt("list")
 
     # Also get per-worktree dirty status
-    status_out, _ = _run_wt("status")
+    _status_out, _ = _run_wt("status")
 
     worktrees = []
     try:

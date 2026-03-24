@@ -1,7 +1,6 @@
 """cc-flow context-budget — analyze token overhead from plugins, rules, skills."""
 
 import json
-import os
 from pathlib import Path
 
 from cc_flow import skin
@@ -235,5 +234,5 @@ def cmd_context_budget(args) -> None:
         print()
         skin.warning(
             f"Total ({total_tokens:,} tokens) exceeds 10,000 — "
-            "consider reducing always-loaded content"
+            "consider reducing always-loaded content",
         )

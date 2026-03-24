@@ -3,7 +3,6 @@
 import json
 import os
 import shutil
-import subprocess
 
 from cc_flow.core import CONFIG_FILE, safe_json_load
 

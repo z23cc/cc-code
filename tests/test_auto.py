@@ -5,11 +5,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
 
-import json
 
 from cc_flow.auto import (
     DEFAULT_TEAM,
-    TEAM_PATTERNS,
     _find_auto_epic,
     _find_ready_tasks,
     _orient_findings,
@@ -86,7 +84,7 @@ class TestOrientFindings:
             "lint": [
                 {"severity": "P4", "message": "minor", "type": "lint"},
                 {"severity": "P1", "message": "critical", "type": "lint"},
-            ]
+            ],
         }
         result = _orient_findings(findings)
         assert len(result) == 2
@@ -104,7 +102,7 @@ class TestOrientFindings:
 
     def test_output_fields(self):
         findings = {
-            "test": [{"severity": "P2", "message": "fail", "type": "test", "file": "x.py"}]
+            "test": [{"severity": "P2", "message": "fail", "type": "test", "file": "x.py"}],
         }
         result = _orient_findings(findings)
         assert result[0]["category"] == "test"

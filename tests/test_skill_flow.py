@@ -1,7 +1,6 @@
 """Tests for cc-flow skill flow — graph extraction, context protocol, CLI commands."""
 
 import json
-import os
 import subprocess
 import sys
 from pathlib import Path
@@ -35,7 +34,7 @@ def skills_dir(tmp_path):
         '  Design exploration.\n'
         '  TRIGGER: brainstorm.\n'
         '  FLOWS INTO: cc-plan (turn design into plan).\n'
-        '---\n# Brainstorm\n'
+        '---\n# Brainstorm\n',
     )
 
     # cc-plan — depends on cc-brainstorming, flows into cc-tdd, cc-work
@@ -45,7 +44,7 @@ def skills_dir(tmp_path):
         '  Create implementation plans.\n'
         '  DEPENDS ON: cc-brainstorming (design before planning).\n'
         '  FLOWS INTO: cc-tdd (implement), cc-work (execute end-to-end).\n'
-        '---\n# Plan\n'
+        '---\n# Plan\n',
     )
 
     # cc-tdd — depends on cc-plan, flows into cc-review
@@ -54,14 +53,14 @@ def skills_dir(tmp_path):
         '---\nname: cc-tdd\ndescription: "Test-driven development. '
         'DEPENDS ON: cc-plan. '
         'FLOWS INTO: cc-review, cc-commit."\n'
-        '---\n# TDD\n'
+        '---\n# TDD\n',
     )
 
     # cc-review — no flows (terminal)
     (skills / "cc-review").mkdir()
     (skills / "cc-review" / "SKILL.md").write_text(
         '---\nname: cc-review\ndescription: "Code review. TRIGGER: review."\n'
-        '---\n# Review\n'
+        '---\n# Review\n',
     )
 
     # cc-rp — used by cc-review
@@ -69,7 +68,7 @@ def skills_dir(tmp_path):
     (skills / "cc-rp" / "SKILL.md").write_text(
         '---\nname: cc-rp\ndescription: "RepoPrompt interface. '
         'USED BY: cc-review, cc-work."\n'
-        '---\n# RP\n'
+        '---\n# RP\n',
     )
 
     return skills
@@ -162,7 +161,7 @@ class TestNextPrevSkills:
 class TestSkillContext:
     def test_save_and_load(self, workspace, monkeypatch):
         monkeypatch.chdir(workspace)
-        from cc_flow.skill_flow import save_skill_ctx, load_skill_ctx, SKILL_CTX_DIR
+        from cc_flow.skill_flow import load_skill_ctx, save_skill_ctx
         # Override skills dir to avoid needing real skills
         save_skill_ctx("cc-test", {"key": "value"})
         ctx = load_skill_ctx("cc-test")
@@ -180,7 +179,7 @@ class TestSkillContext:
 class TestCurrentSkill:
     def test_set_and_get(self, workspace, monkeypatch):
         monkeypatch.chdir(workspace)
-        from cc_flow.skill_flow import set_current, get_current, clear_current
+        from cc_flow.skill_flow import get_current, set_current
         set_current("cc-plan", chain_name="feature")
         current = get_current()
         assert current is not None
@@ -189,7 +188,7 @@ class TestCurrentSkill:
 
     def test_clear(self, workspace, monkeypatch):
         monkeypatch.chdir(workspace)
-        from cc_flow.skill_flow import set_current, get_current, clear_current
+        from cc_flow.skill_flow import clear_current, get_current, set_current
         set_current("cc-plan")
         clear_current()
         assert get_current() is None
@@ -199,21 +198,22 @@ class TestGraphCaching:
     def test_cache_hit(self, skills_dir, workspace, monkeypatch):
         monkeypatch.chdir(workspace)
         monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(skills_dir.parent))
-        from cc_flow.skill_flow import load_graph, SKILL_GRAPH_CACHE
+        from cc_flow.skill_flow import SKILL_GRAPH_CACHE, load_graph
         # First call builds cache
-        g1 = load_graph()
+        load_graph()
         assert SKILL_GRAPH_CACHE.exists()
         mtime1 = SKILL_GRAPH_CACHE.stat().st_mtime
         # Second call hits cache (file not rebuilt)
-        g2 = load_graph()
+        load_graph()
         mtime2 = SKILL_GRAPH_CACHE.stat().st_mtime
         assert mtime1 == mtime2
 
     def test_cache_invalidation(self, skills_dir, workspace, monkeypatch):
         monkeypatch.chdir(workspace)
         monkeypatch.setenv("CLAUDE_PLUGIN_ROOT", str(skills_dir.parent))
-        from cc_flow.skill_flow import load_graph, SKILL_GRAPH_CACHE
         import time
+
+        from cc_flow.skill_flow import SKILL_GRAPH_CACHE, load_graph
         # Build cache
         load_graph()
         cache_mtime = SKILL_GRAPH_CACHE.stat().st_mtime
@@ -222,7 +222,7 @@ class TestGraphCaching:
         skill_md = skills_dir / "cc-plan" / "SKILL.md"
         skill_md.write_text(skill_md.read_text() + "\n")
         # Should rebuild
-        g = load_graph()
+        load_graph()
         new_mtime = SKILL_GRAPH_CACHE.stat().st_mtime
         assert new_mtime > cache_mtime
 

@@ -113,6 +113,13 @@ def _cross_reference_check(skills_dir):
         "cc-interview": "cc-brainstorming", "cc-blueprint": "cc-plan",
         "cc-pr-review": "cc-code-review-loop", "cc-ralph-init": "cc-ralph",
     }
+    # Scouts are accessed via /cc-scout {type}, not individual commands
+    SCOUT_SKILLS = {
+        f"cc-scout-{t}" for t in (
+            "build", "context", "docs", "docs-gap", "env", "gaps",
+            "observability", "practices", "repo", "security", "testing", "tooling",
+        )
+    }
 
     root = skills_dir.parent
     commands_dir = root / "commands"
@@ -126,7 +133,7 @@ def _cross_reference_check(skills_dir):
     if commands_dir.exists():
         cmd_names = {f.stem for f in commands_dir.glob("cc-*.md")}
         for sname in sorted(skill_names):
-            if sname not in cmd_names and sname not in KNOWN_ALIASES:
+            if sname not in cmd_names and sname not in KNOWN_ALIASES and sname not in SCOUT_SKILLS:
                 # Check if any alias maps to this skill
                 has_alias = any(v == sname for v in KNOWN_ALIASES.values())
                 if not has_alias:

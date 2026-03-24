@@ -132,7 +132,7 @@ def require_rp_cli() -> str:
     rp = find_rp_cli()
     if not rp:
         raise RuntimeError(
-            "rp-cli not found. Install from RepoPrompt: Settings → MCP Server → Install CLI to PATH"
+            "rp-cli not found. Install from RepoPrompt: Settings → MCP Server → Install CLI to PATH",
         )
     return rp
 
@@ -144,7 +144,7 @@ def rp_version() -> Optional[str]:
         return None
     try:
         result = subprocess.run(
-            [rp, "--version"], capture_output=True, text=True, timeout=5,
+            [rp, "--version"], check=False, capture_output=True, text=True, timeout=5,
         )
         return result.stdout.strip() or result.stderr.strip() or None
     except (subprocess.TimeoutExpired, subprocess.CalledProcessError, OSError):
@@ -255,13 +255,13 @@ def run(
 
     try:
         return subprocess.run(
-            cmd, capture_output=True, text=True, check=True, timeout=timeout
+            cmd, capture_output=True, text=True, check=True, timeout=timeout,
         )
-    except subprocess.TimeoutExpired:
-        raise RuntimeError(f"rp-cli timed out after {timeout}s: {' '.join(cmd)}")
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(f"rp-cli timed out after {timeout}s: {' '.join(cmd)}") from exc
     except subprocess.CalledProcessError as e:
         msg = (e.stderr or e.stdout or str(e)).strip()
-        raise RuntimeError(f"rp-cli failed: {msg}")
+        raise RuntimeError(f"rp-cli failed: {msg}") from e
 
 
 def exec_cmd(
@@ -431,7 +431,7 @@ def tab_create(
     source_tab: Optional[str] = None,
 ) -> str:
     """Create a new compose tab."""
-    cmd = f"tabs create"
+    cmd = "tabs create"
     if name:
         cmd += f" {shlex.quote(name)}"
     if mode == "fork":
@@ -873,9 +873,9 @@ def setup_review(
     # Step 1: Find matching window
     raw = exec_cmd("windows", raw_json=True)
     try:
-        win_data = json.loads(raw)
+        json.loads(raw)
     except json.JSONDecodeError:
-        win_data = raw
+        pass
 
     # Parse windows - try to find one matching our repo root
     win_id = _find_window_for_root(root, raw)

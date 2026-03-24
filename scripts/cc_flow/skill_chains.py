@@ -190,7 +190,10 @@ def cmd_chain_run(args):
     # Load context from previous skills and save chain state
     try:
         from cc_flow.skill_flow import (
-            load_skill_ctx, set_current, save_chain_state, record_chain_start,
+            load_skill_ctx,
+            record_chain_start,
+            save_chain_state,
+            set_current,
         )
         # Save chain state for resume
         save_chain_state(name, steps, current_step=0)
@@ -259,9 +262,12 @@ def cmd_chain_advance(args):
     """
     try:
         from cc_flow.skill_flow import (
-            load_chain_state, advance_chain_state, set_current,
-            save_skill_ctx, load_skill_ctx,
+            advance_chain_state,
+            load_chain_state,
+            load_skill_ctx,
             record_chain_complete,
+            save_skill_ctx,
+            set_current,
         )
     except ImportError:
         error("skill_flow module not available")
@@ -297,7 +303,7 @@ def cmd_chain_advance(args):
             if missing:
                 schema_warnings.append(
                     f"Missing expected context keys: {', '.join(missing)} "
-                    f"(expected: {', '.join(expected_outputs)})"
+                    f"(expected: {', '.join(expected_outputs)})",
                 )
 
     # Advance to next step
@@ -333,7 +339,7 @@ def cmd_chain_advance(args):
     # Checkpoint gate: run quality check at configured intervals
     checkpoint_result = None
     try:
-        from cc_flow.wisdom import should_checkpoint, run_checkpoint
+        from cc_flow.wisdom import run_checkpoint, should_checkpoint
         total = state.get("total_steps", 0)
         if should_checkpoint(chain_name, current_step, total):
             checkpoint_result = run_checkpoint(chain_name, current_step)
@@ -366,7 +372,7 @@ def cmd_chain_advance(args):
                 if missing_reads:
                     reads_check.append(
                         f"Next step expects: {', '.join(next_reads)}. "
-                        f"Missing: {', '.join(missing_reads)}"
+                        f"Missing: {', '.join(missing_reads)}",
                     )
 
             result = {

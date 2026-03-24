@@ -1,7 +1,7 @@
 """Unit tests for cc_flow.wf_executor — workflow parsing, topo sort, chain export."""
 
-import sys
 import json
+import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts"))
@@ -27,7 +27,7 @@ class TestTopoSort:
             {"from": "a", "to": "b"},
             {"from": "b", "to": "c"},
         ]
-        ordered, node_map, adj = _topo_sort(nodes, connections)
+        ordered, node_map, _adj = _topo_sort(nodes, connections)
         assert ordered == ["a", "b", "c"]
         assert len(node_map) == 3
 
@@ -44,18 +44,18 @@ class TestTopoSort:
             {"from": "x", "to": "e"},
             {"from": "y", "to": "e"},
         ]
-        ordered, node_map, adj = _topo_sort(nodes, connections)
+        ordered, _node_map, _adj = _topo_sort(nodes, connections)
         assert ordered[0] == "s"
         assert ordered[-1] == "e"
         assert set(ordered[1:3]) == {"x", "y"}
 
     def test_empty_graph(self):
-        ordered, node_map, adj = _topo_sort([], [])
+        ordered, _node_map, _adj = _topo_sort([], [])
         assert ordered == []
 
     def test_single_node(self):
         nodes = [{"id": "only", "type": "start"}]
-        ordered, node_map, adj = _topo_sort(nodes, [])
+        ordered, _node_map, _adj = _topo_sort(nodes, [])
         assert ordered == ["only"]
 
     def test_connection_with_condition(self):

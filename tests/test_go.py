@@ -161,7 +161,7 @@ class TestDecideModePure:
     def test_chain_mode_small(self):
         from cc_flow.go import decide_mode
         chain_data = {"skills": [
-            {"required": True}, {"required": True}, {"required": False}
+            {"required": True}, {"required": True}, {"required": False},
         ]}
         assert decide_mode("fix bug", {}, "bugfix", chain_data) == "chain"
 
@@ -245,7 +245,7 @@ class TestResume:
         # Start chain
         run(["chain", "run", "bugfix"], cwd=workspace)
         # Resume
-        out, _, code = run(["go", "--resume"], cwd=workspace)
+        out, _, _code = run(["go", "--resume"], cwd=workspace)
         data = json.loads(out)
         if data.get("resumed"):
             assert data["chain"] == "bugfix"
@@ -254,7 +254,7 @@ class TestResume:
     def test_no_goal_shows_interrupted_hint(self, workspace):
         """When no goal and chain is active, hint about --resume."""
         run(["chain", "run", "bugfix"], cwd=workspace)
-        out, _, code = run(["go"], cwd=workspace)
+        out, _, _code = run(["go"], cwd=workspace)
         data = json.loads(out)
         assert "resume" in data.get("error", "").lower() or data.get("resumed")
 

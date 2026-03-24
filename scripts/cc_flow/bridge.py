@@ -13,9 +13,8 @@ P1:
 
 import json
 import os
-from typing import Optional
 
-from cc_flow.core import now_iso, safe_json_load
+from cc_flow.core import now_iso
 
 # Lazy imports to avoid circular deps and startup cost
 _ERRORS = (RuntimeError, TimeoutError, OSError, ValueError, KeyError, ImportError)
@@ -75,7 +74,7 @@ def _save_memory(content, tags, custom_id=None):
     try:
         kwargs = {
             "content": content,
-            "container_tags": ["cc-flow"] + tags,
+            "container_tags": ["cc-flow", *tags],
             "entity_context": context,
             "metadata": {"source": "cc-flow-bridge", "saved_at": now_iso()},
         }
@@ -132,7 +131,7 @@ def deep_search(query, *, response_type="question", max_files=10,
             grep_result = subprocess.run(
                 ["grep", "-rl", "--include=*.py", "--include=*.ts",
                  "--include=*.js", "--include=*.go", "-i", query, "."],
-                capture_output=True, text=True, timeout=10,
+                check=False, capture_output=True, text=True, timeout=10,
             )
             files_found = [
                 f.strip() for f in grep_result.stdout.splitlines()

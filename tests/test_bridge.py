@@ -10,11 +10,9 @@ from cc_flow.bridge import (
     _recall_memories,
     _save_memory,
     deep_search,
-    memory_enhanced_chat,
     recall_for_review,
     review_to_memory,
     scan_to_memory,
-    structure_to_embed,
 )
 
 

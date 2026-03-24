@@ -104,7 +104,7 @@ def cmd_ralph(args):
 
     # Run Ralph
     try:
-        result = subprocess.run(cmd, env=env, cwd=os.getcwd())
+        result = subprocess.run(cmd, check=False, env=env, cwd=os.getcwd())
         sys.exit(result.returncode)
     except KeyboardInterrupt:
         print("\nRalph interrupted.")

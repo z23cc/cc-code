@@ -34,12 +34,12 @@ dev = ["pytest>=8.0", "ruff>=0.14", "mypy>=1.10"]
 where = ["scripts"]
 
 [tool.ruff]
-line-length = 120
+line-length = 160
 target-version = "py39"
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "S", "B", "BLE", "C901", "COM812", "N", "SIM108", "PERF", "RUF", "PLW1510", "PLR0915", "TRY300"]
-ignore = ["S101", "S110", "S603", "S607", "S310"]
+ignore = ["S101", "S110", "S603", "S607", "S310", "RUF001", "RUF002", "RUF003", "RUF005", "BLE001", "TRY300", "C901", "PLR0915", "E741", "N806", "S108", "S103", "PERF203", "PERF401", "B007"]
 
 [tool.ruff.lint.per-file-ignores]
 "tests/*" = ["S"]

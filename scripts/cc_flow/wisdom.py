@@ -12,8 +12,6 @@ Used by: skill_chains (auto-append on completion), cc-research (cache check).
 
 import hashlib
 import json
-import os
-from pathlib import Path
 
 from cc_flow.core import TASKS_DIR, atomic_write, error, now_iso, safe_json_load
 
@@ -172,7 +170,7 @@ def run_checkpoint(chain_name, step_idx):
     # Check 1: cc-flow verify (lint + tests)
     try:
         cmd = [sys.executable, "-m", "cc_flow", "verify"]
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        proc = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=60)
         verify_ok = proc.returncode == 0
         results["checks"].append({
             "name": "verify",
@@ -185,13 +183,13 @@ def run_checkpoint(chain_name, step_idx):
     # Check 2: No syntax errors in recently changed files
     try:
         cmd = ["git", "diff", "--name-only", "--diff-filter=M"]
-        proc = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
+        proc = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=10)
         changed = [f for f in proc.stdout.strip().split("\n") if f.endswith(".py")]
         all_ok = True
         for f in changed[:10]:
             result = subprocess.run(
                 [sys.executable, "-m", "py_compile", f],
-                capture_output=True, text=True, timeout=5,
+                check=False, capture_output=True, text=True, timeout=5,
             )
             if result.returncode != 0:
                 all_ok = False

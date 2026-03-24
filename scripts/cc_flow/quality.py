@@ -90,11 +90,19 @@ def cmd_validate(args):
         sys.exit(1)
 
 
+def _ruff_targets():
+    """Return list of directories to lint (only existing ones)."""
+    from pathlib import Path
+    candidates = ["scripts/", "tests/", "src/", "app/", "lib/"]
+    targets = [d for d in candidates if Path(d).is_dir()]
+    return targets if targets else ["."]
+
+
 def _scan_ruff():
     """Run ruff and return P3 findings grouped by rule."""
     findings = []
     try:
-        result = subprocess.run(["ruff", "check", ".", "--output-format", "json"],
+        result = subprocess.run(["ruff", "check", *_ruff_targets(), "--output-format", "json"],
                                 check=False, capture_output=True, text=True, timeout=30)
         if result.stdout.strip():
             issues = json.loads(result.stdout)
@@ -199,10 +207,7 @@ def cmd_scan(args):
 _VERIFY_PROFILES = {
     "python": {
         "detect": ["pyproject.toml", "setup.py", "setup.cfg"],
-        "steps": [
-            (["ruff", "check", "."], "ruff"),
-            (["python3", "-m", "pytest", "--tb=short", "-q"], "pytest"),
-        ],
+        "steps": "python_auto",
     },
     "node": {
         "detect": ["package.json"],
@@ -289,12 +294,17 @@ def cmd_verify(args):
 
     # If --fix and Python, run ruff --fix first
     if fix_mode and lang == "python":
-        subprocess.run(["ruff", "check", ".", "--fix"], check=False, capture_output=True, text=True)
+        subprocess.run(["ruff", "check", *_ruff_targets(), "--fix"], check=False, capture_output=True, text=True)
 
-    # Auto-detect Node.js steps from package.json scripts
+    # Auto-detect steps
     steps = profile["steps"]
     if steps == "auto":
         steps = _detect_node_steps()
+    elif steps == "python_auto":
+        steps = [
+            (["ruff", "check", *_ruff_targets()], "ruff"),
+            (["python3", "-m", "pytest", "--tb=short", "-q"], "pytest"),
+        ]
 
     results = []
     all_passed = True

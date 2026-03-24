@@ -215,7 +215,7 @@ def eval_bridge():
     total_score = 0
 
     for case in cases:
-        out, err, code, ms = _run_cc(case["cmd"], timeout=case["timeout"])
+        out, _err, code, ms = _run_cc(case["cmd"], timeout=case["timeout"])
         data = _parse_json(out)
 
         # Determine per-case score:
