@@ -723,7 +723,7 @@ def _add_misc_commands(sub):
     # Multi-engine review
     mr_p = sub.add_parser("multi-review", help="Multi-engine code review with consensus (codex+gemini+rp+agent)")
     mr_p.add_argument("--engines", default="", help="Comma-separated engines: codex,gemini,rp,agent")
-    mr_p.add_argument("--timeout", type=int, default=180, help="Per-engine timeout in seconds")
+    mr_p.add_argument("--timeout", type=int, default=1000, help="Per-engine timeout in seconds")
     mr_p.add_argument("--dry-run", action="store_true", help="Show plan without running")
 
     # Safety modes

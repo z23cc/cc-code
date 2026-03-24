@@ -95,7 +95,7 @@ def _build_review_context():
 
 # ── Engine Runners ──
 
-def _run_codex(context, timeout=180):
+def _run_codex(context, timeout=1000):
     """Run codex review CLI (it auto-detects git changes)."""
     custom_prompt = (
         "Focus on: correctness, edge cases, error handling. "
@@ -151,7 +151,7 @@ def _run_gemini(context, timeout=120):
         return {"success": False, "error": str(e)}
 
 
-def _run_rp(context, timeout=180):
+def _run_rp(context, timeout=1000):
     """Run RepoPrompt review via builder (auto-selects files + deep analysis)."""
     try:
         files_str = ", ".join(context.get("files", [])[:10])
