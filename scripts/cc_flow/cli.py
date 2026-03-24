@@ -728,6 +728,12 @@ def _add_misc_commands(sub):
     mr_p.add_argument("--path", nargs="*", default=None, help="Limit review to paths: scripts/ tests/")
     mr_p.add_argument("--dry-run", action="store_true", help="Show plan without running")
 
+    # Multi-engine plan
+    mp_p = sub.add_parser("multi-plan", help="3-engine plan: Claude designs → Codex critiques → Gemini synthesizes")
+    mp_p.add_argument("goal", nargs="*", help="What to plan: 'build user authentication'")
+    mp_p.add_argument("--timeout", type=int, default=300, help="Per-engine timeout")
+    mp_p.add_argument("--dry-run", action="store_true", help="Show plan without running")
+
     # Adversarial review
     ar_p = sub.add_parser("adversarial-review", help="3-engine debate: Claude × Codex × Gemini review with battle")
     ar_p.add_argument("--engines", default="", help="Engines: claude,codex,gemini (default: all available)")
