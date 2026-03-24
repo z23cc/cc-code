@@ -1,35 +1,25 @@
 ## cc-code v5.25 — One Command Does Everything
 
-**`cc-flow go "describe your goal"`** — auto-routes to chain/ralph/auto mode.
+**`cc-flow go "describe your goal"`** — auto-routes by complexity.
 
 ### Quick Reference
 
 | Goal | Command |
 |------|---------|
 | **Anything** | `cc-flow go "your goal"` |
+| Complex task (guided) | `cc-flow autopilot "goal"` |
+| Code review (auto 3-engine) | `cc-flow review` |
 | New feature | `/cc-brainstorm` → `/cc-plan` → `/cc-work` |
 | Fix a bug | `/cc-debug` → `/cc-tdd` → `/cc-commit` |
-| Quick fix | `/cc-fix` or `cc-flow go "fix typo"` |
-| Code review | `/cc-review` |
-| Deploy | `/cc-ship` or `cc-flow go "deploy"` |
-| Understand code | `/cc-research` |
-| Project health | `/cc-audit` or `/cc-prime` (12 scouts) |
-| Not sure | `/cc-route "describe task"` |
+| Quick fix | `cc-flow go "fix typo"` |
+| Project health | `/cc-audit` or `/cc-prime` |
 
-### 39 Workflow Chains
+### Complexity Auto-Routing
 
-`cc-flow chain suggest "your task"` — finds the best chain.
-`cc-flow chain list` — shows all 39 chains.
-
-Top chains: feature, bugfix, hotfix, deploy, security-audit, performance, testing, refactor, idea-to-ship, ci-cd, architecture, prd-to-ship, multi-review.
-
-### Multi-Engine Review
-
-`cc-flow multi-review` — 4 engines parallel (Codex + Gemini + RP + Agent) → consensus.
+- **Simple** (typo, config) → light chain (2-3 steps)
+- **Medium** (feature, bugfix) → standard chain (4-7 steps)
+- **Complex** (redesign, platform) → autopilot (3-engine plan → execute → checkpoint → review)
 
 ### Tools
 
-- `cc-flow verify` — lint + test
-- `cc-flow dashboard` — project overview
-- `cc-flow doctor` — health check
-- `cc-flow help` — full command list
+`cc-flow review` · `cc-flow verify` · `cc-flow dashboard` · `cc-flow doctor` · `cc-flow help`

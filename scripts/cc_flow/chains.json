@@ -253,19 +253,19 @@
         "phase": "observe"
       },
       {
-        "skill": "/cc-scout repo",
+        "skill": "/cc-scout-repo",
         "role": "Find existing patterns",
         "required": true,
         "phase": "observe"
       },
       {
-        "skill": "/cc-scout testing",
+        "skill": "/cc-scout-testing",
         "role": "Check test setup",
         "required": false,
         "phase": "observe"
       },
       {
-        "skill": "/cc-scout security",
+        "skill": "/cc-scout-security",
         "role": "Security config review",
         "required": false,
         "phase": "observe"
@@ -395,7 +395,7 @@
         "phase": "observe"
       },
       {
-        "skill": "/cc-scout repo",
+        "skill": "/cc-scout-repo",
         "role": "Find existing patterns",
         "required": false,
         "phase": "observe"
@@ -514,7 +514,7 @@
     ],
     "skills": [
       {
-        "skill": "/cc-scout security",
+        "skill": "/cc-scout-security",
         "role": "Check security config",
         "required": true,
         "phase": "observe"
@@ -639,7 +639,7 @@
     ],
     "skills": [
       {
-        "skill": "/cc-scout docs-gap",
+        "skill": "/cc-scout-docs-gap",
         "role": "Find stale/missing documentation",
         "required": true,
         "phase": "observe"
@@ -859,13 +859,11 @@
   "new-project": {
     "description": "Bootstrap project → design → plan → first feature",
     "trigger": [
-      "new project",
       "start from scratch",
       "scaffold",
       "bootstrap",
       "init",
       "新项目",
-      "从零开始",
       "初始化项目"
     ],
     "skills": [
@@ -936,7 +934,6 @@
   "deploy": {
     "description": "Pre-deploy verification → deploy → monitor",
     "trigger": [
-      "deploy",
       "production",
       "go live",
       "push to prod",
@@ -1033,7 +1030,6 @@
       "config change",
       "revert",
       "bump version",
-      "紧急修复",
       "快速修复",
       "小改动",
       "配置修改",
@@ -1432,7 +1428,6 @@
       "异常处理",
       "重试",
       "add error",
-      "error handling",
       "improve error"
     ],
     "skills": [
@@ -1633,51 +1628,10 @@
       }
     ]
   },
-  "clone-and-ship": {
-    "description": "Clone reference site: capture → analyze → implement → QA → ship",
-    "trigger": [
-      "clone site",
-      "replicate",
-      "copy design",
-      "make it look like",
-      "仿站",
-      "照着做",
-      "模仿"
-    ],
-    "skills": [
-      {
-        "skill": "/cc-clone-site",
-        "role": "Screenshot + analyze reference",
-        "required": true,
-        "phase": "mutate"
-      },
-      {
-        "skill": "/cc-browser-qa",
-        "role": "Visual comparison + accessibility",
-        "required": true,
-        "phase": "observe"
-      },
-      {
-        "skill": "/cc-review",
-        "role": "Review implementation",
-        "required": false,
-        "phase": "verify"
-      },
-      {
-        "skill": "/cc-ship",
-        "role": "Deploy",
-        "required": true,
-        "phase": "gate"
-      }
-    ]
-  },
   "ci-cd": {
     "description": "Set up or improve CI/CD pipeline: scaffold → deploy → verify",
     "trigger": [
-      "ci/cd",
       "ci cd",
-      "CI/CD",
-      "pipeline",
       "github actions",
       "continuous integration",
       "continuous deployment",
@@ -1685,7 +1639,6 @@
       "add ci",
       "CI",
       "CD",
-      "流水线",
       "持续集成",
       "持续部署"
     ],
