@@ -55,7 +55,9 @@ _COMMANDS = {
     "health": "insights:cmd_health",
     # review setup
     "review-setup": "review_setup:cmd_review_setup",
-    # multi-engine review
+    # review (unified — auto-selects best mode)
+    "review": "unified_review:cmd_unified_review",
+    # legacy aliases (still work directly)
     "multi-review": "multi_review:cmd_multi_review",
     "adversarial-review": "adversarial_review:cmd_adversarial_review",
     "multi-plan": "multi_plan:cmd_multi_plan",

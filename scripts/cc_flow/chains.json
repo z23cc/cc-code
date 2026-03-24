@@ -984,7 +984,7 @@
     ]
   },
   "deep-review": {
-    "description": "Multi-layer review: bridge → code review → security → refinement",
+    "description": "Deep code review — auto-selects best mode (3-engine debate / consensus / agent)",
     "trigger": [
       "thorough review",
       "deep review",
@@ -1000,28 +1000,23 @@
     ],
     "skills": [
       {
-        "skill": "/cc-bridge",
-        "role": "Recall past review findings (memory-enhanced)",
-        "required": false,
-        "phase": "observe"
-      },
-      {
-        "skill": "/cc-code-review-loop",
-        "role": "Verdict-driven review + auto-fix",
+        "skill": "/cc-review",
+        "role": "Auto-selects best review mode",
         "required": true,
-        "phase": "verify"
+        "phase": "verify",
+        "outputs": [
+          "verdict",
+          "issues"
+        ]
       },
       {
-        "skill": "/cc-security-review",
-        "role": "Security patterns check",
+        "skill": "/cc-commit",
+        "role": "Commit if SHIP",
         "required": true,
-        "phase": "verify"
-      },
-      {
-        "skill": "/cc-refinement",
-        "role": "Edge case hardening",
-        "required": false,
-        "phase": "verify"
+        "phase": "gate",
+        "reads": [
+          "verdict"
+        ]
       }
     ]
   },
@@ -1943,69 +1938,6 @@
       }
     ]
   },
-  "multi-review": {
-    "description": "Multi-model review — independent reviews from 2+ engines, then consensus",
-    "trigger": [
-      "multi model review",
-      "multi review",
-      "cross model",
-      "consensus review",
-      "roundtable",
-      "multi engine",
-      "multiple models",
-      "多模型审查",
-      "圆桌审查",
-      "多引擎",
-      "交叉审查"
-    ],
-    "skills": [
-      {
-        "skill": "/cc-review",
-        "role": "Agent review (Claude built-in agents)",
-        "required": true,
-        "outputs": [
-          "agent_verdict",
-          "agent_issues"
-        ],
-        "phase": "verify"
-      },
-      {
-        "skill": "/cc-rp",
-        "role": "RepoPrompt AI review (deep context)",
-        "required": false,
-        "outputs": [
-          "rp_verdict",
-          "rp_issues"
-        ],
-        "phase": "verify"
-      },
-      {
-        "skill": "/cc-review",
-        "role": "Consensus — compare verdicts, resolve conflicts",
-        "required": true,
-        "reads": [
-          "agent_verdict",
-          "rp_verdict",
-          "agent_issues",
-          "rp_issues"
-        ],
-        "outputs": [
-          "final_verdict",
-          "consensus_report"
-        ],
-        "phase": "verify"
-      },
-      {
-        "skill": "/cc-commit",
-        "role": "Commit if consensus=SHIP",
-        "required": true,
-        "reads": [
-          "final_verdict"
-        ],
-        "phase": "gate"
-      }
-    ]
-  },
   "multi-engine": {
     "description": "Full 3-engine pipeline: multi-plan → work → adversarial-review → commit",
     "trigger": [
@@ -2021,7 +1953,7 @@
     "skills": [
       {
         "skill": "/cc-multi-plan",
-        "role": "3-engine collaborative plan (Claude→Codex→Gemini)",
+        "role": "3-engine collaborative plan",
         "required": true,
         "phase": "design",
         "outputs": [
@@ -2031,7 +1963,7 @@
       },
       {
         "skill": "/cc-work",
-        "role": "Execute the plan (worktree + worker + verify)",
+        "role": "Execute the plan",
         "required": true,
         "phase": "mutate",
         "reads": [
@@ -2039,8 +1971,8 @@
         ]
       },
       {
-        "skill": "/cc-adversarial-review",
-        "role": "3-engine debate review (Claude×Codex×Gemini)",
+        "skill": "/cc-review",
+        "role": "Auto-selects best review mode (3-engine debate if available)",
         "required": true,
         "phase": "verify",
         "outputs": [
@@ -2050,7 +1982,7 @@
       },
       {
         "skill": "/cc-commit",
-        "role": "Commit if debate verdict = SHIP",
+        "role": "Commit if verdict = SHIP",
         "required": true,
         "phase": "gate",
         "reads": [
@@ -2078,42 +2010,6 @@
         "phase": "design",
         "outputs": [
           "plan_file",
-          "verdict"
-        ]
-      }
-    ]
-  },
-  "adversarial": {
-    "description": "3-engine adversarial debate: Claude × Codex × Gemini battle review",
-    "trigger": [
-      "adversarial",
-      "debate review",
-      "battle review",
-      "3 engine review",
-      "对抗审查",
-      "辩论审查",
-      "三引擎审查",
-      "adversarial review",
-      "debate",
-      "battle"
-    ],
-    "skills": [
-      {
-        "skill": "/cc-adversarial-review",
-        "role": "3-engine debate",
-        "required": true,
-        "phase": "verify",
-        "outputs": [
-          "verdict",
-          "issues"
-        ]
-      },
-      {
-        "skill": "/cc-commit",
-        "role": "Commit if verdict = SHIP",
-        "required": true,
-        "phase": "gate",
-        "reads": [
           "verdict"
         ]
       }
@@ -2148,8 +2044,8 @@
         ]
       },
       {
-        "skill": "/cc-adversarial-review",
-        "role": "3-engine debate review",
+        "skill": "/cc-review",
+        "role": "Auto-selects best review mode",
         "required": true,
         "phase": "verify",
         "outputs": [
