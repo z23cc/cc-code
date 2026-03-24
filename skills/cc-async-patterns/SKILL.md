@@ -4,6 +4,7 @@ description: >
   Python async/await patterns — asyncio, FastAPI, aiohttp, task groups, error handling for concurrent I/O.
   TRIGGER: 'async', 'await', 'asyncio', 'concurrent', 'aiohttp', 'task group', '异步', '并发'
   NOT FOR: CPU-bound parallelism, multiprocessing, threading
+  FLOWS INTO: cc-fastapi, cc-task-queues.
 ---
 
 # Async Python Patterns

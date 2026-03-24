@@ -6,6 +6,7 @@ description: >
   TRIGGER: 'check build', 'how does the build work', 'CI config', 'CI/CD', 'monorepo',
   '构建配置', 'CI 怎么设置的', '构建系统'.
   NOT FOR: fixing build errors — use cc-fix instead.
+  FLOWS INTO: cc-readiness-audit.
 ---
 
 # Build Scout — Build System Audit

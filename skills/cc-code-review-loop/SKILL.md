@@ -1,6 +1,6 @@
 ---
 name: cc-code-review-loop
-description: "Verdict-driven code review with auto-fix loop. SHIP/NEEDS_WORK/MAJOR_RETHINK verdicts, auto-fix until SHIP. No manual confirmation between iterations. TRIGGER: 'review and fix', 'review loop', 'get this to SHIP', 'code review', '审查循环', '代码审查', '审查并修复'. NOT FOR: epic-level review (use cc-epic-review), one-time review without fix (use cc-review)."
+description: "Verdict-driven code review with auto-fix loop. SHIP/NEEDS_WORK/MAJOR_RETHINK verdicts, auto-fix until SHIP. No manual confirmation between iterations. TRIGGER: 'review and fix', 'review loop', 'get this to SHIP', 'code review', '审查循环', '代码审查', '审查并修复'. NOT FOR: epic-level review (use cc-epic-review), one-time review without fix (use cc-review). FLOWS INTO: cc-commit, cc-ship."
 ---
 
 # Code Review Loop — Verdict Gates

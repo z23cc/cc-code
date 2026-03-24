@@ -1,6 +1,6 @@
 ---
 name: cc-clean-architecture
-description: "Clean Architecture principles — dependency direction, entity design, use case isolation, boundary definition, separation of concerns. TRIGGER: 'architecture', 'clean architecture', 'layer design', 'structure this', 'boundary', 'separation of concerns', '架构设计', '分层', '依赖方向'. NOT FOR: code review (use cc-code-review-loop), refactoring execution (use cc-simplify)."
+description: "Clean Architecture principles — dependency direction, entity design, use case isolation, boundary definition, separation of concerns. TRIGGER: 'architecture', 'clean architecture', 'layer design', 'structure this', 'boundary', 'separation of concerns', '架构设计', '分层', '依赖方向'. NOT FOR: code review (use cc-code-review-loop), refactoring execution (use cc-simplify). FLOWS INTO: cc-brainstorming, cc-plan."
 ---
 
 # Clean Architecture — Python Edition

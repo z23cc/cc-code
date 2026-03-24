@@ -1,5 +1,19 @@
 # Changelog
 
+## [5.7.0] - 2026-03-24
+### Added
+- **Flow graph coverage 84%** — 38 orphan skills now have FLOWS INTO/DEPENDS ON relationships (was 33%, 21→58 connected)
+- **Dependency enforcement** — `cc-flow skill check-deps --skill cc-plan` warns when predecessor context is missing
+- **Chain metrics** — `cc-flow chain stats` tracks runs, completions, success rate per chain
+- **Context schema hints** — feature + bugfix chains define `outputs`/`reads` keys per step
+- **Auto-learn prompt** — chain completion suggests `cc-flow learn` command with outcome
+
+### Improved
+- `chain run` records start metrics; `chain advance` records completion metrics
+- Scouts → readiness-audit → deploy flow connections established
+- Python pack skills (fastapi, database, async, etc.) now flow into tdd/review/refinement
+- UI skills chain: ui-ux → web-design → optimize → review
+
 ## [5.6.0] - 2026-03-24
 ### Added
 - **`cc-flow go`** — one command full automation: describe your goal, system auto-routes to chain/ralph/auto mode

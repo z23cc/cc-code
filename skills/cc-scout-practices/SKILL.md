@@ -6,6 +6,7 @@ description: >
   TRIGGER: 'best practices for', 'how should I implement', 'what are the pitfalls',
   'community guidance', '最佳实践', '有什么坑', '推荐做法'.
   NOT FOR: existing repo patterns — use cc-scout-repo instead.
+  FLOWS INTO: cc-brainstorming, cc-plan.
 ---
 
 # Practice Scout — Best Practices Before Code

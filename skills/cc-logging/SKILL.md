@@ -3,6 +3,7 @@ name: cc-logging
 description: >
   Python logging, structured output, and error handling patterns.
   TRIGGER: 'logging', 'log', 'monitoring', 'observability', '日志', '监控'.
+  FLOWS INTO: cc-deploy.
 ---
 
 # Logging & Observability

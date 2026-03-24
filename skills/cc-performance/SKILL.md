@@ -3,6 +3,7 @@ name: cc-performance
 description: >
   Python performance profiling, optimization patterns, and benchmarking.
   TRIGGER: 'slow', 'profile', 'bottleneck', 'optimize', '慢', '性能', '优化'.
+  FLOWS INTO: cc-optimize, cc-refinement.
 ---
 
 # Python Performance Optimization

@@ -3,6 +3,7 @@ name: cc-database
 description: >
   Python database patterns — SQLAlchemy, migrations, connection pooling, query optimization, transactions.
   TRIGGER: 'database', 'SQL', 'migration', 'query', '数据库', 'SQL'.
+  FLOWS INTO: cc-tdd, cc-performance.
 ---
 
 # Python Database Patterns

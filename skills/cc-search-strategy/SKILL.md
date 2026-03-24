@@ -6,6 +6,7 @@ description: >
   TRIGGER: 'searching codebase', 'exploring code', 'finding where X is used',
   'understanding architecture', 'refactoring', 'security audit', '搜索', '查找', '代码搜索'.
   NOT FOR: known file paths — just use Read directly.
+  FLOWS INTO: cc-research.
 ---
 
 # Search Strategy — Tool Priority Chain

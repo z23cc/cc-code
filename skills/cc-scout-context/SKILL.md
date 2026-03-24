@@ -6,6 +6,7 @@ description: >
   TRIGGER: 'quick overview', 'explore the codebase efficiently', 'save context',
   'minimal tokens', '快速了解', '省 token 探索', '高效探索'.
   NOT FOR: deep cross-file analysis — use cc-research or cc-rp builder.
+  FLOWS INTO: cc-research.
 ---
 
 # Context Scout — Efficient Codebase Exploration

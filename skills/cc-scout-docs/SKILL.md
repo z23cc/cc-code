@@ -5,6 +5,7 @@ description: >
   Fetches version-specific docs, source code references, and known issues.
   TRIGGER: 'find docs for', 'what does the API say', 'check the docs', '查文档', '看看文档怎么说', '查API'.
   NOT FOR: checking if YOUR docs are stale — use cc-scout-docs-gap instead.
+  FLOWS INTO: cc-docs.
 ---
 
 # Docs Scout — Find Relevant Documentation

@@ -172,6 +172,7 @@ def _add_workflow_commands(sub):
     chain_run.add_argument("--required-only", action="store_true", default=False)
     chain_advance = chain_sub.add_parser("advance", help="Advance chain to next step")
     chain_advance.add_argument("--data", default="{}", help="JSON context from completed step")
+    chain_sub.add_parser("stats", help="Show chain execution metrics")
 
 
 def _add_template_commands(sub):
@@ -604,6 +605,10 @@ def _add_skill_flow_commands(sub):
     ctx_sub.add_parser("current", help="Show current active skill")
     ctx_clear = ctx_sub.add_parser("clear", help="Clear skill context")
     ctx_clear.add_argument("--all", action="store_true", default=False, help="Clear all context, not just current")
+
+    # skill check-deps [--skill name]
+    check_deps = skill_sub.add_parser("check-deps", help="Check if skill dependencies are satisfied")
+    check_deps.add_argument("--skill", default="", help="Skill to check")
 
 
 def _add_go_command(sub):

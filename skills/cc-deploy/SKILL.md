@@ -4,6 +4,8 @@ description: >
   Docker, CI/CD, and deployment patterns for Python applications.
   TRIGGER: 'deploy', 'docker', 'CI/CD', 'production', 'container', 'Dockerfile', '部署', 'Docker'
   NOT FOR: local development setup, testing, scaffolding
+  FLOWS INTO: cc-ship.
+  DEPENDS ON: cc-verification.
 ---
 
 # Python Deployment Patterns

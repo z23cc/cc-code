@@ -6,6 +6,7 @@ description: >
   TRIGGER: 'what patterns exist', 'scan the repo', 'find conventions', 'existing abstractions',
   '扫描仓库', '已有什么模式', '代码规范'.
   NOT FOR: external best practices — use cc-scout-practices instead.
+  FLOWS INTO: cc-plan, cc-brainstorming.
 ---
 
 # Repo Scout — Find Existing Patterns

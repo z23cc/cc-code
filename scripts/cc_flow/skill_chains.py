@@ -16,21 +16,30 @@ SKILL_CHAINS = {
         "description": "Full feature development lifecycle",
         "trigger": ["new feature", "add feature", "add new", "build", "implement", "create", "新功能", "新增"],
         "skills": [
-            {"skill": "/cc-brainstorm", "role": "Design exploration", "required": True},
-            {"skill": "/cc-plan", "role": "Implementation plan with tasks", "required": True},
-            {"skill": "/cc-tdd", "role": "Test-driven implementation", "required": True},
-            {"skill": "/cc-review", "role": "Code review (parallel reviewers)", "required": True},
-            {"skill": "/cc-commit", "role": "Verify and commit", "required": True},
+            {"skill": "/cc-brainstorm", "role": "Design exploration", "required": True,
+             "outputs": ["design_doc", "decisions", "acceptance_criteria"]},
+            {"skill": "/cc-plan", "role": "Implementation plan with tasks", "required": True,
+             "reads": ["design_doc", "decisions"], "outputs": ["epic_id", "task_ids", "plan_doc"]},
+            {"skill": "/cc-tdd", "role": "Test-driven implementation", "required": True,
+             "reads": ["epic_id", "task_ids"], "outputs": ["test_results", "files_changed", "coverage"]},
+            {"skill": "/cc-review", "role": "Code review (parallel reviewers)", "required": True,
+             "reads": ["files_changed"], "outputs": ["verdict", "issues_fixed"]},
+            {"skill": "/cc-commit", "role": "Verify and commit", "required": True,
+             "reads": ["verdict"]},
         ],
     },
     "bugfix": {
         "description": "Systematic bug fix",
         "trigger": ["fix bug", "debug", "crash", "error", "修bug", "修复"],
         "skills": [
-            {"skill": "/cc-debug", "role": "Root cause analysis", "required": True},
-            {"skill": "/cc-tdd", "role": "Write regression test + fix", "required": True},
-            {"skill": "/cc-review", "role": "Verify no side effects", "required": False},
-            {"skill": "/cc-commit", "role": "Commit fix", "required": True},
+            {"skill": "/cc-debug", "role": "Root cause analysis", "required": True,
+             "outputs": ["root_cause", "fix_description", "regression_test"]},
+            {"skill": "/cc-tdd", "role": "Write regression test + fix", "required": True,
+             "reads": ["root_cause", "fix_description"], "outputs": ["test_results", "files_changed"]},
+            {"skill": "/cc-review", "role": "Verify no side effects", "required": False,
+             "reads": ["files_changed"], "outputs": ["verdict"]},
+            {"skill": "/cc-commit", "role": "Commit fix", "required": True,
+             "reads": ["verdict"]},
         ],
     },
     "ui-design": {
@@ -385,13 +394,15 @@ def cmd_chain_run(args):
     # Load context from previous skills and save chain state
     try:
         from cc_flow.skill_flow import (
-            load_skill_ctx, set_current, save_chain_state,
+            load_skill_ctx, set_current, save_chain_state, record_chain_start,
         )
         # Save chain state for resume
         save_chain_state(name, steps, current_step=0)
         # Set first skill as current
         first_skill = _skill_name_from_cmd(steps[0]["skill"])
         set_current(first_skill, chain_name=name)
+        # Record metrics
+        record_chain_start(name)
     except ImportError:
         pass
 
@@ -454,6 +465,7 @@ def cmd_chain_advance(args):
         from cc_flow.skill_flow import (
             load_chain_state, advance_chain_state, set_current,
             save_skill_ctx, load_skill_ctx,
+            record_chain_complete,
         )
     except ImportError:
         error("skill_flow module not available")
@@ -483,11 +495,19 @@ def cmd_chain_advance(args):
         error("No active chain state")
 
     if new_state.get("complete"):
+        # Record metrics
+        total = state.get("total_steps", 0)
+        try:
+            record_chain_complete(chain_name, total, total)
+        except Exception:
+            pass
+
         print(json.dumps({
             "success": True,
             "complete": True,
             "chain": chain_name,
             "message": f"Chain '{chain_name}' complete! All steps finished.",
+            "auto_learn": f"cc-flow learn --task '{chain_name} chain' --outcome success --approach 'chain execution' --lesson 'completed {total} steps'",
         }))
         return
 

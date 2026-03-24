@@ -6,6 +6,7 @@ description: >
   TRIGGER: 'check env setup', 'environment config', 'how to set up', 'docker config',
   'devcontainer', '环境配置', '怎么搭建环境', '开发环境'.
   NOT FOR: runtime debugging — use cc-debug instead.
+  FLOWS INTO: cc-readiness-audit.
 ---
 
 # Env Scout — Environment Setup Audit

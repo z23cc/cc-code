@@ -5,6 +5,7 @@ description: >
   Scans README, CHANGELOG, API docs, ADRs, and inline docs.
   TRIGGER: 'what docs need updating', 'docs gap', 'check doc coverage', '哪些文档需要更新', '文档覆盖'.
   NOT FOR: finding library docs — use cc-scout-docs instead.
+  FLOWS INTO: cc-docs.
 ---
 
 # Docs Gap Scout — Find Stale Documentation

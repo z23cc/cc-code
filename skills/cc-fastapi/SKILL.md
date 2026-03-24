@@ -3,6 +3,7 @@ name: cc-fastapi
 description: >
   FastAPI patterns — route design, Pydantic models, dependency injection, error handling, auth, pagination.
   TRIGGER: 'fastapi', 'API', 'endpoint', 'route', 'FastAPI', 'API接口'.
+  FLOWS INTO: cc-tdd, cc-security-review.
 ---
 
 # FastAPI Patterns

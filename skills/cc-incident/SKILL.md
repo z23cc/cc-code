@@ -1,6 +1,6 @@
 ---
 name: cc-incident
-description: "Production incident response and postmortem — triage, investigate, mitigate, fix, write postmortem. TRIGGER: 'incident', 'production down', 'outage', 'postmortem', 'service down', 'SEV1', '事故', '生产故障', '复盘', '线上问题'. NOT FOR: dev bugs (use cc-debug), build errors (use cc-fix), code review (use cc-review)."
+description: "Production incident response and postmortem — triage, investigate, mitigate, fix, write postmortem. TRIGGER: 'incident', 'production down', 'outage', 'postmortem', 'service down', 'SEV1', '事故', '生产故障', '复盘', '线上问题'. NOT FOR: dev bugs (use cc-debug), build errors (use cc-fix), code review (use cc-review). FLOWS INTO: cc-debugging, cc-tdd."
 ---
 
 # Incident Response & Postmortem

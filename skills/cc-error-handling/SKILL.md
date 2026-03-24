@@ -4,6 +4,7 @@ description: >
   Python error handling — exception hierarchies, retry logic, graceful degradation, context propagation.
   TRIGGER: 'error handling', 'exception', 'retry', 'try/except', 'graceful degradation', '错误处理', '异常处理'
   NOT FOR: logging setup, monitoring, general debugging
+  FLOWS INTO: cc-python-testing, cc-refinement.
 ---
 
 # Error Handling Patterns

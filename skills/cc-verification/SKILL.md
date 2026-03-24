@@ -3,6 +3,7 @@ name: cc-verification
 description: >
   Run verification commands and confirm output before any completion claims. Evidence before assertions.
   TRIGGER: 'verify', 'check', 'done?', 'complete?', '验证', '检查完成'.
+  FLOWS INTO: cc-refinement, cc-commit.
 ---
 
 # Verification Before Completion

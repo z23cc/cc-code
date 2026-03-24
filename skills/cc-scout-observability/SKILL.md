@@ -6,6 +6,7 @@ description: >
   TRIGGER: 'check observability', 'logging setup', 'monitoring config', 'tracing', 'metrics',
   '监控配置', '日志怎么设置的', '可观测性'.
   NOT FOR: adding logging to code — use cc-python-logging instead.
+  FLOWS INTO: cc-readiness-audit.
 ---
 
 # Observability Scout — Logging/Tracing/Metrics Audit

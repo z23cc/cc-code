@@ -4,6 +4,7 @@ description: >
   Python testing with pytest — TDD, fixtures, parametrization, mocking, async testing, and coverage.
   TRIGGER: 'pytest', 'test', 'TDD', 'coverage', 'mock', 'fixture', '测试', '写测试'
   NOT FOR: error handling patterns, debugging, deployment
+  FLOWS INTO: cc-verification, cc-refinement.
 ---
 
 # Python Testing Patterns

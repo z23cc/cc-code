@@ -6,6 +6,7 @@ description: >
   TRIGGER: 'assemble team', 'dispatch team', 'run team', 'multi-agent',
   '组团', '派团队', '组队'.
   NOT FOR: single-agent tasks — just use the agent directly.
+  FLOWS INTO: cc-parallel-agents, cc-work.
 ---
 
 # Agent Teams — Composition & Dispatch

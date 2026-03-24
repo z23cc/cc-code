@@ -4,6 +4,7 @@ description: >
   Security checklist and patterns for Python applications. Auth, input validation, secrets, API endpoints.
   TRIGGER: 'security', 'auth', 'injection', 'XSS', 'CSRF', 'vulnerability', '安全审查', '安全检查'
   NOT FOR: general code review, testing, performance
+  FLOWS INTO: cc-review, cc-refinement.
 ---
 
 # Security Review Checklist

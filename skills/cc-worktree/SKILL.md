@@ -7,6 +7,7 @@ description: >
   TRIGGER: 'worktree', 'parallel work', 'isolated branch', 'create worktree',
   '工作树', '并行开发', '隔离分支'.
   NOT FOR: simple branching — use git directly.
+  FLOWS INTO: cc-work.
 ---
 
 # Worktree Management

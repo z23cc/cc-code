@@ -7,6 +7,8 @@ description: >
   TRIGGER: 'background job', 'celery', 'async task', 'periodic task', 'task queue',
   '后台任务', '定时任务', '异步队列', '消息队列'.
   NOT FOR: project task tracking — use cc-task-tracking instead.
+  FLOWS INTO: cc-performance.
+  DEPENDS ON: cc-async-patterns.
 ---
 
 # Task Queues — Celery Patterns

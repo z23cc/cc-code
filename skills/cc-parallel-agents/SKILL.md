@@ -4,6 +4,8 @@ description: >
   Dispatch 2+ independent tasks to concurrent agents with isolated context. No shared state needed.
   TRIGGER: 'parallel', 'concurrent', 'multiple agents', 'fan-out', 'simultaneous', '并行', '并发agent'
   NOT FOR: sequential workflows, single-task execution
+  FLOWS INTO: cc-review.
+  DEPENDS ON: cc-teams.
 ---
 
 # Dispatching Parallel Agents

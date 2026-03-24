@@ -6,6 +6,8 @@ description: >
   TRIGGER: 'refine', 'harden', 'polish', 'production-ready', 'edge cases',
   '加固', '打磨', '上线前优化'.
   NOT FOR: initial implementation — use cc-tdd or cc-work first.
+  FLOWS INTO: cc-review, cc-commit.
+  DEPENDS ON: cc-tdd.
 ---
 
 # Refinement Loop

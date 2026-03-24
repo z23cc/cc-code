@@ -340,6 +340,126 @@ def advance_chain_state():
     return state
 
 
+# ── Dependency check ──
+
+def check_deps(name):
+    """Check if a skill's dependencies have context available.
+
+    Returns {"ready": bool, "missing": [...], "available": [...]}.
+    """
+    deps = prev_skills(name)
+    if not deps:
+        return {"ready": True, "missing": [], "available": []}
+
+    missing = []
+    available = []
+    for dep in deps:
+        ctx = load_skill_ctx(dep)
+        if ctx:
+            available.append(dep)
+        else:
+            missing.append(dep)
+
+    return {"ready": len(missing) == 0, "missing": missing, "available": available}
+
+
+def cmd_check_deps(args):
+    """CLI: check if a skill's dependencies are satisfied."""
+    name = getattr(args, "skill", "") or getattr(args, "name", "")
+    if not name:
+        current = get_current()
+        if current:
+            name = current.get("skill", "")
+    if not name:
+        error("Specify skill: cc-flow skill check-deps --skill <name>")
+
+    alias_map = _build_alias_map(_skills_dir())
+    canonical = _normalize(name, alias_map)
+    result = check_deps(canonical)
+    result["skill"] = canonical
+    result["success"] = True
+
+    if result["missing"]:
+        result["message"] = (
+            f"Missing context from: {', '.join(result['missing'])}. "
+            f"Run these skills first, or use: cc-flow skill ctx save <name> --data '{{}}'"
+        )
+    else:
+        result["message"] = "All dependencies satisfied."
+
+    print(json.dumps(result))
+
+
+# ── Chain metrics ──
+
+CHAIN_METRICS_FILE = TASKS_DIR / "chain_metrics.json"
+
+
+def _load_metrics():
+    """Load chain metrics."""
+    return safe_json_load(CHAIN_METRICS_FILE, default={"chains": {}, "total_runs": 0})
+
+
+def record_chain_start(chain_name):
+    """Record chain execution start."""
+    metrics = _load_metrics()
+    if chain_name not in metrics["chains"]:
+        metrics["chains"][chain_name] = {
+            "runs": 0, "completions": 0, "failures": 0,
+            "total_steps_completed": 0, "avg_steps": 0,
+        }
+    metrics["chains"][chain_name]["runs"] += 1
+    metrics["chains"][chain_name]["last_started"] = now_iso()
+    metrics["total_runs"] += 1
+    CHAIN_METRICS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    atomic_write(CHAIN_METRICS_FILE, json.dumps(metrics, indent=2) + "\n")
+
+
+def record_chain_complete(chain_name, steps_completed, total_steps):
+    """Record chain completion."""
+    metrics = _load_metrics()
+    if chain_name not in metrics["chains"]:
+        metrics["chains"][chain_name] = {
+            "runs": 1, "completions": 0, "failures": 0,
+            "total_steps_completed": 0, "avg_steps": 0,
+        }
+    m = metrics["chains"][chain_name]
+    m["completions"] += 1
+    m["total_steps_completed"] += steps_completed
+    m["last_completed"] = now_iso()
+    total_runs = m["completions"] + m["failures"]
+    if total_runs > 0:
+        m["avg_steps"] = round(m["total_steps_completed"] / total_runs, 1)
+    m["success_rate"] = round(m["completions"] / max(m["runs"], 1) * 100)
+    CHAIN_METRICS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    atomic_write(CHAIN_METRICS_FILE, json.dumps(metrics, indent=2) + "\n")
+
+
+def record_chain_failure(chain_name, step_failed):
+    """Record chain failure."""
+    metrics = _load_metrics()
+    if chain_name in metrics["chains"]:
+        metrics["chains"][chain_name]["failures"] += 1
+        metrics["chains"][chain_name]["last_failure"] = now_iso()
+        metrics["chains"][chain_name]["last_failure_step"] = step_failed
+        CHAIN_METRICS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        atomic_write(CHAIN_METRICS_FILE, json.dumps(metrics, indent=2) + "\n")
+
+
+def cmd_chain_stats(args):
+    """Show chain execution metrics."""
+    metrics = _load_metrics()
+    if not metrics["chains"]:
+        print(json.dumps({"success": True, "total_runs": 0, "message": "No chain metrics yet."}))
+        return
+
+    print(json.dumps({
+        "success": True,
+        "total_runs": metrics["total_runs"],
+        "chains": metrics["chains"],
+    }))
+
+
 # ── CLI commands ──
 
 def cmd_next(args):

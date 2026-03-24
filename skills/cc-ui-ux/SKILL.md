@@ -6,6 +6,7 @@ description: >
   'font pairing', 'accessibility', 'responsive design', 'UI审查', '设计UI', '配色方案'.
   NOT FOR: backend API design — this is for visual UI and user experience.
   Based on ui-ux-pro-max by nextlevelbuilder.
+  FLOWS INTO: cc-web-design, cc-optimize.
 ---
 
 # UI/UX Pro Max - Design Intelligence

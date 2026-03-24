@@ -6,6 +6,7 @@ description: >
   TRIGGER: 'show tasks', 'what needs to be done', 'task status', 'create task',
   'list epics', 'next task', 'progress', '任务列表', '查看进度', '创建任务', '任务管理'.
   NOT FOR: background job queues — use cc-task-queues instead.
+  FLOWS INTO: cc-work.
 ---
 
 # Task Tracking — File-Based Project Management

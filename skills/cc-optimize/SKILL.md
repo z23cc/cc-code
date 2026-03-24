@@ -6,6 +6,7 @@ description: >
   'Core Web Vitals', 'LCP', '性能优化', '页面太慢'. Based on pbakaus/impeccable.
 user-invocable: true
 argument-hint: [TARGET=<value>]
+  FLOWS INTO: cc-review, cc-refinement.
 ---
 
 # Frontend Performance Optimization

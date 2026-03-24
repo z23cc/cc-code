@@ -6,6 +6,7 @@ description: >
   TRIGGER: 'check tooling', 'lint config', 'what linters are set up', 'pre-commit hooks',
   'formatter', '检查工具链', 'lint 配置', '代码格式化'.
   NOT FOR: fixing lint errors — use cc-fix instead.
+  FLOWS INTO: cc-readiness-audit.
 ---
 
 # Tooling Scout — Lint/Format/Type Check Audit

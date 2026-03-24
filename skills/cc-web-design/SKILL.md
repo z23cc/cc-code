@@ -5,6 +5,8 @@ description: >
   TRIGGER: 'review UI', 'check design', 'audit UX', 'accessibility check',
   'web design review', '检查UI', '审查设计', '前端审查'.
   Fetches latest guidelines, reads files, outputs findings.
+  FLOWS INTO: cc-optimize, cc-review.
+  DEPENDS ON: cc-ui-ux.
 ---
 
 # Web Design Review

@@ -6,6 +6,7 @@ description: >
   TRIGGER: 'what am I missing', 'edge cases', 'gap analysis', 'requirements complete?',
   'missing requirements', '有什么遗漏', '边界情况', '需求分析', '需求完整吗'.
   NOT FOR: post-implementation review — use cc-review instead.
+  FLOWS INTO: cc-plan, cc-brainstorming.
 ---
 
 # Gap Analyst — Find Missing Requirements

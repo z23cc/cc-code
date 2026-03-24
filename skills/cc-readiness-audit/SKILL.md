@@ -7,6 +7,7 @@ description: >
   TRIGGER: 'audit project', 'is this ready', 'readiness check', 'project health',
   '项目体检', '准备好了吗', '项目审计'.
   NOT FOR: code review — use cc-review. NOT FOR: security audit — use cc-scout-security.
+  FLOWS INTO: cc-deploy.
 ---
 
 # Readiness Audit — 8 Pillars
