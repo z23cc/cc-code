@@ -1,5 +1,23 @@
 # Changelog
 
+## [5.24.0] - 2026-03-24
+### Added
+- **3 new chains** (39 total):
+  - `ci-cd`: scaffold → deploy → verify → commit (CI/CD pipeline setup)
+  - `prd-review`: prd-validate → elicit → requirement-gate → prd (spec quality pipeline)
+  - `architecture`: research → clean-architecture → architecture → plan (system design)
+- **Expanded help system** — `cc-flow help` now shows:
+  - `go` as the #1 entry point (was missing from help)
+  - 7 example chains (was 4), including hotfix, idea-to-ship, deploy, security-audit
+  - New categories: Automation, Wisdom & Learning, Workflows
+  - Tab completions for go, wisdom, explore, wf commands
+
+### Fixed
+- **"set up CI/CD" routing** — now correctly routes to deploy/ci-cd chain (was hitting refactor)
+- **`chain list` count** — help now shows "39 chains" (was hardcoded "7")
+- **Non-standard skill ref** — `deep-search` in research chain → `/cc-bridge`
+- **Deploy chain triggers** — added CI/CD, pipeline keywords
+
 ## [5.23.0] - 2026-03-24
 ### Added
 - **15 missing slash commands** — every skill now has a direct `/cc-*` command (82 total):

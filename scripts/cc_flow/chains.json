@@ -339,8 +339,8 @@
     ],
     "skills": [
       {
-        "skill": "deep-search",
-        "role": "Morph search → RP builder (find + analyze)",
+        "skill": "/cc-bridge",
+        "role": "Deep search (Morph find → RP analyze)",
         "required": true
       },
       {
@@ -835,7 +835,13 @@
       "push to prod",
       "部署",
       "上生产",
-      "发布上线"
+      "发布上线",
+      "ci/cd",
+      "CI/CD",
+      "pipeline",
+      "ci",
+      "cd",
+      "流水线"
     ],
     "skills": [
       {
@@ -1478,6 +1484,129 @@
       {
         "skill": "/cc-ship",
         "role": "Deploy",
+        "required": true
+      }
+    ]
+  },
+  "ci-cd": {
+    "description": "Set up or improve CI/CD pipeline: scaffold → deploy → verify",
+    "trigger": [
+      "ci/cd",
+      "ci cd",
+      "CI/CD",
+      "pipeline",
+      "github actions",
+      "continuous integration",
+      "continuous deployment",
+      "set up ci",
+      "add ci",
+      "CI",
+      "CD",
+      "流水线",
+      "持续集成",
+      "持续部署"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-scaffold",
+        "role": "Project structure and tooling setup",
+        "required": false
+      },
+      {
+        "skill": "/cc-deploy",
+        "role": "Docker + CI/CD configuration",
+        "required": true,
+        "outputs": [
+          "deploy_config",
+          "ci_config"
+        ]
+      },
+      {
+        "skill": "/cc-verification",
+        "role": "Verify pipeline works",
+        "required": true
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit CI/CD changes",
+        "required": true
+      }
+    ]
+  },
+  "prd-review": {
+    "description": "Validate and improve a PRD/spec before planning",
+    "trigger": [
+      "review prd",
+      "check spec",
+      "validate spec",
+      "spec review",
+      "prd quality",
+      "审查PRD",
+      "检查需求",
+      "需求质量"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-prd-validate",
+        "role": "10-step PRD quality pipeline",
+        "required": true,
+        "outputs": [
+          "quality_score",
+          "issues",
+          "improvements"
+        ]
+      },
+      {
+        "skill": "/cc-elicit",
+        "role": "Challenge assumptions (pre-mortem)",
+        "required": false
+      },
+      {
+        "skill": "/cc-requirement-gate",
+        "role": "Final requirements validation",
+        "required": true
+      },
+      {
+        "skill": "/cc-prd",
+        "role": "Convert validated spec to implementation plan",
+        "required": true
+      }
+    ]
+  },
+  "architecture": {
+    "description": "Architecture design: research → clean arch → ADR → plan",
+    "trigger": [
+      "architecture design",
+      "system design",
+      "design architecture",
+      "architect",
+      "架构设计",
+      "系统设计",
+      "技术架构"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-research",
+        "role": "Understand current codebase",
+        "required": true
+      },
+      {
+        "skill": "/cc-clean-architecture",
+        "role": "Apply clean architecture principles",
+        "required": true
+      },
+      {
+        "skill": "/cc-architecture",
+        "role": "Document ADRs",
+        "required": true,
+        "outputs": [
+          "architecture_doc",
+          "adrs"
+        ]
+      },
+      {
+        "skill": "/cc-plan",
+        "role": "Create implementation plan from ADRs",
         "required": true
       }
     ]

@@ -9,6 +9,13 @@ from cc_flow import skin
 
 def _repl_help():
     """Show curated REPL help — progressive disclosure."""
+    skin.heading("One Command")
+    go = [
+        ("go \"describe goal\"", "Auto-route + execute (chain/ralph/auto)"),
+        ("go \"fix bug\" --dry-run", "Preview plan without executing"),
+    ]
+    skin.table(["Command", "Description"], go)
+
     skin.heading("Start Here")
     start = [
         ("route <task>", "Don't know what to do? Describe your task"),
@@ -19,13 +26,16 @@ def _repl_help():
     ]
     skin.table(["Command", "Description"], start)
 
-    skin.heading("Skill Chains (multi-step workflows)")
+    skin.heading("Skill Chains (39 workflows)")
     chains = [
         ("chain run feature", "brainstorm → plan → tdd → review → commit"),
         ("chain run bugfix", "debug → tdd → review → commit"),
-        ("chain run ui-design", "ui-ux → web-design → optimize → browser"),
-        ("chain run release", "refine → security → review → docs → commit"),
-        ("chain list", "Show all 7 chains"),
+        ("chain run hotfix", "tdd → review → commit (fast-track)"),
+        ("chain run idea-to-ship", "office-hours → brainstorm → plan → work → ship"),
+        ("chain run deploy", "readiness → verify → deploy → ship"),
+        ("chain run security-audit", "scout-security → security-review → commit"),
+        ("chain suggest <task>", "Find best chain for your task"),
+        ("chain list", "Show all 39 chains"),
     ]
     skin.table(["Command", "Steps"], chains)
     print()
@@ -36,32 +46,36 @@ def _repl_help():
 def _repl_help_all():
     """Show all commands grouped by category."""
     groups = [
+        ("Automation",
+         "go \"goal\", ralph, auto scan/run/deep/full"),
         ("Task Management",
          "init, epic, task, dep, list, show, ready, next, progress, dashboard"),
         ("Work Execution",
-         "start, done, block, reopen, rollback, diff, bulk, work (via skill)"),
+         "start, done, block, reopen, rollback, diff, bulk"),
         ("Quality",
-         "verify, scan, validate, validate-skills, doctor, health, auto"),
+         "verify, scan, validate, validate-skills, doctor, health"),
         ("Search & Route",
          "search, route, learn, learnings, consolidate, find, similar, suggest"),
+        ("Skill Flow",
+         "skill next/graph/ctx, chain list/show/suggest/run/advance/stats"),
+        ("Wisdom & Learning",
+         "wisdom show/search/add, explore cache/lookup"),
         ("Worktree",
          "worktree create/list/switch/remove/status/info"),
         ("Safety",
-         "careful, freeze, guard, checkpoint"),
+         "careful, freeze, guard, checkpoint create/verify/compare/list"),
         ("Bridge (Morph\u00d7RP\u00d7SM)",
          "deep-search, smart-chat, embed-structure, recall-review, bridge-status"),
         ("RepoPrompt",
          "rp check/builder/plan/review/chat/search/tree/structure/git/edit/..."),
+        ("Workflows",
+         "wf run/list/show/export, workflow list/run/show/create"),
         ("Analytics",
          "stats, standup, changelog, burndown, report, time, forecast"),
         ("Session",
          "session save/restore/list, context-budget"),
-        ("Autonomous",
-         "go, ralph, auto scan/run/deep/full"),
-        ("Skill Flow",
-         "skill next/graph/graph-build/ctx, chain list/show/suggest/run/advance"),
         ("Misc",
-         "config, version, clean, graph, export, perf"),
+         "config, version, clean, graph, export, perf, help"),
     ]
     print()
     for title, cmds in groups:
@@ -129,10 +143,13 @@ _COMPLETIONS = [
     "worktree create", "worktree list", "worktree switch", "worktree remove",
     "worktree cleanup", "worktree status", "worktree info",
     "memory save", "memory search", "memory sync", "memory recall",
-    "chain list", "chain show", "chain suggest", "chain run", "chain advance",
-    "skill next", "skill graph", "skill graph-build",
+    "chain list", "chain show", "chain suggest", "chain run", "chain advance", "chain stats",
+    "skill next", "skill graph", "skill graph-build", "skill check-deps",
     "skill ctx save", "skill ctx load", "skill ctx current", "skill ctx clear",
-    "go",
+    "go", "go --dry-run", "go --mode=chain", "go --mode=ralph", "go --resume",
+    "wisdom show", "wisdom search", "wisdom add", "wisdom clear",
+    "explore cache", "explore lookup", "explore clear",
+    "wf run", "wf list", "wf show", "wf export",
     # Flags
     "--json", "--epic", "--fix", "--dry-run", "--semantic",
     # REPL
