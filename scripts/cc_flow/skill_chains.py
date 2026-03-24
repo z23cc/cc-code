@@ -480,14 +480,29 @@ def cmd_chain_advance(args):
 
     # Save context from completed step if --data provided
     data_str = getattr(args, "data", "{}")
+    saved_keys = []
     if data_str and data_str != "{}":
         try:
             data = json.loads(data_str)
             if current_step < len(step_skills):
                 completed_skill = _skill_name_from_cmd(step_skills[current_step])
                 save_skill_ctx(completed_skill, data)
+                saved_keys = list(data.keys())
         except (json.JSONDecodeError, Exception):
             pass
+
+    # Schema validation: check if saved context has expected output keys
+    schema_warnings = []
+    if chain_name in SKILL_CHAINS and current_step < len(SKILL_CHAINS[chain_name]["skills"]):
+        step_def = SKILL_CHAINS[chain_name]["skills"][current_step]
+        expected_outputs = step_def.get("outputs", [])
+        if expected_outputs and saved_keys:
+            missing = [k for k in expected_outputs if k not in saved_keys]
+            if missing:
+                schema_warnings.append(
+                    f"Missing expected context keys: {', '.join(missing)} "
+                    f"(expected: {', '.join(expected_outputs)})"
+                )
 
     # Advance to next step
     new_state = advance_chain_state()
@@ -529,6 +544,17 @@ def cmd_chain_advance(args):
                 prev_skill = _skill_name_from_cmd(steps[next_step_idx - 1]["skill"])
                 prev_ctx = load_skill_ctx(prev_skill)
 
+            # Check if next step's reads are satisfied
+            reads_check = []
+            next_reads = next_step.get("reads", [])
+            if next_reads and prev_ctx:
+                missing_reads = [k for k in next_reads if k not in prev_ctx]
+                if missing_reads:
+                    reads_check.append(
+                        f"Next step expects: {', '.join(next_reads)}. "
+                        f"Missing: {', '.join(missing_reads)}"
+                    )
+
             result = {
                 "success": True,
                 "chain": chain_name,
@@ -541,6 +567,10 @@ def cmd_chain_advance(args):
             }
             if prev_ctx:
                 result["prev_context"] = prev_ctx
+            if schema_warnings:
+                result["schema_warnings"] = schema_warnings
+            if reads_check:
+                result["reads_warnings"] = reads_check
 
             print(json.dumps(result))
             return

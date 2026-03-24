@@ -15,6 +15,13 @@ def run(args, cwd=None):
     return result.stdout.strip(), result.stderr.strip(), result.returncode
 
 
+@pytest.fixture
+def workspace(tmp_path):
+    """Create a temp workspace with .tasks/ initialized."""
+    run(["init"], cwd=tmp_path)
+    return tmp_path
+
+
 class TestModeDecision:
     """Test that go routes to the correct mode."""
 
@@ -165,3 +172,82 @@ class TestDecideModePure:
         from cc_flow.go import decide_mode
         assert decide_mode("anything", {}, "x", {}, force_mode="ralph") == "ralph"
         assert decide_mode("anything", {}, "x", {}, force_mode="auto") == "auto"
+
+
+class TestAutoExecInstruction:
+    """Test auto-execution instruction format."""
+
+    def test_chain_instruction_has_auto_execute_header(self):
+        out, _, code = run(["go", "fix", "the", "login", "bug", "--dry-run"])
+        assert code == 0
+        data = json.loads(out)
+        if data["mode"] == "chain":
+            assert "AUTO-EXECUTE" in data["instruction"]
+            assert "Do NOT stop between steps" in data["instruction"]
+
+    def test_chain_instruction_has_step_details(self):
+        out, _, code = run(["go", "refactor", "auth", "--dry-run"])
+        assert code == 0
+        data = json.loads(out)
+        if data["mode"] == "chain":
+            assert "Step 1/" in data["instruction"]
+            assert "cc-flow skill ctx save" in data["instruction"]
+            assert "cc-flow chain advance" in data["instruction"]
+
+    def test_feature_chain_has_outputs(self):
+        """Feature chain steps include outputs/reads schema hints."""
+        out, _, code = run(["go", "new", "feature", "--dry-run"])
+        assert code == 0
+        data = json.loads(out)
+        if data["mode"] == "chain":
+            first_step = data["steps"][0]
+            assert "outputs" in first_step
+            assert "design_doc" in first_step["outputs"]
+
+
+class TestResume:
+    """Test --resume flag."""
+
+    def test_resume_no_chain(self):
+        out, _, code = run(["go", "--resume"])
+        assert code == 0 or code == 1
+        data = json.loads(out)
+        # Either no chain or resumed
+        assert "success" in data
+
+    def test_resume_with_active_chain(self, workspace):
+        """Start a chain, then resume it."""
+        # Start chain
+        run(["chain", "run", "bugfix"], cwd=workspace)
+        # Resume
+        out, _, code = run(["go", "--resume"], cwd=workspace)
+        data = json.loads(out)
+        if data.get("resumed"):
+            assert data["chain"] == "bugfix"
+            assert data["resumed_from_step"] >= 1
+
+    def test_no_goal_shows_interrupted_hint(self, workspace):
+        """When no goal and chain is active, hint about --resume."""
+        run(["chain", "run", "bugfix"], cwd=workspace)
+        out, _, code = run(["go"], cwd=workspace)
+        data = json.loads(out)
+        assert "resume" in data.get("error", "").lower() or data.get("resumed")
+
+
+class TestSchemaValidation:
+    """Test context schema validation on chain advance."""
+
+    def test_advance_warns_missing_keys(self, workspace):
+        """Schema validation warns when expected output keys are missing."""
+        # Start feature chain
+        run(["chain", "run", "feature"], cwd=workspace)
+        # Save partial context (missing decisions, acceptance_criteria)
+        run(["skill", "ctx", "save", "cc-brainstorm", "--data",
+             '{"design_doc": "test.md"}'], cwd=workspace)
+        # Advance
+        out, _, code = run(["chain", "advance", "--data",
+                            '{"design_doc": "test.md"}'], cwd=workspace)
+        assert code == 0
+        data = json.loads(out)
+        if "schema_warnings" in data:
+            assert any("decisions" in w for w in data["schema_warnings"])

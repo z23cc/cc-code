@@ -3,7 +3,7 @@
 Unified entry point: describe your goal → system routes, decides mode, executes.
 
 Modes:
-  chain  — lightweight skill sequence (≤ 3 required steps)
+  chain  — lightweight skill sequence (≤ 4 required steps), auto-executed
   ralph  — autonomous goal-driven execution (complex goals, creates tasks)
   auto   — OODA improvement loop (scan → fix → test)
 """
@@ -21,8 +21,7 @@ from cc_flow.core import error, now_iso
 def _route(query):
     """Route a query to the best command. Returns route result dict."""
     try:
-        from cc_flow.route_learn import _keyword_route, _q_route, ROUTE_TABLE
-        # Simple keyword matching (avoid heavy imports)
+        from cc_flow.route_learn import ROUTE_TABLE
         query_lower = query.lower()
         words = set(query_lower.split())
 
@@ -83,33 +82,158 @@ def decide_mode(query, route_result, chain_name, chain_data, force_mode=""):
     return "ralph"
 
 
+# ── Chain auto-execution instruction builder ──
+
+def _build_auto_exec_instruction(chain_name, chain_data, query, steps):
+    """Build a self-contained instruction that Claude follows step by step.
+
+    The key insight: Claude reads this instruction and executes each step
+    automatically, calling cc-flow commands between steps. No manual
+    intervention needed.
+    """
+    lines = [
+        f"# AUTO-EXECUTE: {chain_name} chain",
+        f"Goal: {query}",
+        "",
+        "Execute these steps IN ORDER. After each step, save context and advance.",
+        "Do NOT stop between steps — continue automatically until all steps are done.",
+        "",
+    ]
+
+    for i, s in enumerate(steps):
+        skill_name = s["skill"].lstrip("/").strip()
+        required_tag = "REQUIRED" if s["required"] else "OPTIONAL"
+        outputs = s.get("outputs", [])
+        reads = s.get("reads", [])
+
+        lines.append(f"## Step {i+1}/{len(steps)}: {s['skill']} [{required_tag}]")
+        lines.append(f"Role: {s['role']}")
+
+        if reads:
+            lines.append(f"Reads from previous step: {', '.join(reads)}")
+            lines.append(f"Load context: `cc-flow skill ctx load {steps[i-1]['skill'].lstrip('/').strip()}`")
+
+        lines.append(f"Action: Activate the {skill_name} skill and execute it for: {query}")
+
+        if outputs:
+            ctx_json = ", ".join(f'"{k}": "..."' for k in outputs)
+            lines.append(f"On completion, save: `cc-flow skill ctx save {skill_name} --data '{{{ctx_json}}}'`")
+        else:
+            lines.append(f"On completion: `cc-flow skill ctx save {skill_name} --data '{{\"done\": true}}'`")
+
+        lines.append(f"Then advance: `cc-flow chain advance`")
+        lines.append("")
+
+    lines.append("## On Chain Complete")
+    lines.append(f"All {len(steps)} steps done. The chain will auto-report completion.")
+    lines.append(f"Record learning: `cc-flow learn --task '{chain_name}: {query}' --outcome success`")
+
+    return "\n".join(lines)
+
+
+# ── Resume logic ──
+
+def _check_resume():
+    """Check if there's an interrupted chain to resume. Returns state or None."""
+    try:
+        from cc_flow.skill_flow import load_chain_state, load_skill_ctx, CHAIN_STATE_FILE
+        if not CHAIN_STATE_FILE.exists():
+            return None
+        state = load_chain_state()
+        if state and not state.get("complete"):
+            return state
+    except ImportError:
+        pass
+    return None
+
+
+def _execute_resume(state):
+    """Resume an interrupted chain from the current step."""
+    from cc_flow.skill_flow import set_current, load_skill_ctx
+    from cc_flow.skill_chains import SKILL_CHAINS
+
+    chain_name = state.get("chain", "")
+    current_step = state.get("current_step", 0)
+    total_steps = state.get("total_steps", 0)
+    step_skills = state.get("steps", [])
+
+    chain_data = SKILL_CHAINS.get(chain_name)
+    if not chain_data:
+        print(json.dumps({
+            "success": False,
+            "error": f"Chain '{chain_name}' not found. Clear with: cc-flow skill ctx clear",
+        }))
+        return
+
+    steps = chain_data["skills"]
+    remaining = steps[current_step:]
+
+    # Set current skill
+    if remaining:
+        skill_name = remaining[0]["skill"].lstrip("/").strip()
+        set_current(skill_name, chain_name=chain_name)
+
+    # Load previous step context if available
+    prev_ctx = None
+    if current_step > 0:
+        prev_skill = steps[current_step - 1]["skill"].lstrip("/").strip()
+        prev_ctx = load_skill_ctx(prev_skill)
+
+    instruction = _build_auto_exec_instruction(
+        chain_name, chain_data, f"(resumed from step {current_step + 1})", remaining
+    )
+
+    result = {
+        "success": True,
+        "mode": "chain",
+        "resumed": True,
+        "chain": chain_name,
+        "resumed_from_step": current_step + 1,
+        "total_steps": total_steps,
+        "remaining_steps": len(remaining),
+        "instruction": instruction,
+    }
+
+    if prev_ctx:
+        result["prev_context"] = prev_ctx
+
+    print(json.dumps(result))
+
+
 # ── Executors ──
 
 def _execute_chain(chain_name, chain_data, query, dry_run=False):
-    """Execute a skill chain with context protocol."""
+    """Execute a skill chain with full auto-execution protocol."""
     steps = chain_data["skills"]
 
     # Set up chain state via skill_flow
     try:
-        from cc_flow.skill_flow import save_chain_state, set_current, load_skill_ctx
+        from cc_flow.skill_flow import (
+            save_chain_state, set_current, load_skill_ctx, record_chain_start,
+        )
     except ImportError:
-        save_chain_state = set_current = load_skill_ctx = None
+        save_chain_state = set_current = load_skill_ctx = record_chain_start = None
 
     if not dry_run and save_chain_state:
         save_chain_state(chain_name, steps)
         first_skill = steps[0]["skill"].lstrip("/").strip()
         set_current(first_skill, chain_name=chain_name)
+        if record_chain_start:
+            record_chain_start(chain_name)
 
     # Build step list with context
     execute_steps = []
     for i, s in enumerate(steps):
-        skill_name = s["skill"].lstrip("/").strip()
         step_info = {
             "step": i + 1,
             "skill": s["skill"],
             "role": s["role"],
             "required": s["required"],
         }
+        if "outputs" in s:
+            step_info["outputs"] = s["outputs"]
+        if "reads" in s:
+            step_info["reads"] = s["reads"]
 
         # Load prev context
         if i > 0 and load_skill_ctx:
@@ -119,6 +243,9 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False):
                 step_info["prev_context"] = prev_ctx
 
         execute_steps.append(step_info)
+
+    # Build auto-execution instruction
+    instruction = _build_auto_exec_instruction(chain_name, chain_data, query, steps)
 
     result = {
         "success": True,
@@ -130,18 +257,7 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False):
         "steps": execute_steps,
         "total_steps": len(steps),
         "required_steps": sum(1 for s in steps if s["required"]),
-        "instruction": (
-            f"Execute the '{chain_name}' chain for: {query}\n\n"
-            + "\n".join(
-                f"  {'[required]' if s['required'] else '[optional]'} "
-                f"Step {i+1}. {s['skill']} — {s['role']}"
-                for i, s in enumerate(steps)
-            )
-            + "\n\nStart with step 1. After each step:\n"
-            + "  1. Save context: cc-flow skill ctx save <skill> --data '{...}'\n"
-            + "  2. Advance: cc-flow chain advance\n"
-            + "  3. Run next step"
-        ),
+        "instruction": instruction,
     }
 
     print(json.dumps(result))
@@ -250,12 +366,33 @@ def _execute_auto(query, dry_run=False):
 def cmd_go(args):
     """One command, full automation: describe your goal, everything runs."""
     query = " ".join(args.goal) if args.goal else ""
-    if not query:
-        error("Describe your goal: cc-flow go \"what you want to achieve\"")
-
     force_mode = getattr(args, "mode", "") or ""
     max_iter = getattr(args, "max", 25)
     dry_run = getattr(args, "dry_run", False)
+    resume = getattr(args, "resume", False)
+
+    # Resume mode: continue interrupted chain
+    if resume:
+        state = _check_resume()
+        if state:
+            _execute_resume(state)
+            return
+        print(json.dumps({"success": False, "error": "No interrupted chain to resume."}))
+        return
+
+    if not query:
+        # Check for interrupted chain even without --resume
+        state = _check_resume()
+        if state:
+            chain = state.get("chain", "?")
+            step = state.get("current_step", 0) + 1
+            total = state.get("total_steps", 0)
+            print(json.dumps({
+                "success": False,
+                "error": f"No goal specified. (Interrupted chain '{chain}' at step {step}/{total} — use --resume to continue)",
+            }))
+            return
+        error("Describe your goal: cc-flow go \"what you want to achieve\"")
 
     # 1. Route
     route_result = _route(query)

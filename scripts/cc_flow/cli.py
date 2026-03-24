@@ -614,12 +614,14 @@ def _add_skill_flow_commands(sub):
 def _add_go_command(sub):
     """Add the unified 'go' entry point."""
     go_p = sub.add_parser("go", help="One command — describe goal, everything runs automatically")
-    go_p.add_argument("goal", nargs="+", help="What you want to achieve")
+    go_p.add_argument("goal", nargs="*", help="What you want to achieve")
     go_p.add_argument("--mode", choices=["auto", "chain", "ralph"], default="",
                        help="Force execution mode")
     go_p.add_argument("--max", type=int, default=25, help="Max iterations (ralph mode)")
     go_p.add_argument("--dry-run", action="store_true", default=False,
                        help="Show plan without executing")
+    go_p.add_argument("--resume", action="store_true", default=False,
+                       help="Resume interrupted chain from last step")
 
 
 def _add_misc_commands(sub):

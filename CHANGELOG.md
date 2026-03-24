@@ -1,5 +1,17 @@
 # Changelog
 
+## [5.8.0] - 2026-03-24
+### Added
+- **Chain auto-execution** — `cc-flow go` chain mode now outputs `# AUTO-EXECUTE` instruction with explicit "Do NOT stop between steps" directive, per-step context save/advance commands, and schema hints (outputs/reads)
+- **Resume interrupted chains** — `cc-flow go --resume` detects `_chain_state.json` and generates instructions for remaining steps. No-goal invocation hints about interrupted chain.
+- **Context schema validation** — `cc-flow chain advance` validates saved context against expected `outputs` keys. Next step's `reads` are checked against available context. Warnings emitted for missing keys.
+- 7 new tests: auto-exec instruction format, resume, schema validation
+
+### Improved
+- `cc-flow go` chain instruction now self-contained: Claude follows it without manual intervention
+- Feature + bugfix chains fully annotated with `outputs`/`reads` per step
+- `--resume` flag on `go` command; `goal` arg now optional (for resume-only usage)
+
 ## [5.7.0] - 2026-03-24
 ### Added
 - **Flow graph coverage 84%** — 38 orphan skills now have FLOWS INTO/DEPENDS ON relationships (was 33%, 21→58 connected)
