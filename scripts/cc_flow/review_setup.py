@@ -41,10 +41,27 @@ def _detect_backends():
         "setup": None if codex_available else "Install: npm i -g @openai/codex",
     }
 
+    # Gemini CLI
+    gemini_available = shutil.which("gemini") is not None or shutil.which("gemini-cli") is not None
+    backends["gemini"] = {
+        "available": gemini_available,
+        "info": "Google Gemini CLI — multi-model terminal review",
+        "command": "gemini" if shutil.which("gemini") else "gemini-cli" if shutil.which("gemini-cli") else None,
+        "setup": None if gemini_available else "Install: npm i -g @anthropic-ai/gemini-cli or use gemini CLI",
+    }
+
     # Export — always available
     backends["export"] = {
         "available": True,
         "info": "Export context markdown for external LLM (ChatGPT, Claude web)",
+    }
+
+    # Multi-model (virtual) — available when 2+ review engines are available
+    review_engines = [name for name in ("agent", "rp", "codex", "gemini") if backends.get(name, {}).get("available")]
+    backends["multi"] = {
+        "available": len(review_engines) >= 2,
+        "info": f"Multi-model review — {len(review_engines)} engines run independently, then consensus",
+        "engines": review_engines,
     }
 
     return backends
@@ -108,11 +125,16 @@ def cmd_review_setup(args):
         "current_config": current,
     }
     for name, info in backends.items():
-        result["backends"][name] = {
+        entry = {
             "available": info["available"],
             "info": info["info"],
         }
         if not info["available"] and info.get("setup"):
-            result["backends"][name]["setup"] = info["setup"]
+            entry["setup"] = info["setup"]
+        if info.get("engines"):
+            entry["engines"] = info["engines"]
+        if info.get("command"):
+            entry["command"] = info["command"]
+        result["backends"][name] = entry
 
     print(json.dumps(result, indent=2))

@@ -1761,5 +1761,64 @@
         "required": true
       }
     ]
+  },
+  "multi-review": {
+    "description": "Multi-model review — independent reviews from 2+ engines, then consensus",
+    "trigger": [
+      "multi model review",
+      "multi review",
+      "cross model",
+      "consensus review",
+      "roundtable",
+      "multi engine",
+      "multiple models",
+      "多模型审查",
+      "圆桌审查",
+      "多引擎",
+      "交叉审查"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-review",
+        "role": "Agent review (Claude built-in agents)",
+        "required": true,
+        "outputs": [
+          "agent_verdict",
+          "agent_issues"
+        ]
+      },
+      {
+        "skill": "/cc-rp",
+        "role": "RepoPrompt AI review (deep context)",
+        "required": false,
+        "outputs": [
+          "rp_verdict",
+          "rp_issues"
+        ]
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Consensus — compare verdicts, resolve conflicts",
+        "required": true,
+        "reads": [
+          "agent_verdict",
+          "rp_verdict",
+          "agent_issues",
+          "rp_issues"
+        ],
+        "outputs": [
+          "final_verdict",
+          "consensus_report"
+        ]
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit if consensus=SHIP",
+        "required": true,
+        "reads": [
+          "final_verdict"
+        ]
+      }
+    ]
   }
 }
