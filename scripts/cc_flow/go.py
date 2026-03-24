@@ -688,19 +688,21 @@ def cmd_go(args):
             return
         error("Describe your goal: cc-flow go \"what you want to achieve\"")
 
-    # 1. Try AI router first (most accurate) — skip if mode is forced
-    ai_result = None
-    if not force_mode:
-        try:
-            from cc_flow.ai_router import ai_route
-            ai_result = ai_route(query)
-        except ImportError:
-            pass
+    # 1. AI router — LLM selects the best chain + complexity
+    from cc_flow.ai_router import ai_route
+    from cc_flow.skill_chains import SKILL_CHAINS
 
-    if ai_result and ai_result.get("chain"):
-        # AI router succeeded — use its decision
-        ai_chain = ai_result["chain"]
-        ai_complexity = ai_result.get("complexity", "medium")
+    if force_mode:
+        # Forced mode — skip AI, use keyword routing
+        intent_analysis = analyze_intent(query)
+        pre_complexity = _estimate_complexity(query, None)
+        route_result = _route(query)
+        chain_name, chain_data = _find_chain(query, complexity=pre_complexity)
+        complexity = _estimate_complexity(query, chain_data)
+        mode = decide_mode(query, route_result, chain_name, chain_data, force_mode)
+    else:
+        ai_result = ai_route(query)
+        ai_chain = ai_result["chain"] if ai_result else None
 
         if ai_chain == "autopilot":
             mode = "multi-engine"
@@ -709,42 +711,31 @@ def cmd_go(args):
         elif ai_chain == "auto":
             mode = "auto"
             chain_name, chain_data = None, None
-            complexity = ai_complexity
+            complexity = ai_result.get("complexity", "medium")
+        elif ai_chain and ai_chain in SKILL_CHAINS:
+            chain_name = ai_chain
+            chain_data = SKILL_CHAINS[ai_chain]
+            complexity = ai_result.get("complexity", "medium")
+            # Scale-adaptive: prefer -light for simple
+            if complexity == "simple":
+                light_name = f"{ai_chain}-light"
+                if light_name in SKILL_CHAINS:
+                    chain_name = light_name
+                    chain_data = SKILL_CHAINS[light_name]
+            mode = "chain"
         else:
-            # Load the chain AI selected
-            from cc_flow.skill_chains import SKILL_CHAINS
-            chain_data = SKILL_CHAINS.get(ai_chain)
-            if chain_data:
-                chain_name = ai_chain
-                complexity = ai_complexity
-                # Scale-adaptive: prefer -light for simple
-                if complexity == "simple":
-                    light_name = f"{ai_chain}-light"
-                    if light_name in SKILL_CHAINS:
-                        chain_name = light_name
-                        chain_data = SKILL_CHAINS[light_name]
-                mode = "chain"
-            else:
-                # AI picked a chain that doesn't exist — fall through to keyword
-                ai_result = None
+            # AI returned unknown chain → default to multi-engine for safety
+            mode = "multi-engine"
+            chain_name, chain_data = None, None
+            complexity = "complex"
 
+        intent_analysis = analyze_intent(query)
+        route_result = {"command": ai_chain or "autopilot", "score": 10, "ai_routed": True}
         if ai_result:
-            intent_analysis = analyze_intent(query)
-            route_result = {"command": ai_chain, "score": 10, "ai_routed": True}
-            if ai_result.get("reason"):
-                intent_analysis["ai_reason"] = ai_result["reason"]
             intent_analysis["ai_routed"] = True
             intent_analysis["ai_engine"] = ai_result.get("router_engine", "")
+            intent_analysis["ai_reason"] = ai_result.get("reason", "")
             intent_analysis["from_cache"] = ai_result.get("from_cache", False)
-
-    if not ai_result:
-        # 2. Fallback: keyword routing
-        intent_analysis = analyze_intent(query)
-        pre_complexity = _estimate_complexity(query, None)
-        route_result = _route(query)
-        chain_name, chain_data = _find_chain(query, complexity=pre_complexity)
-        complexity = _estimate_complexity(query, chain_data)
-        mode = decide_mode(query, route_result, chain_name, chain_data, force_mode)
 
     # 5. Multi-goal advisory
     goals = _count_goals(query)
