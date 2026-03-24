@@ -24,19 +24,25 @@ from cc_flow.core import TASKS_DIR, atomic_write, now_iso
 ENGINE_CONFIG = {
     "claude": {
         "label": "Claude (Anthropic)",
-        "lens": "code correctness, security, edge cases",
+        "lens": "security vulnerabilities, edge case correctness, boundary conditions",
+        "role": "Security & Correctness Auditor",
+        "strength": "nuanced safety reasoning, catches subtle auth/injection/race issues others miss",
         "detect": lambda: shutil.which("claude") is not None,
         "run": lambda prompt, timeout: _exec_claude(prompt, timeout),
     },
     "codex": {
         "label": "Codex (OpenAI)",
-        "lens": "architecture, performance, error handling",
+        "lens": "code patterns, bug detection, error handling completeness",
+        "role": "Bug Hunter & Code Quality",
+        "strength": "pattern recognition across millions of repos, spots known anti-patterns and missing error paths",
         "detect": lambda: shutil.which("codex") is not None,
         "run": lambda prompt, timeout: _exec_codex(prompt, timeout),
     },
     "gemini": {
         "label": "Gemini (Google)",
-        "lens": "scalability, best practices, design patterns",
+        "lens": "architecture impact, system-wide effects, design coherence",
+        "role": "Architecture & Impact Analyst",
+        "strength": "1M token context — sees full codebase structure, catches cross-module breakage",
         "detect": lambda: shutil.which("gemini") is not None or shutil.which("gemini-cli") is not None,
         "run": lambda prompt, timeout: _exec_gemini(prompt, timeout),
     },
@@ -47,10 +53,13 @@ ENGINE_CONFIG = {
 
 R1_PROMPT = """\
 You are **{label}** in a 3-engine adversarial code review debate.
-Your unique lens: **{lens}**.
+Your role: **{role}**
+Your unique lens: **{lens}**
+Your strength: {strength}
 
-Review these changes thoroughly from YOUR perspective. Be specific — cite files,
-functions, line patterns. Output:
+Review these changes thoroughly from YOUR perspective. Leverage your specific
+strength — don't try to cover everything, focus on what YOU are best at finding.
+Be specific — cite files, functions, line patterns. Output:
 
 ## Strengths
 - [what this code does well from your lens]
@@ -351,6 +360,8 @@ def run_debate(context, engines=None, timeout=300, dry_run=False):
         for name, config in active.items():
             prompt = R1_PROMPT.format(
                 label=config["label"], lens=config["lens"],
+                role=config.get("role", "Reviewer"),
+                strength=config.get("strength", "general code review"),
                 files=files_str, diff=diff,
             ) + rp_section
             futures[pool.submit(config["run"], prompt, timeout)] = name
