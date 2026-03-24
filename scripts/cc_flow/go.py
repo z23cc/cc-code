@@ -713,14 +713,20 @@ def cmd_go(args):
         _execute_chain(chain_name, chain_data, query, dry_run, complexity=complexity,
                        intent=intent_analysis)
     elif mode == "multi-engine":
-        # Complex task → use multi-engine chain (multi-plan → work → review → commit)
-        from cc_flow.skill_chains import SKILL_CHAINS
-        me_chain = SKILL_CHAINS.get("multi-engine")
-        if me_chain:
-            _execute_chain("multi-engine", me_chain, query, dry_run, complexity="complex",
-                           intent=intent_analysis)
+        # Complex task → autopilot (3-engine guided execution)
+        from cc_flow.autopilot import run_autopilot
+        result = run_autopilot(query, timeout=300, dry_run=dry_run)
+        if result.get("success"):
+            print(json.dumps(result))
         else:
-            _execute_ralph(query, max_iter, dry_run)
+            # Fallback to multi-engine chain
+            from cc_flow.skill_chains import SKILL_CHAINS
+            me_chain = SKILL_CHAINS.get("multi-engine")
+            if me_chain:
+                _execute_chain("multi-engine", me_chain, query, dry_run, complexity="complex",
+                               intent=intent_analysis)
+            else:
+                _execute_ralph(query, max_iter, dry_run)
     elif mode == "auto":
         _execute_auto(query, dry_run)
     else:

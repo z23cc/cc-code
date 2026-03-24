@@ -61,6 +61,7 @@ _COMMANDS = {
     "multi-review": "multi_review:cmd_multi_review",
     "adversarial-review": "adversarial_review:cmd_adversarial_review",
     "multi-plan": "multi_plan:cmd_multi_plan",
+    "autopilot": "autopilot:cmd_autopilot",
     # skill validation
     "validate-skills": "skill_validate:cmd_validate_skills",
     # bridge (Morph × RP × Supermemory)
