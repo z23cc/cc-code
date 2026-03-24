@@ -143,6 +143,26 @@ do_create() {
   fi
 
   copy_env "$target"
+
+  # Auto-install frontend deps if package.json exists
+  if [[ -f "$target/package.json" ]]; then
+    echo "detected package.json — installing node_modules..."
+    if command -v npm >/dev/null 2>&1; then
+      (cd "$target" && npm install --no-audit --no-fund --loglevel=error 2>&1) || true
+      echo "node_modules installed in worktree"
+    else
+      echo "warning: npm not found — run 'npm install' in worktree manually"
+    fi
+  fi
+
+  # Auto-install Python deps if requirements.txt or pyproject.toml with deps
+  if [[ -f "$target/requirements.txt" ]]; then
+    echo "detected requirements.txt — checking Python deps..."
+    if command -v pip3 >/dev/null 2>&1; then
+      (cd "$target" && pip3 install -r requirements.txt --quiet 2>&1) || true
+    fi
+  fi
+
   echo "created: $target"
 }
 
