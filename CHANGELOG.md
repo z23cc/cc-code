@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.16.0] - 2026-03-24
+### Added (BMAD-METHOD inspired)
+- **`/cc-architecture` skill** — Solutioning phase: document ADRs (API, data model, auth, testing, deployment) before coding. Inserted into feature chain between plan and tdd as optional step. Prevents multi-agent style conflicts.
+- **`/cc-prd-validate` skill** — 10-step PRD validation pipeline: format, density, clarity scoring, SMART validation, traceability, completeness, implementation leakage, measurability. PASS/REVISE verdict.
+- **`/cc-elicit` skill** — 8 structured reasoning methods: pre-mortem, first principles, inversion, red team, Socratic, constraint removal, stakeholder mapping, analogical reasoning. Auto-suggests relevant methods based on content type.
+- 3 new skills + commands (74 skills, 63 commands total)
+
 ## [5.15.0] - 2026-03-24
 ### Added (AegisFlow inspired)
 - **Severity-weighted review consensus** — verdicts based on finding severity, not reviewer vote count:

@@ -22,6 +22,8 @@ SKILL_CHAINS = {
              "reads": ["design_doc", "decisions"], "outputs": ["decision", "complexity", "risks"]},
             {"skill": "/cc-plan", "role": "Implementation plan with tasks", "required": True,
              "reads": ["design_doc", "decisions"], "outputs": ["epic_id", "task_ids", "plan_doc"]},
+            {"skill": "/cc-architecture", "role": "Document ADRs before coding (API, data model, auth)", "required": False,
+             "reads": ["plan_doc", "decisions"], "outputs": ["architecture_doc", "adrs"]},
             {"skill": "/cc-tdd", "role": "Test-driven implementation", "required": True,
              "reads": ["epic_id", "task_ids"], "outputs": ["test_results", "files_changed", "coverage"]},
             {"skill": "/cc-review", "role": "Code review (severity-weighted consensus)", "required": True,
