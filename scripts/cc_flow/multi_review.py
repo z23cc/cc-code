@@ -166,12 +166,18 @@ def _run_rp(context, timeout=180):
             ["cc-flow", "rp", "builder", summary, "--type", "review"],
             check=False, capture_output=True, text=True, timeout=timeout,
         )
-        # RP builder output is JSON with a "response" field
+        # RP builder output is JSON — extract the review response text
         output = r.stdout
         try:
             data = json.loads(output)
-            # Extract the actual review text from RP response
-            response = data.get("response", data.get("text", output))
+            # RP builder nests review in: data.review.response or data.response
+            review_obj = data.get("review", {})
+            response = review_obj.get("response", "") if isinstance(review_obj, dict) else ""
+            if not response:
+                response = data.get("response", data.get("text", ""))
+            if not response:
+                # Fallback: stringify the whole thing
+                response = output
             return {"success": True, "output": str(response), "exit_code": r.returncode}
         except (json.JSONDecodeError, TypeError):
             return {"success": True, "output": output, "exit_code": r.returncode}
@@ -327,7 +333,7 @@ def _parse_engine_result(engine_name, raw_result):
         "status": "completed",
         "verdict": _parse_verdict(output),
         "findings": _parse_findings(output),
-        "raw_output": output[:3000],
+        "raw_output": output[:8000],
     }
 
 
