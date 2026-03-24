@@ -216,7 +216,7 @@ class TestAutoExecInstruction:
         assert code == 0
         data = json.loads(out)
         if data["mode"] == "chain":
-            assert "Step 1/" in data["instruction"]
+            assert "Phase 1/" in data["instruction"]
             assert "cc-flow skill ctx save" in data["instruction"]
             assert "cc-flow chain advance" in data["instruction"]
 

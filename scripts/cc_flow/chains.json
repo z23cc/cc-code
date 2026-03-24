@@ -20,7 +20,8 @@
           "design_doc",
           "decisions",
           "acceptance_criteria"
-        ]
+        ],
+        "phase": "design"
       },
       {
         "skill": "/cc-requirement-gate",
@@ -34,7 +35,8 @@
           "decision",
           "complexity",
           "risks"
-        ]
+        ],
+        "phase": "design"
       },
       {
         "skill": "/cc-plan",
@@ -48,7 +50,8 @@
           "epic_id",
           "task_ids",
           "plan_doc"
-        ]
+        ],
+        "phase": "design"
       },
       {
         "skill": "/cc-architecture",
@@ -61,7 +64,8 @@
         "outputs": [
           "architecture_doc",
           "adrs"
-        ]
+        ],
+        "phase": "design"
       },
       {
         "skill": "/cc-tdd",
@@ -75,7 +79,8 @@
           "test_results",
           "files_changed",
           "coverage"
-        ]
+        ],
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
@@ -89,7 +94,8 @@
           "issues_fixed",
           "severity_summary",
           "lens"
-        ]
+        ],
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
@@ -97,7 +103,8 @@
         "required": true,
         "reads": [
           "verdict"
-        ]
+        ],
+        "phase": "gate"
       }
     ]
   },
@@ -120,7 +127,8 @@
           "root_cause",
           "fix_description",
           "regression_test"
-        ]
+        ],
+        "phase": "mutate"
       },
       {
         "skill": "/cc-tdd",
@@ -133,7 +141,8 @@
         "outputs": [
           "test_results",
           "files_changed"
-        ]
+        ],
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
@@ -144,7 +153,8 @@
         ],
         "outputs": [
           "verdict"
-        ]
+        ],
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
@@ -152,7 +162,8 @@
         "required": true,
         "reads": [
           "verdict"
-        ]
+        ],
+        "phase": "gate"
       }
     ]
   },
@@ -172,22 +183,26 @@
       {
         "skill": "/cc-ui-ux",
         "role": "Design decisions (style, colors, fonts)",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-web-design",
         "role": "Check against Web Interface Guidelines",
-        "required": false
+        "required": false,
+        "phase": "design"
       },
       {
         "skill": "/cc-optimize",
         "role": "Performance optimization (Core Web Vitals)",
-        "required": false
+        "required": false,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-browser",
         "role": "Visual testing + screenshots",
-        "required": false
+        "required": false,
+        "phase": "mutate"
       }
     ]
   },
@@ -204,17 +219,20 @@
       {
         "skill": "/cc-autoimmune",
         "role": "Auto-scan and fix",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-audit",
         "role": "8-pillar readiness check",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
         "role": "Final code review",
-        "required": false
+        "required": false,
+        "phase": "verify"
       }
     ]
   },
@@ -231,27 +249,32 @@
       {
         "skill": "/cc-research",
         "role": "Investigate architecture",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-scout repo",
         "role": "Find existing patterns",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-scout testing",
         "role": "Check test setup",
-        "required": false
+        "required": false,
+        "phase": "observe"
       },
       {
         "skill": "/cc-scout security",
         "role": "Security config review",
-        "required": false
+        "required": false,
+        "phase": "observe"
       },
       {
         "skill": "/cc-prime",
         "role": "Full project assessment",
-        "required": false
+        "required": false,
+        "phase": "observe"
       }
     ]
   },
@@ -268,27 +291,32 @@
       {
         "skill": "/cc-refine",
         "role": "Polish and harden",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-security-review",
         "role": "Security scan",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-review",
         "role": "Final review",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-docs",
         "role": "Update documentation",
-        "required": true
+        "required": true,
+        "phase": "gate"
       },
       {
         "skill": "/cc-commit",
         "role": "Tag and push",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -305,22 +333,26 @@
       {
         "skill": "/cc-research",
         "role": "Map dependencies",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-simplify",
         "role": "Apply refactoring",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
         "role": "Verify behavior preserved",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit changes",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -353,17 +385,20 @@
       {
         "skill": "/cc-bridge",
         "role": "Deep search (Morph find → RP analyze)",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-research",
         "role": "Structured codebase research",
-        "required": false
+        "required": false,
+        "phase": "observe"
       },
       {
         "skill": "/cc-scout repo",
         "role": "Find existing patterns",
-        "required": false
+        "required": false,
+        "phase": "observe"
       }
     ]
   },
@@ -387,42 +422,50 @@
       {
         "skill": "/cc-office-hours",
         "role": "Validate the idea (5 forcing questions)",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-brainstorm",
         "role": "Explore design options",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-requirement-gate",
         "role": "Validate requirements before planning",
-        "required": false
+        "required": false,
+        "phase": "design"
       },
       {
         "skill": "/cc-grill-me",
         "role": "Adversarial review of the plan",
-        "required": false
+        "required": false,
+        "phase": "design"
       },
       {
         "skill": "/cc-plan",
         "role": "Create implementation plan with tasks",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-work",
         "role": "Execute tasks (worktree + worker + review)",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-epic-review",
         "role": "Verify all requirements met",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-ship",
         "role": "Version bump + PR + release",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -439,17 +482,20 @@
       {
         "skill": "/cc-qa",
         "role": "Diff-aware QA with health scoring",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
         "role": "Review the fixes",
-        "required": false
+        "required": false,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit verified fixes",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -470,22 +516,26 @@
       {
         "skill": "/cc-scout security",
         "role": "Check security config",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-security-review",
         "role": "Code-level security patterns",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-review",
         "role": "Final review of fixes",
-        "required": false
+        "required": false,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit security fixes",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -509,22 +559,26 @@
       {
         "skill": "/cc-performance",
         "role": "Profile and identify bottlenecks",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-optimize",
         "role": "Frontend Core Web Vitals optimization",
-        "required": false
+        "required": false,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
         "role": "Review optimization changes",
-        "required": false
+        "required": false,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit improvements",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -543,27 +597,32 @@
       {
         "skill": "/cc-incident",
         "role": "Triage + investigate + mitigate",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-debug",
         "role": "Root cause analysis",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-tdd",
         "role": "Regression test + fix",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
         "role": "Verify fix safety",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-retro",
         "role": "Postmortem and learnings",
-        "required": false
+        "required": false,
+        "phase": "gate"
       }
     ]
   },
@@ -582,17 +641,20 @@
       {
         "skill": "/cc-scout docs-gap",
         "role": "Find stale/missing documentation",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-docs",
         "role": "Update README, CHANGELOG, API docs",
-        "required": true
+        "required": true,
+        "phase": "gate"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit doc updates",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -610,22 +672,26 @@
       {
         "skill": "/cc-dependency-upgrade",
         "role": "Audit and plan upgrades",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-verification",
         "role": "Run full test suite",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-review",
         "role": "Review breaking changes",
-        "required": false
+        "required": false,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit upgrades",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -648,32 +714,38 @@
       {
         "skill": "/cc-brainstorm",
         "role": "API design exploration",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-plan",
         "role": "Endpoint specs with request/response",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-fastapi",
         "role": "FastAPI patterns and implementation",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-tdd",
         "role": "Test-driven endpoint development",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-security-review",
         "role": "Auth + input validation review",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit API changes",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -698,27 +770,32 @@
       {
         "skill": "/cc-autonomous-loops",
         "role": "Choose loop pattern (simple/ralph/goal-driven)",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-ralph",
         "role": "Configure Ralph: GOAL, SELF_HEAL, MAX_ITERATIONS",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-work",
         "role": "Execute tasks with worker isolation",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-autoimmune",
         "role": "Self-heal: scan + create tasks when stuck",
-        "required": false
+        "required": false,
+        "phase": "observe"
       },
       {
         "skill": "/cc-epic-review",
         "role": "Verify goal/epic completion",
-        "required": true
+        "required": true,
+        "phase": "verify"
       }
     ]
   },
@@ -744,32 +821,38 @@
       {
         "skill": "/cc-browser",
         "role": "Screenshot reference at 3 viewports",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-ui-ux",
         "role": "Extract design tokens (colors, fonts, spacing)",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-plan",
         "role": "Create component-level implementation plan",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-tdd",
         "role": "Implement each component with tests",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-qa",
         "role": "Visual compare against reference screenshots",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-ship",
         "role": "Deploy when match achieved",
-        "required": false
+        "required": false,
+        "phase": "gate"
       }
     ]
   },
@@ -789,22 +872,26 @@
       {
         "skill": "/cc-scaffold",
         "role": "Generate project skeleton",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-brainstorm",
         "role": "Design first feature",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-plan",
         "role": "Create implementation plan",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-tdd",
         "role": "Implement with TDD",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       }
     ]
   },
@@ -823,22 +910,26 @@
       {
         "skill": "/cc-prime",
         "role": "Run all 12 scouts in parallel",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-readiness-audit",
         "role": "8-pillar readiness assessment",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-qa-report",
         "role": "QA report (browser, no fixes)",
-        "required": false
+        "required": false,
+        "phase": "verify"
       },
       {
         "skill": "/cc-retro",
         "role": "Recent work review",
-        "required": false
+        "required": false,
+        "phase": "gate"
       }
     ]
   },
@@ -869,22 +960,26 @@
       {
         "skill": "/cc-readiness-audit",
         "role": "Pre-deploy readiness check",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-verification",
         "role": "Full lint + test pass",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-deploy",
         "role": "Docker + CI/CD deployment",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-ship",
         "role": "Version bump + PR + push",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -907,22 +1002,26 @@
       {
         "skill": "/cc-bridge",
         "role": "Recall past review findings (memory-enhanced)",
-        "required": false
+        "required": false,
+        "phase": "observe"
       },
       {
         "skill": "/cc-code-review-loop",
         "role": "Verdict-driven review + auto-fix",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-security-review",
         "role": "Security patterns check",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-refinement",
         "role": "Edge case hardening",
-        "required": false
+        "required": false,
+        "phase": "verify"
       }
     ]
   },
@@ -953,7 +1052,8 @@
         "outputs": [
           "fix_description",
           "files_changed"
-        ]
+        ],
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
@@ -964,7 +1064,8 @@
         ],
         "outputs": [
           "verdict"
-        ]
+        ],
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
@@ -972,7 +1073,8 @@
         "required": true,
         "reads": [
           "verdict"
-        ]
+        ],
+        "phase": "gate"
       }
     ]
   },
@@ -990,12 +1092,14 @@
       {
         "skill": "/cc-research",
         "role": "Understand PR changes",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-code-review-loop",
         "role": "Verdict-driven review",
-        "required": true
+        "required": true,
+        "phase": "verify"
       }
     ]
   },
@@ -1019,7 +1123,8 @@
         "outputs": [
           "bottleneck",
           "baseline_metrics"
-        ]
+        ],
+        "phase": "observe"
       },
       {
         "skill": "/cc-research",
@@ -1031,7 +1136,8 @@
         "outputs": [
           "root_cause",
           "commit"
-        ]
+        ],
+        "phase": "observe"
       },
       {
         "skill": "/cc-tdd",
@@ -1043,17 +1149,20 @@
         "outputs": [
           "fix_description",
           "test_results"
-        ]
+        ],
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
         "role": "Verify fix + no side effects",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit fix",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1072,27 +1181,32 @@
       {
         "skill": "/cc-research",
         "role": "Map debt hotspots",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-plan",
         "role": "Prioritize by ROI",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-simplify",
         "role": "Refactor highest-ROI items",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
         "role": "Verify behavior preserved",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit improvements",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1115,7 +1229,8 @@
         "outputs": [
           "migration_plan",
           "rollback_plan"
-        ]
+        ],
+        "phase": "design"
       },
       {
         "skill": "/cc-tdd",
@@ -1127,22 +1242,26 @@
         "outputs": [
           "migration_file",
           "test_results"
-        ]
+        ],
+        "phase": "mutate"
       },
       {
         "skill": "/cc-security-review",
         "role": "Check for data safety",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-review",
         "role": "Review migration script",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit migration",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1169,7 +1288,8 @@
           "phases",
           "slices",
           "decisions"
-        ]
+        ],
+        "phase": "design"
       },
       {
         "skill": "/cc-plan",
@@ -1182,7 +1302,8 @@
         "outputs": [
           "epic_id",
           "task_ids"
-        ]
+        ],
+        "phase": "design"
       },
       {
         "skill": "/cc-work",
@@ -1194,17 +1315,20 @@
         ],
         "outputs": [
           "completed_tasks"
-        ]
+        ],
+        "phase": "mutate"
       },
       {
         "skill": "/cc-epic-review",
         "role": "Verify all requirements met",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-ship",
         "role": "Version bump + PR + release",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1232,7 +1356,8 @@
         "outputs": [
           "test_strategy",
           "test_files"
-        ]
+        ],
+        "phase": "design"
       },
       {
         "skill": "/cc-tdd",
@@ -1244,17 +1369,20 @@
         "outputs": [
           "test_results",
           "coverage"
-        ]
+        ],
+        "phase": "mutate"
       },
       {
         "skill": "/cc-verification",
         "role": "Verify all tests pass + coverage",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit tests",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1275,22 +1403,26 @@
       {
         "skill": "/cc-logging",
         "role": "Logging patterns and setup",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-tdd",
         "role": "Implement with tests",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
         "role": "Review logging quality",
-        "required": false
+        "required": false,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit changes",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1312,22 +1444,26 @@
       {
         "skill": "/cc-error-handling",
         "role": "Error handling patterns",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-tdd",
         "role": "Implement with tests",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
         "role": "Review error paths",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit changes",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1350,7 +1486,8 @@
           "pmf_score",
           "decision",
           "mvp_scope"
-        ]
+        ],
+        "phase": "observe"
       },
       {
         "skill": "/cc-requirement-gate",
@@ -1362,17 +1499,20 @@
         "outputs": [
           "decision",
           "complexity"
-        ]
+        ],
+        "phase": "design"
       },
       {
         "skill": "/cc-elicit",
         "role": "Challenge assumptions (pre-mortem)",
-        "required": false
+        "required": false,
+        "phase": "design"
       },
       {
         "skill": "/cc-brainstorm",
         "role": "Design if validated",
-        "required": true
+        "required": true,
+        "phase": "design"
       }
     ]
   },
@@ -1397,22 +1537,26 @@
           "health_score",
           "a11y_violations",
           "vitals_grade"
-        ]
+        ],
+        "phase": "observe"
       },
       {
         "skill": "/cc-optimize",
         "role": "Fix performance issues",
-        "required": false
+        "required": false,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-qa",
         "role": "Fix remaining bugs",
-        "required": false
+        "required": false,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit fixes",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1433,22 +1577,26 @@
       {
         "skill": "/cc-async-patterns",
         "role": "Async patterns and architecture",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-tdd",
         "role": "Implement with tests",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
         "role": "Review async correctness",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1467,22 +1615,26 @@
       {
         "skill": "/cc-team-builder",
         "role": "Analyze task + recommend team",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-deps",
         "role": "Compute dependency graph + critical path",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-work",
         "role": "Execute with team dispatch",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-epic-review",
         "role": "Verify completion",
-        "required": true
+        "required": true,
+        "phase": "verify"
       }
     ]
   },
@@ -1501,22 +1653,26 @@
       {
         "skill": "/cc-clone-site",
         "role": "Screenshot + analyze reference",
-        "required": true
+        "required": true,
+        "phase": "mutate"
       },
       {
         "skill": "/cc-browser-qa",
         "role": "Visual comparison + accessibility",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-review",
         "role": "Review implementation",
-        "required": false
+        "required": false,
+        "phase": "verify"
       },
       {
         "skill": "/cc-ship",
         "role": "Deploy",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1542,7 +1698,8 @@
       {
         "skill": "/cc-scaffold",
         "role": "Project structure and tooling setup",
-        "required": false
+        "required": false,
+        "phase": "design"
       },
       {
         "skill": "/cc-deploy",
@@ -1551,17 +1708,20 @@
         "outputs": [
           "deploy_config",
           "ci_config"
-        ]
+        ],
+        "phase": "mutate"
       },
       {
         "skill": "/cc-verification",
         "role": "Verify pipeline works",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit CI/CD changes",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1586,22 +1746,26 @@
           "quality_score",
           "issues",
           "improvements"
-        ]
+        ],
+        "phase": "observe"
       },
       {
         "skill": "/cc-elicit",
         "role": "Challenge assumptions (pre-mortem)",
-        "required": false
+        "required": false,
+        "phase": "design"
       },
       {
         "skill": "/cc-requirement-gate",
         "role": "Final requirements validation",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-prd",
         "role": "Convert validated spec to implementation plan",
-        "required": true
+        "required": true,
+        "phase": "design"
       }
     ]
   },
@@ -1620,12 +1784,14 @@
       {
         "skill": "/cc-research",
         "role": "Understand current codebase",
-        "required": true
+        "required": true,
+        "phase": "observe"
       },
       {
         "skill": "/cc-clean-architecture",
         "role": "Apply clean architecture principles",
-        "required": true
+        "required": true,
+        "phase": "design"
       },
       {
         "skill": "/cc-architecture",
@@ -1634,12 +1800,14 @@
         "outputs": [
           "architecture_doc",
           "adrs"
-        ]
+        ],
+        "phase": "design"
       },
       {
         "skill": "/cc-plan",
         "role": "Create implementation plan from ADRs",
-        "required": true
+        "required": true,
+        "phase": "design"
       }
     ]
   },
@@ -1654,7 +1822,8 @@
         "outputs": [
           "test_results",
           "files_changed"
-        ]
+        ],
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
@@ -1665,7 +1834,8 @@
         ],
         "outputs": [
           "verdict"
-        ]
+        ],
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
@@ -1673,7 +1843,8 @@
         "required": true,
         "reads": [
           "verdict"
-        ]
+        ],
+        "phase": "gate"
       }
     ]
   },
@@ -1688,12 +1859,14 @@
         "outputs": [
           "test_results",
           "files_changed"
-        ]
+        ],
+        "phase": "mutate"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit fix",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1707,17 +1880,20 @@
         "required": true,
         "outputs": [
           "files_changed"
-        ]
+        ],
+        "phase": "mutate"
       },
       {
         "skill": "/cc-review",
         "role": "Verify behavior preserved",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1728,17 +1904,20 @@
       {
         "skill": "/cc-review",
         "role": "Final review",
-        "required": true
+        "required": true,
+        "phase": "verify"
       },
       {
         "skill": "/cc-docs",
         "role": "Update changelog",
-        "required": true
+        "required": true,
+        "phase": "gate"
       },
       {
         "skill": "/cc-commit",
         "role": "Tag and commit",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1753,12 +1932,14 @@
         "outputs": [
           "test_results",
           "coverage"
-        ]
+        ],
+        "phase": "mutate"
       },
       {
         "skill": "/cc-commit",
         "role": "Commit tests",
-        "required": true
+        "required": true,
+        "phase": "gate"
       }
     ]
   },
@@ -1785,7 +1966,8 @@
         "outputs": [
           "agent_verdict",
           "agent_issues"
-        ]
+        ],
+        "phase": "verify"
       },
       {
         "skill": "/cc-rp",
@@ -1794,7 +1976,8 @@
         "outputs": [
           "rp_verdict",
           "rp_issues"
-        ]
+        ],
+        "phase": "verify"
       },
       {
         "skill": "/cc-review",
@@ -1809,7 +1992,8 @@
         "outputs": [
           "final_verdict",
           "consensus_report"
-        ]
+        ],
+        "phase": "verify"
       },
       {
         "skill": "/cc-commit",
@@ -1817,7 +2001,8 @@
         "required": true,
         "reads": [
           "final_verdict"
-        ]
+        ],
+        "phase": "gate"
       }
     ]
   }

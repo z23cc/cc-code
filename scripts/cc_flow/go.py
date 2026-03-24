@@ -264,50 +264,142 @@ def decide_mode(query, route_result, chain_name, chain_data, force_mode=""):
     return "ralph"
 
 
-# ── Chain auto-execution instruction builder ──
+# ── Phase-based parallel execution ──
+
+def _group_into_phases(steps):
+    """Group chain steps into execution phases.
+
+    Same-phase consecutive steps run in PARALLEL (via Agent tool) ONLY IF:
+    1. They share the same phase type (observe/design/verify)
+    2. The later step does NOT have `reads` that reference the earlier step's `outputs`
+
+    Phase types:
+      observe — read-only analysis (parallel safe)
+      design  — produce specs, no code changes (parallel safe)
+      verify  — check code state (parallel safe)
+      mutate  — change code (sequential)
+      gate    — commit/ship (sequential, always last)
+
+    Returns: list of phases, each phase = {"phase": str, "parallel": bool, "steps": [...]}
+    """
+    if not steps:
+        return []
+
+    phases = []
+    current = {"phase": steps[0].get("phase", "mutate"), "steps": [steps[0]]}
+
+    for s in steps[1:]:
+        phase = s.get("phase", "mutate")
+        reads = set(s.get("reads", []))
+        # Check if this step reads from any output in the current group
+        has_dependency = False
+        if reads:
+            for prev in current["steps"]:
+                if reads & set(prev.get("outputs", [])):
+                    has_dependency = True
+                    break
+
+        if phase == current["phase"] and phase in ("observe", "design", "verify") and not has_dependency:
+            current["steps"].append(s)
+        else:
+            phases.append(current)
+            current = {"phase": phase, "steps": [s]}
+
+    phases.append(current)
+
+    # Mark parallel phases
+    for p in phases:
+        p["parallel"] = len(p["steps"]) > 1 and p["phase"] in ("observe", "design", "verify")
+
+    return phases
+
 
 def _build_auto_exec_instruction(chain_name, chain_data, query, steps):
-    """Build a self-contained instruction that Claude follows step by step.
+    """Build phase-based execution instruction with parallel dispatch.
 
-    The key insight: Claude reads this instruction and executes each step
-    automatically, calling cc-flow commands between steps. No manual
-    intervention needed.
+    Key optimization: consecutive observe/design/verify steps are grouped
+    into parallel phases. Claude dispatches them as multiple Agent tool
+    calls in a single message, then waits for all to complete before
+    proceeding to the next phase.
     """
+    phases = _group_into_phases(steps)
+    total_phases = len(phases)
+    total_steps = len(steps)
+
+    # Count parallelizable steps
+    parallel_count = sum(len(p["steps"]) for p in phases if p["parallel"])
+    is_parallel = parallel_count > 0
+
     lines = [
         f"# AUTO-EXECUTE: {chain_name} chain",
         f"Goal: {query}",
         "",
-        "Execute these steps IN ORDER. After each step, save context and advance.",
-        "Do NOT stop between steps — continue automatically until all steps are done.",
-        "",
     ]
 
-    for i, s in enumerate(steps):
-        skill_name = s["skill"].lstrip("/").strip()
-        required_tag = "REQUIRED" if s["required"] else "OPTIONAL"
-        outputs = s.get("outputs", [])
-        reads = s.get("reads", [])
-
-        lines.append(f"## Step {i+1}/{len(steps)}: {s['skill']} [{required_tag}]")
-        lines.append(f"Role: {s['role']}")
-
-        if reads:
-            lines.append(f"Reads from previous step: {', '.join(reads)}")
-            lines.append(f"Load context: `cc-flow skill ctx load {steps[i-1]['skill'].lstrip('/').strip()}`")
-
-        lines.append(f"Action: Activate the {skill_name} skill and execute it for: {query}")
-
-        if outputs:
-            ctx_json = ", ".join(f'"{k}": "..."' for k in outputs)
-            lines.append(f"On completion, save: `cc-flow skill ctx save {skill_name} --data '{{{ctx_json}}}'`")
-        else:
-            lines.append(f"On completion: `cc-flow skill ctx save {skill_name} --data '{{\"done\": true}}'`")
-
-        lines.append("Then advance: `cc-flow chain advance`")
+    if is_parallel:
+        lines.append(f"This chain has {total_steps} steps organized into {total_phases} phases.")
+        lines.append(f"⚡ {parallel_count} steps run in PARALLEL (same phase, no code conflicts).")
+        lines.append("IMPORTANT: For parallel phases, launch ALL agents in ONE message using multiple Agent tool calls.")
+        lines.append("")
+    else:
+        lines.append("Execute these steps IN ORDER. Do NOT stop between steps.")
         lines.append("")
 
+    step_num = 0
+    for pi, phase in enumerate(phases):
+        phase_label = phase["phase"].upper()
+
+        if phase["parallel"]:
+            # Parallel phase
+            lines.append(f"## Phase {pi+1}/{total_phases}: PARALLEL [{phase_label}] — {len(phase['steps'])} agents simultaneously")
+            lines.append("")
+            lines.append("**Launch ALL of these in a single message (multiple Agent tool calls):**")
+            lines.append("")
+            for s in phase["steps"]:
+                step_num += 1
+                skill_name = s["skill"].lstrip("/").strip()
+                required_tag = "REQUIRED" if s["required"] else "OPTIONAL"
+                lines.append(f"- **{s['skill']}** [{required_tag}]: {s['role']}")
+            lines.append("")
+            lines.append("Wait for ALL parallel agents to complete, then save each context:")
+            for s in phase["steps"]:
+                skill_name = s["skill"].lstrip("/").strip()
+                outputs = s.get("outputs", [])
+                if outputs:
+                    ctx_json = ", ".join(f'"{k}": "..."' for k in outputs)
+                    lines.append(f"  `cc-flow skill ctx save {skill_name} --data '{{{ctx_json}}}'`")
+                else:
+                    lines.append(f"  `cc-flow skill ctx save {skill_name} --data '{{\"done\": true}}'`")
+            lines.append("Then advance: `cc-flow chain advance`")
+            lines.append("")
+        else:
+            # Sequential step(s)
+            for s in phase["steps"]:
+                step_num += 1
+                skill_name = s["skill"].lstrip("/").strip()
+                required_tag = "REQUIRED" if s["required"] else "OPTIONAL"
+                outputs = s.get("outputs", [])
+                reads = s.get("reads", [])
+
+                lines.append(f"## Phase {pi+1}/{total_phases}: {s['skill']} [{required_tag}] [{phase_label}]")
+                lines.append(f"Role: {s['role']}")
+
+                if reads:
+                    lines.append(f"Reads from previous: {', '.join(reads)}")
+
+                lines.append(f"Action: Activate the {skill_name} skill and execute it for: {query}")
+
+                if outputs:
+                    ctx_json = ", ".join(f'"{k}": "..."' for k in outputs)
+                    lines.append(f"On completion, save: `cc-flow skill ctx save {skill_name} --data '{{{ctx_json}}}'`")
+                else:
+                    lines.append(f"On completion: `cc-flow skill ctx save {skill_name} --data '{{\"done\": true}}'`")
+
+                lines.append("Then advance: `cc-flow chain advance`")
+                lines.append("")
+
     lines.append("## On Chain Complete")
-    lines.append(f"All {len(steps)} steps done. The chain will auto-report completion.")
+    lines.append(f"All {total_steps} steps done ({total_phases} phases). The chain will auto-report completion.")
     lines.append(f"Record learning: `cc-flow learn --task '{chain_name}: {query}' --outcome success`")
 
     return "\n".join(lines)
@@ -432,6 +524,10 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="med
     # Build auto-execution instruction
     instruction = _build_auto_exec_instruction(chain_name, chain_data, query, steps)
 
+    # Phase analysis for parallel execution
+    phases = _group_into_phases(steps)
+    parallel_count = sum(len(p["steps"]) for p in phases if p["parallel"])
+
     result = {
         "success": True,
         "mode": "chain",
@@ -443,6 +539,8 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="med
         "steps": execute_steps,
         "total_steps": len(steps),
         "required_steps": sum(1 for s in steps if s["required"]),
+        "phases": len(phases),
+        "parallel_steps": parallel_count,
         "instruction": instruction,
     }
 
