@@ -1,5 +1,14 @@
 # Changelog
 
+## [5.22.0] - 2026-03-24
+### Added
+- **AI-first skill routing** — `cc-flow go` now analyzes intent + detects domains before routing:
+  - 7 intent categories: BUILD, FIX, IMPROVE, VERIFY, SHIP, UNDERSTAND, PLAN
+  - 5 domain detectors: security, database, api, frontend, performance
+  - Auto-recommends supporting skills per domain (e.g., "add JWT auth" → auto-add `/cc-security-review`)
+  - Output includes: `intent`, `domains_detected`, `recommended_additions`, `supporting_skills`
+- **Enhanced proactive-suggestions rule** — full skill catalog by domain, multi-skill combination patterns, contextual triggers with AI analysis protocol. Replaces simple keyword matching with "analyze before suggesting" framework.
+
 ## [5.21.0] - 2026-03-24
 ### Improved
 - **100% On Completion coverage** — all 78 skills now have standardized `## On Completion` section with:

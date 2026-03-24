@@ -63,6 +63,72 @@ HOTFIX_KEYWORDS = {"hotfix", "typo", "trivial", "one-liner", "urgent", "revert",
                    "紧急", "快速修复", "小改动", "回滚"}
 
 
+# ── Intent analysis ──
+
+INTENT_PATTERNS = {
+    "BUILD": {"keywords": {"feature", "add", "create", "implement", "build", "new", "新增", "创建", "实现"},
+              "supporting": ["/cc-requirement-gate", "/cc-architecture"]},
+    "FIX": {"keywords": {"fix", "bug", "error", "crash", "broken", "fail", "修复", "报错", "崩溃"},
+            "supporting": ["/cc-tdd"]},
+    "IMPROVE": {"keywords": {"refactor", "optimize", "clean", "simplify", "performance", "speed", "重构", "优化"},
+                "supporting": ["/cc-browser-qa", "/cc-elicit"]},
+    "VERIFY": {"keywords": {"test", "review", "audit", "check", "qa", "验证", "测试", "审查"},
+               "supporting": ["/cc-verification"]},
+    "SHIP": {"keywords": {"deploy", "release", "ship", "push", "pr", "部署", "发布", "上线"},
+             "supporting": ["/cc-review", "/cc-readiness-audit"]},
+    "UNDERSTAND": {"keywords": {"research", "understand", "explain", "investigate", "how", "调研", "理解"},
+                   "supporting": ["/cc-scout-repo"]},
+    "PLAN": {"keywords": {"plan", "design", "architecture", "spec", "prd", "规划", "设计", "架构"},
+             "supporting": ["/cc-elicit", "/cc-requirement-gate"]},
+}
+
+DOMAIN_DETECTORS = {
+    "security": {"keywords": {"auth", "security", "password", "token", "jwt", "oauth", "secret", "安全", "认证"},
+                 "auto_add": "/cc-security-review"},
+    "database": {"keywords": {"database", "sql", "migration", "schema", "query", "table", "数据库", "查询"},
+                 "auto_add": "/cc-database"},
+    "api": {"keywords": {"api", "endpoint", "rest", "graphql", "route", "handler", "接口"},
+            "auto_add": "/cc-fastapi"},
+    "frontend": {"keywords": {"ui", "css", "frontend", "component", "responsive", "accessibility", "前端", "界面"},
+                 "auto_add": "/cc-browser-qa"},
+    "performance": {"keywords": {"slow", "performance", "latency", "speed", "optimize", "慢", "性能"},
+                    "auto_add": "/cc-performance"},
+}
+
+
+def analyze_intent(query):
+    """AI-assisted intent analysis: classify query and suggest supporting skills."""
+    query_lower = query.lower()
+    words = set(query_lower.split())
+
+    # Classify primary intent
+    intent = "BUILD"  # default
+    best_score = 0
+    for intent_name, config in INTENT_PATTERNS.items():
+        score = len(words & config["keywords"])
+        if score > best_score:
+            best_score = score
+            intent = intent_name
+
+    # Detect domains touched
+    domains = []
+    auto_skills = []
+    for domain, config in DOMAIN_DETECTORS.items():
+        if words & config["keywords"]:
+            domains.append(domain)
+            auto_skills.append(config["auto_add"])
+
+    # Get supporting skills for the intent
+    supporting = INTENT_PATTERNS.get(intent, {}).get("supporting", [])
+
+    return {
+        "intent": intent,
+        "domains": domains,
+        "supporting_skills": supporting,
+        "auto_add_skills": auto_skills,
+    }
+
+
 COMPLEX_KEYWORDS = {"architecture", "system", "platform", "redesign", "rewrite",
                      "multi-service", "microservice", "monorepo", "migrate",
                      "架构", "系统", "平台", "重写", "微服务"}
@@ -271,7 +337,7 @@ def _execute_resume(state):
 
 # ── Executors ──
 
-def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="medium"):
+def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="medium", intent=None):
     """Execute a skill chain with full auto-execution protocol."""
     steps = chain_data["skills"]
 
@@ -329,6 +395,16 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="med
         "required_steps": sum(1 for s in steps if s["required"]),
         "instruction": instruction,
     }
+
+    # Add AI intent analysis
+    if intent:
+        result["intent"] = intent.get("intent", "")
+        if intent.get("domains"):
+            result["domains_detected"] = intent["domains"]
+        if intent.get("auto_add_skills"):
+            result["recommended_additions"] = intent["auto_add_skills"]
+        if intent.get("supporting_skills"):
+            result["supporting_skills"] = intent["supporting_skills"]
 
     print(json.dumps(result))
 
@@ -464,17 +540,21 @@ def cmd_go(args):
             return
         error("Describe your goal: cc-flow go \"what you want to achieve\"")
 
-    # 1. Route
+    # 1. Analyze intent (AI-first routing)
+    intent_analysis = analyze_intent(query)
+
+    # 2. Route
     route_result = _route(query)
     chain_name, chain_data = _find_chain(query)
 
-    # 2. Decide
+    # 3. Decide
     complexity = _estimate_complexity(query, chain_data)
     mode = decide_mode(query, route_result, chain_name, chain_data, force_mode)
 
-    # 3. Execute (pass complexity for output)
+    # 4. Execute (pass complexity + intent for output)
     if mode == "chain" and chain_data:
-        _execute_chain(chain_name, chain_data, query, dry_run, complexity=complexity)
+        _execute_chain(chain_name, chain_data, query, dry_run, complexity=complexity,
+                       intent=intent_analysis)
     elif mode == "auto":
         _execute_auto(query, dry_run)
     else:
