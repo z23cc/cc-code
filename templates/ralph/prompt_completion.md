@@ -8,8 +8,8 @@ RECEIPT_PATH: {{RECEIPT_PATH}}
 
 1. Read epic spec and all task summaries:
    ```bash
-   python3 scripts/cc-flow.py show {{EPIC_ID}}
-   python3 scripts/cc-flow.py progress --epic {{EPIC_ID}}
+   cc-flow show {{EPIC_ID}}
+   cc-flow progress --epic {{EPIC_ID}}
    ```
 
 2. Verify each requirement in the spec is fully implemented:
@@ -19,7 +19,7 @@ RECEIPT_PATH: {{RECEIPT_PATH}}
 
 3. If gaps found:
    - Implement missing requirements
-   - Run verification: `python3 scripts/cc-flow.py verify`
+   - Run verification: `cc-flow verify`
    - Commit fixes
    - Re-verify
 

@@ -8,7 +8,7 @@ COMMAND=$(echo "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin
 
 # Helper: get next skill suggestion from flow graph
 _skill_next() {
-  python3 -m cc_flow skill next --skill "$1" 2>/dev/null | python3 -c "
+  cc-flow skill next --skill "$1" 2>/dev/null | python3 -c "
 import sys, json
 try:
     d = json.load(sys.stdin)

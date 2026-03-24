@@ -69,8 +69,7 @@ cc-flow rp review "check recent changes"       # RP code review
 ## cc-flow Quick Reference
 
 ```bash
-# After: pip install -e .  →  cc-flow <command>
-# Or:    python -m cc_flow <command>  (from scripts/)
+# Install: pip install -e .  →  cc-flow <command>
 
 cc-flow go "describe your goal"                # ONE COMMAND — auto-routes + executes
 cc-flow go "fix login bug" --dry-run           # preview plan without executing

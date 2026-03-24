@@ -17,6 +17,11 @@
 - **Morph API test failures** — embed/rerank tests now gracefully skip when endpoint returns 404 (API changed, not a code bug)
 
 ### Improved
+- **All CLI via `cc-flow` command** — eliminated all `python3 scripts/cc-flow.py` and `python3 -m cc_flow` invocations:
+  - 12 scout agents: `CCFLOW="cc-flow"` instead of `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py`
+  - 4 Ralph templates: `cc-flow show/start/done/verify` instead of `python3 scripts/cc-flow.py`
+  - 4 hooks (session-end, pre-compact, session-start, post-task-hint): `cc-flow` CLI
+  - CLAUDE.md, `__init__.py` docs updated
 - **CLAUDE.md accuracy** — updated all stats: 55 modules (was 53), 78 skills (was 69), 82 commands (was 58), 36 chains (was 22), 354 tests (was 286)
 - **`skill_chains.py` reduced from 827 → ~380 lines** — data separated from logic
 

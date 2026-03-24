@@ -16,7 +16,7 @@ WATCH_MODE=""
 [[ "${1:-}" == "verbose" ]] && WATCH_MODE="verbose" && shift
 
 # cc-flow CLI
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT:-$SCRIPT_DIR/../../}/scripts/cc-flow.py"
+CCFLOW="cc-flow"
 
 # Run setup
 RUN_ID="$(date -u +%Y%m%d-%H%M%S)-$(head -c4 /dev/urandom | xxd -p)"
@@ -109,14 +109,14 @@ for e in data.get('epics', []):
   eid = e.get('id','')
   if not eid: continue
   tasks_out = subprocess.run(
-    ['python3', '${CCFLOW#python3 }', 'tasks', '--epic', eid, '--json'],
+    ['cc-flow', 'tasks', '--epic', eid, '--json'],
     capture_output=True, text=True
   )
   try:
     tasks = json.loads(tasks_out.stdout).get('tasks', [])
   except: continue
   if tasks and all(t.get('status')=='done' for t in tasks):
-    subprocess.run(['python3', '${CCFLOW#python3 }', 'epic', 'close', eid])
+    subprocess.run(['cc-flow', 'epic', 'close', eid])
 " 2>/dev/null || true
 }
 

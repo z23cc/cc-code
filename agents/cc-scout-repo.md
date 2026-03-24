@@ -113,7 +113,7 @@ grep -rn "except\|raise\|try:" src/ | head -10
 Use these cc-flow and rp-cli commands via Bash for enhanced analysis:
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
+CCFLOW="cc-flow"
 
 # Semantic search (Morph WarpGrep)
 $CCFLOW search "your query here"

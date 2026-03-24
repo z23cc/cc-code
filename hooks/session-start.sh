@@ -2,7 +2,6 @@
 # SessionStart hook: show skills overview + smart project state detection.
 # Detects: interrupted chains, pending tasks, lint status, recent activity.
 
-CCFLOW="${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 HOOK_DIR="${CLAUDE_PLUGIN_ROOT}/hooks"
 
 # 1. Static skills overview
@@ -42,7 +41,7 @@ fi
 
 # 3. Infinite Context Autopilot — restore from compaction
 CONTEXT_FILE=".tasks/compaction_context.json"
-if [ -f "$CONTEXT_FILE" ] && command -v python3 >/dev/null 2>&1; then
+if [ -f "$CONTEXT_FILE" ]; then
   RESTORED=$(python3 -c "
 import json
 from pathlib import Path
@@ -99,7 +98,7 @@ print('\n'.join(lines))
 fi
 
 # 4. Smart project state detection + recommendations
-if command -v python3 >/dev/null 2>&1 && [ -f "$CCFLOW" ]; then
+if command -v cc-flow >/dev/null 2>&1; then
   echo ""
   echo "# [cc-code] recent context, $(date '+%Y-%m-%d %I:%M%p %Z')"
   echo ""

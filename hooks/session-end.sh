@@ -1,12 +1,10 @@
 #!/bin/bash
 # Stop hook: auto-save session and consolidate learnings when session ends.
 
-CCFLOW="${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
-
 # Only run if prerequisites met
-if [ -d ".tasks" ] && command -v python3 >/dev/null 2>&1 && [ -f "$CCFLOW" ]; then
+if [ -d ".tasks" ] && command -v cc-flow >/dev/null 2>&1; then
   # Auto-save session
-  if python3 "$CCFLOW" session save --name "auto-$(date +%Y%m%d-%H%M%S)" \
+  if cc-flow session save --name "auto-$(date +%Y%m%d-%H%M%S)" \
       --notes "auto-saved at session end" 2>/dev/null; then
     echo "cc-flow: session saved" >&2
   fi
@@ -15,7 +13,7 @@ if [ -d ".tasks" ] && command -v python3 >/dev/null 2>&1 && [ -f "$CCFLOW" ]; th
   if [ -d ".tasks/learnings" ]; then
     LEARN_COUNT=$(find .tasks/learnings -name "*.json" 2>/dev/null | wc -l | tr -d ' ')
     if [ "$LEARN_COUNT" -ge 10 ]; then
-      if python3 "$CCFLOW" consolidate 2>/dev/null; then
+      if cc-flow consolidate 2>/dev/null; then
         echo "cc-flow: learnings consolidated" >&2
       fi
     fi

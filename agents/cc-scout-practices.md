@@ -100,7 +100,7 @@ gh api repos/{owner}/{repo} --jq '{stars: .stargazers_count, pushed: .pushed_at}
 Use these cc-flow commands via Bash for enhanced analysis:
 
 ```bash
-CCFLOW="python3 ${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
+CCFLOW="cc-flow"
 
 # Semantic search (Morph WarpGrep — better than grep for "how does X work")
 $CCFLOW search "your query here"

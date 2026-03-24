@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """cc-flow CLI — thin shim for backward compatibility.
 
-Preferred invocations:
-    cc-flow <command>          (after pip install)
-    python -m cc_flow <command>
+Preferred: cc-flow <command>  (after pip install -e .)
 """
 
 import sys

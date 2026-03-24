@@ -1,4 +1,4 @@
-"""Allow running cc_flow as a module: python -m cc_flow."""
+"""Fallback: python -m cc_flow. Prefer: cc-flow <command>."""
 
 from cc_flow.entry import main
 

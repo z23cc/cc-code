@@ -3,14 +3,13 @@
 # Preserves: active chain, skill context, wisdom, current task, git state.
 # Restored by session-start.sh on next session.
 
-CCFLOW="${CLAUDE_PLUGIN_ROOT}/scripts/cc-flow.py"
 CONTEXT_FILE=".tasks/compaction_context.json"
 
-if [ -d ".tasks" ] && command -v python3 >/dev/null 2>&1; then
+if [ -d ".tasks" ]; then
 
-  # 1. Save session (existing behavior)
-  if [ -f "$CCFLOW" ]; then
-    HAS_ACTIVE=$(python3 "$CCFLOW" status 2>/dev/null | python3 -c "
+  # 1. Save session if cc-flow is available
+  if command -v cc-flow >/dev/null 2>&1; then
+    HAS_ACTIVE=$(cc-flow status 2>/dev/null | python3 -c "
 import sys,json
 try:
     d = json.load(sys.stdin)
@@ -19,7 +18,7 @@ except: print('no')
 " 2>/dev/null)
 
     if [ "$HAS_ACTIVE" = "yes" ]; then
-      python3 "$CCFLOW" session save --name "pre-compact-$(date +%Y%m%d-%H%M%S)" \
+      cc-flow session save --name "pre-compact-$(date +%Y%m%d-%H%M%S)" \
         --notes "auto-saved before context compaction" 2>/dev/null || true
     fi
   fi

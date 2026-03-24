@@ -2,12 +2,11 @@
 
 Usage:
     cc-flow <command>          (after pip install -e .)
-    python -m cc_flow <command>
 
-Package structure (53 modules, 145 commands):
+Package structure (55 modules, 145 commands):
   cc_flow/
     __init__.py      → VERSION
-    __main__.py      → python -m cc_flow support
+    __main__.py      → python -m cc_flow fallback
     entry.py         → lazy-loaded command dispatch (only imports needed module)
     cli.py           → argparse with 11+ command categories
     core.py          → shared constants, atomic writes, cross-platform locks, ID resolution
@@ -55,4 +54,4 @@ Package structure (53 modules, 145 commands):
   cc-flow.py         → backward-compatible shim
 """
 
-VERSION = "5.22.0"
+VERSION = "5.23.0"

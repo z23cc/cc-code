@@ -9,19 +9,19 @@ RECEIPT_PATH: {{RECEIPT_PATH}}
 
 1. Read task spec:
    ```bash
-   python3 scripts/cc-flow.py show {{TASK_ID}}
+   cc-flow show {{TASK_ID}}
    ```
 
 2. Start task:
    ```bash
-   python3 scripts/cc-flow.py start {{TASK_ID}}
+   cc-flow start {{TASK_ID}}
    ```
 
 3. Implement using TDD:
    - Write failing test
    - Write minimal code to pass
    - Refactor
-   - Run verification: `python3 scripts/cc-flow.py verify`
+   - Run verification: `cc-flow verify`
 
 4. Commit:
    ```bash
@@ -30,7 +30,7 @@ RECEIPT_PATH: {{RECEIPT_PATH}}
 
 5. Mark done:
    ```bash
-   python3 scripts/cc-flow.py done {{TASK_ID}} --summary "Brief description of what was done"
+   cc-flow done {{TASK_ID}} --summary "Brief description of what was done"
    ```
 
 6. Write receipt:

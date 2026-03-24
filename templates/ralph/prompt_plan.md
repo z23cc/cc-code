@@ -8,7 +8,7 @@ RECEIPT_PATH: {{RECEIPT_PATH}}
 
 1. Read epic spec:
    ```bash
-   python3 scripts/cc-flow.py show {{EPIC_ID}}
+   cc-flow show {{EPIC_ID}}
    ```
 
 2. Review the plan:
