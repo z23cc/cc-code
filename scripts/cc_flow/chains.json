@@ -1,0 +1,1485 @@
+{
+  "feature": {
+    "description": "Full feature development lifecycle",
+    "trigger": [
+      "new feature",
+      "add feature",
+      "add new",
+      "build",
+      "implement",
+      "create",
+      "新功能",
+      "新增"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-brainstorm",
+        "role": "Design exploration",
+        "required": true,
+        "outputs": [
+          "design_doc",
+          "decisions",
+          "acceptance_criteria"
+        ]
+      },
+      {
+        "skill": "/cc-requirement-gate",
+        "role": "Validate requirements (clarity, completeness, risks)",
+        "required": false,
+        "reads": [
+          "design_doc",
+          "decisions"
+        ],
+        "outputs": [
+          "decision",
+          "complexity",
+          "risks"
+        ]
+      },
+      {
+        "skill": "/cc-plan",
+        "role": "Implementation plan with tasks",
+        "required": true,
+        "reads": [
+          "design_doc",
+          "decisions"
+        ],
+        "outputs": [
+          "epic_id",
+          "task_ids",
+          "plan_doc"
+        ]
+      },
+      {
+        "skill": "/cc-architecture",
+        "role": "Document ADRs before coding (API, data model, auth)",
+        "required": false,
+        "reads": [
+          "plan_doc",
+          "decisions"
+        ],
+        "outputs": [
+          "architecture_doc",
+          "adrs"
+        ]
+      },
+      {
+        "skill": "/cc-tdd",
+        "role": "Test-driven implementation",
+        "required": true,
+        "reads": [
+          "epic_id",
+          "task_ids"
+        ],
+        "outputs": [
+          "test_results",
+          "files_changed",
+          "coverage"
+        ]
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Code review (severity-weighted consensus)",
+        "required": true,
+        "reads": [
+          "files_changed"
+        ],
+        "outputs": [
+          "verdict",
+          "issues_fixed",
+          "severity_summary",
+          "lens"
+        ]
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Verify and commit",
+        "required": true,
+        "reads": [
+          "verdict"
+        ]
+      }
+    ]
+  },
+  "bugfix": {
+    "description": "Systematic bug fix",
+    "trigger": [
+      "fix bug",
+      "debug",
+      "crash",
+      "error",
+      "修bug",
+      "修复"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-debug",
+        "role": "Root cause analysis",
+        "required": true,
+        "outputs": [
+          "root_cause",
+          "fix_description",
+          "regression_test"
+        ]
+      },
+      {
+        "skill": "/cc-tdd",
+        "role": "Write regression test + fix",
+        "required": true,
+        "reads": [
+          "root_cause",
+          "fix_description"
+        ],
+        "outputs": [
+          "test_results",
+          "files_changed"
+        ]
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Verify no side effects",
+        "required": false,
+        "reads": [
+          "files_changed"
+        ],
+        "outputs": [
+          "verdict"
+        ]
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit fix",
+        "required": true,
+        "reads": [
+          "verdict"
+        ]
+      }
+    ]
+  },
+  "ui-design": {
+    "description": "UI design → review → optimize → test",
+    "trigger": [
+      "design UI",
+      "UI review",
+      "frontend",
+      "design",
+      "界面设计",
+      "设计",
+      "UI审查",
+      "前端"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-ui-ux",
+        "role": "Design decisions (style, colors, fonts)",
+        "required": true
+      },
+      {
+        "skill": "/cc-web-design",
+        "role": "Check against Web Interface Guidelines",
+        "required": false
+      },
+      {
+        "skill": "/cc-optimize",
+        "role": "Performance optimization (Core Web Vitals)",
+        "required": false
+      },
+      {
+        "skill": "/cc-browser",
+        "role": "Visual testing + screenshots",
+        "required": false
+      }
+    ]
+  },
+  "quality": {
+    "description": "Full quality gate",
+    "trigger": [
+      "quality check",
+      "audit",
+      "is this ready",
+      "质量检查",
+      "审计"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-autoimmune",
+        "role": "Auto-scan and fix",
+        "required": true
+      },
+      {
+        "skill": "/cc-audit",
+        "role": "8-pillar readiness check",
+        "required": true
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Final code review",
+        "required": false
+      }
+    ]
+  },
+  "onboard": {
+    "description": "Understand a new codebase",
+    "trigger": [
+      "new project",
+      "onboard",
+      "understand code",
+      "接手项目",
+      "了解代码"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-research",
+        "role": "Investigate architecture",
+        "required": true
+      },
+      {
+        "skill": "/cc-scout repo",
+        "role": "Find existing patterns",
+        "required": true
+      },
+      {
+        "skill": "/cc-scout testing",
+        "role": "Check test setup",
+        "required": false
+      },
+      {
+        "skill": "/cc-scout security",
+        "role": "Security config review",
+        "required": false
+      },
+      {
+        "skill": "/cc-prime",
+        "role": "Full project assessment",
+        "required": false
+      }
+    ]
+  },
+  "release": {
+    "description": "Pre-release checklist",
+    "trigger": [
+      "release",
+      "ship",
+      "deploy",
+      "发布",
+      "上线"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-refine",
+        "role": "Polish and harden",
+        "required": true
+      },
+      {
+        "skill": "/cc-security-review",
+        "role": "Security scan",
+        "required": true
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Final review",
+        "required": true
+      },
+      {
+        "skill": "/cc-docs",
+        "role": "Update documentation",
+        "required": true
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Tag and push",
+        "required": true
+      }
+    ]
+  },
+  "refactor": {
+    "description": "Safe refactoring with tests",
+    "trigger": [
+      "refactor",
+      "clean up",
+      "simplify",
+      "重构",
+      "清理"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-research",
+        "role": "Map dependencies",
+        "required": true
+      },
+      {
+        "skill": "/cc-simplify",
+        "role": "Apply refactoring",
+        "required": true
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Verify behavior preserved",
+        "required": true
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit changes",
+        "required": true
+      }
+    ]
+  },
+  "research": {
+    "description": "Deep codebase understanding (Morph + RP + Memory)",
+    "trigger": [
+      "understand",
+      "how does",
+      "explain",
+      "research",
+      "deep dive",
+      "理解",
+      "怎么工作",
+      "深度分析",
+      "调研"
+    ],
+    "skills": [
+      {
+        "skill": "deep-search",
+        "role": "Morph search → RP builder (find + analyze)",
+        "required": true
+      },
+      {
+        "skill": "/cc-research",
+        "role": "Structured codebase research",
+        "required": false
+      },
+      {
+        "skill": "/cc-scout repo",
+        "role": "Find existing patterns",
+        "required": false
+      }
+    ]
+  },
+  "idea-to-ship": {
+    "description": "Full lifecycle: validate idea → plan → implement → review → ship",
+    "trigger": [
+      "idea to production",
+      "end to end",
+      "full lifecycle",
+      "from scratch",
+      "idea to ship",
+      "complete workflow",
+      "everything",
+      "从想法到上线",
+      "想法到发布",
+      "端到端",
+      "完整流程",
+      "从零开始"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-office-hours",
+        "role": "Validate the idea (5 forcing questions)",
+        "required": true
+      },
+      {
+        "skill": "/cc-brainstorm",
+        "role": "Explore design options",
+        "required": true
+      },
+      {
+        "skill": "/cc-requirement-gate",
+        "role": "Validate requirements before planning",
+        "required": false
+      },
+      {
+        "skill": "/cc-grill-me",
+        "role": "Adversarial review of the plan",
+        "required": false
+      },
+      {
+        "skill": "/cc-plan",
+        "role": "Create implementation plan with tasks",
+        "required": true
+      },
+      {
+        "skill": "/cc-work",
+        "role": "Execute tasks (worktree + worker + review)",
+        "required": true
+      },
+      {
+        "skill": "/cc-epic-review",
+        "role": "Verify all requirements met",
+        "required": true
+      },
+      {
+        "skill": "/cc-ship",
+        "role": "Version bump + PR + release",
+        "required": true
+      }
+    ]
+  },
+  "qa-fix": {
+    "description": "QA test → fix bugs → verify → ship",
+    "trigger": [
+      "qa",
+      "test the site",
+      "find and fix bugs",
+      "QA测试",
+      "测试修复"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-qa",
+        "role": "Diff-aware QA with health scoring",
+        "required": true
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Review the fixes",
+        "required": false
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit verified fixes",
+        "required": true
+      }
+    ]
+  },
+  "security-audit": {
+    "description": "Full security review: scout → code review → fix",
+    "trigger": [
+      "security audit",
+      "security review",
+      "security scan",
+      "penetration",
+      "vulnerability",
+      "安全审计",
+      "安全审查",
+      "安全检查",
+      "漏洞扫描"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-scout security",
+        "role": "Check security config",
+        "required": true
+      },
+      {
+        "skill": "/cc-security-review",
+        "role": "Code-level security patterns",
+        "required": true
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Final review of fixes",
+        "required": false
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit security fixes",
+        "required": true
+      }
+    ]
+  },
+  "performance": {
+    "description": "Profile → optimize → verify improvement",
+    "trigger": [
+      "performance",
+      "slow",
+      "speed up",
+      "optimize",
+      "profile",
+      "性能优化",
+      "太慢",
+      "加速"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-performance",
+        "role": "Profile and identify bottlenecks",
+        "required": true
+      },
+      {
+        "skill": "/cc-optimize",
+        "role": "Frontend Core Web Vitals optimization",
+        "required": false
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Review optimization changes",
+        "required": false
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit improvements",
+        "required": true
+      }
+    ]
+  },
+  "incident": {
+    "description": "Production incident: triage → fix → postmortem → prevent",
+    "trigger": [
+      "incident",
+      "production down",
+      "outage",
+      "sev1",
+      "生产故障",
+      "线上崩了",
+      "紧急修复"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-incident",
+        "role": "Triage + investigate + mitigate",
+        "required": true
+      },
+      {
+        "skill": "/cc-debug",
+        "role": "Root cause analysis",
+        "required": true
+      },
+      {
+        "skill": "/cc-tdd",
+        "role": "Regression test + fix",
+        "required": true
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Verify fix safety",
+        "required": true
+      },
+      {
+        "skill": "/cc-retro",
+        "role": "Postmortem and learnings",
+        "required": false
+      }
+    ]
+  },
+  "docs-update": {
+    "description": "Documentation refresh: audit gaps → update → verify",
+    "trigger": [
+      "update docs",
+      "documentation",
+      "readme",
+      "stale docs",
+      "更新文档",
+      "文档过期",
+      "写文档"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-scout docs-gap",
+        "role": "Find stale/missing documentation",
+        "required": true
+      },
+      {
+        "skill": "/cc-docs",
+        "role": "Update README, CHANGELOG, API docs",
+        "required": true
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit doc updates",
+        "required": true
+      }
+    ]
+  },
+  "dependency-upgrade": {
+    "description": "Safe dependency upgrade: audit → upgrade → test → fix",
+    "trigger": [
+      "upgrade deps",
+      "update dependencies",
+      "outdated packages",
+      "升级依赖",
+      "更新包",
+      "依赖过期"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-dependency-upgrade",
+        "role": "Audit and plan upgrades",
+        "required": true
+      },
+      {
+        "skill": "/cc-verification",
+        "role": "Run full test suite",
+        "required": true
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Review breaking changes",
+        "required": false
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit upgrades",
+        "required": true
+      }
+    ]
+  },
+  "api-feature": {
+    "description": "API development: design → scaffold → implement → test",
+    "trigger": [
+      "build api",
+      "new endpoint",
+      "api development",
+      "rest api",
+      "api",
+      "endpoint",
+      "接口",
+      "写API",
+      "新接口",
+      "API开发",
+      "写接口"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-brainstorm",
+        "role": "API design exploration",
+        "required": true
+      },
+      {
+        "skill": "/cc-plan",
+        "role": "Endpoint specs with request/response",
+        "required": true
+      },
+      {
+        "skill": "/cc-fastapi",
+        "role": "FastAPI patterns and implementation",
+        "required": true
+      },
+      {
+        "skill": "/cc-tdd",
+        "role": "Test-driven endpoint development",
+        "required": true
+      },
+      {
+        "skill": "/cc-security-review",
+        "role": "Auth + input validation review",
+        "required": true
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit API changes",
+        "required": true
+      }
+    ]
+  },
+  "autonomous": {
+    "description": "Unattended autonomous loop: goal-driven with self-heal + quality gates",
+    "trigger": [
+      "autonomous",
+      "ralph",
+      "unattended",
+      "run all tasks",
+      "until done",
+      "keep going",
+      "achieve goal",
+      "goal driven",
+      "自治",
+      "无人值守",
+      "自动跑",
+      "跑到完成",
+      "达成目标"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-autonomous-loops",
+        "role": "Choose loop pattern (simple/ralph/goal-driven)",
+        "required": true
+      },
+      {
+        "skill": "/cc-ralph",
+        "role": "Configure Ralph: GOAL, SELF_HEAL, MAX_ITERATIONS",
+        "required": true
+      },
+      {
+        "skill": "/cc-work",
+        "role": "Execute tasks with worker isolation",
+        "required": true
+      },
+      {
+        "skill": "/cc-autoimmune",
+        "role": "Self-heal: scan + create tasks when stuck",
+        "required": false
+      },
+      {
+        "skill": "/cc-epic-review",
+        "role": "Verify goal/epic completion",
+        "required": true
+      }
+    ]
+  },
+  "clone-site": {
+    "description": "Replicate a reference website: capture → analyze → implement → QA compare",
+    "trigger": [
+      "clone",
+      "replicate",
+      "copy this site",
+      "make it look like",
+      "reference site",
+      "look the same",
+      "same as this",
+      "仿站",
+      "照着做",
+      "参考",
+      "一模一样",
+      "一样的",
+      "模仿",
+      "抄这个"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-browser",
+        "role": "Screenshot reference at 3 viewports",
+        "required": true
+      },
+      {
+        "skill": "/cc-ui-ux",
+        "role": "Extract design tokens (colors, fonts, spacing)",
+        "required": true
+      },
+      {
+        "skill": "/cc-plan",
+        "role": "Create component-level implementation plan",
+        "required": true
+      },
+      {
+        "skill": "/cc-tdd",
+        "role": "Implement each component with tests",
+        "required": true
+      },
+      {
+        "skill": "/cc-qa",
+        "role": "Visual compare against reference screenshots",
+        "required": true
+      },
+      {
+        "skill": "/cc-ship",
+        "role": "Deploy when match achieved",
+        "required": false
+      }
+    ]
+  },
+  "new-project": {
+    "description": "Bootstrap project → design → plan → first feature",
+    "trigger": [
+      "new project",
+      "start from scratch",
+      "scaffold",
+      "bootstrap",
+      "init",
+      "新项目",
+      "从零开始",
+      "初始化项目"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-scaffold",
+        "role": "Generate project skeleton",
+        "required": true
+      },
+      {
+        "skill": "/cc-brainstorm",
+        "role": "Design first feature",
+        "required": true
+      },
+      {
+        "skill": "/cc-plan",
+        "role": "Create implementation plan",
+        "required": true
+      },
+      {
+        "skill": "/cc-tdd",
+        "role": "Implement with TDD",
+        "required": true
+      }
+    ]
+  },
+  "full-audit": {
+    "description": "Comprehensive project health: all scouts + readiness + deep scan",
+    "trigger": [
+      "full audit",
+      "project health",
+      "comprehensive check",
+      "how healthy",
+      "全面体检",
+      "项目健康",
+      "全面审查"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-prime",
+        "role": "Run all 12 scouts in parallel",
+        "required": true
+      },
+      {
+        "skill": "/cc-readiness-audit",
+        "role": "8-pillar readiness assessment",
+        "required": true
+      },
+      {
+        "skill": "/cc-qa-report",
+        "role": "QA report (browser, no fixes)",
+        "required": false
+      },
+      {
+        "skill": "/cc-retro",
+        "role": "Recent work review",
+        "required": false
+      }
+    ]
+  },
+  "deploy": {
+    "description": "Pre-deploy verification → deploy → monitor",
+    "trigger": [
+      "deploy",
+      "production",
+      "go live",
+      "push to prod",
+      "部署",
+      "上生产",
+      "发布上线"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-readiness-audit",
+        "role": "Pre-deploy readiness check",
+        "required": true
+      },
+      {
+        "skill": "/cc-verification",
+        "role": "Full lint + test pass",
+        "required": true
+      },
+      {
+        "skill": "/cc-deploy",
+        "role": "Docker + CI/CD deployment",
+        "required": true
+      },
+      {
+        "skill": "/cc-ship",
+        "role": "Version bump + PR + push",
+        "required": true
+      }
+    ]
+  },
+  "deep-review": {
+    "description": "Multi-layer review: bridge → code review → security → refinement",
+    "trigger": [
+      "thorough review",
+      "deep review",
+      "review everything",
+      "pre-merge",
+      "深度审查",
+      "全面审查代码",
+      "合并前检查"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-bridge",
+        "role": "Recall past review findings (memory-enhanced)",
+        "required": false
+      },
+      {
+        "skill": "/cc-code-review-loop",
+        "role": "Verdict-driven review + auto-fix",
+        "required": true
+      },
+      {
+        "skill": "/cc-security-review",
+        "role": "Security patterns check",
+        "required": true
+      },
+      {
+        "skill": "/cc-refinement",
+        "role": "Edge case hardening",
+        "required": false
+      }
+    ]
+  },
+  "hotfix": {
+    "description": "Emergency/trivial fix — skip brainstorm+plan, minimal review, fast commit",
+    "trigger": [
+      "hotfix",
+      "quick fix",
+      "trivial",
+      "typo",
+      "one-liner",
+      "urgent fix",
+      "emergency fix",
+      "config change",
+      "revert",
+      "bump version",
+      "紧急修复",
+      "快速修复",
+      "小改动",
+      "配置修改",
+      "回滚"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-tdd",
+        "role": "Implement fix (skip TDD if <10 lines)",
+        "required": true,
+        "outputs": [
+          "fix_description",
+          "files_changed"
+        ]
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Quick review (1 loop max)",
+        "required": true,
+        "reads": [
+          "files_changed"
+        ],
+        "outputs": [
+          "verdict"
+        ]
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit immediately",
+        "required": true,
+        "reads": [
+          "verdict"
+        ]
+      }
+    ]
+  },
+  "pr-review": {
+    "description": "Review an incoming PR: fetch → review → feedback",
+    "trigger": [
+      "review pr",
+      "review pull request",
+      "check this pr",
+      "pr review",
+      "审查PR",
+      "看看PR",
+      "PR审查"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-research",
+        "role": "Understand PR changes",
+        "required": true
+      },
+      {
+        "skill": "/cc-code-review-loop",
+        "role": "Verdict-driven review",
+        "required": true
+      }
+    ]
+  },
+  "perf-regression": {
+    "description": "Detect and fix performance regression",
+    "trigger": [
+      "slow down",
+      "regression",
+      "performance regression",
+      "slower",
+      "latency",
+      "性能回退",
+      "变慢了",
+      "延迟增加"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-performance",
+        "role": "Profile and identify bottleneck",
+        "required": true,
+        "outputs": [
+          "bottleneck",
+          "baseline_metrics"
+        ]
+      },
+      {
+        "skill": "/cc-research",
+        "role": "Bisect commit causing regression",
+        "required": true,
+        "reads": [
+          "bottleneck"
+        ],
+        "outputs": [
+          "root_cause",
+          "commit"
+        ]
+      },
+      {
+        "skill": "/cc-tdd",
+        "role": "Fix + regression test",
+        "required": true,
+        "reads": [
+          "root_cause"
+        ],
+        "outputs": [
+          "fix_description",
+          "test_results"
+        ]
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Verify fix + no side effects",
+        "required": true
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit fix",
+        "required": true
+      }
+    ]
+  },
+  "tech-debt": {
+    "description": "Structured technical debt reduction sprint",
+    "trigger": [
+      "tech debt",
+      "technical debt",
+      "debt sprint",
+      "cleanup sprint",
+      "技术债",
+      "债务清理",
+      "还债"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-research",
+        "role": "Map debt hotspots",
+        "required": true
+      },
+      {
+        "skill": "/cc-plan",
+        "role": "Prioritize by ROI",
+        "required": true
+      },
+      {
+        "skill": "/cc-simplify",
+        "role": "Refactor highest-ROI items",
+        "required": true
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Verify behavior preserved",
+        "required": true
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit improvements",
+        "required": true
+      }
+    ]
+  },
+  "db-migration": {
+    "description": "Database schema migration: plan → script → test → deploy",
+    "trigger": [
+      "migration",
+      "schema change",
+      "database migration",
+      "alter table",
+      "数据库迁移",
+      "改表",
+      "加字段"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-database",
+        "role": "Design migration plan",
+        "required": true,
+        "outputs": [
+          "migration_plan",
+          "rollback_plan"
+        ]
+      },
+      {
+        "skill": "/cc-tdd",
+        "role": "Write migration + test on clean DB",
+        "required": true,
+        "reads": [
+          "migration_plan"
+        ],
+        "outputs": [
+          "migration_file",
+          "test_results"
+        ]
+      },
+      {
+        "skill": "/cc-security-review",
+        "role": "Check for data safety",
+        "required": true
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Review migration script",
+        "required": true
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit migration",
+        "required": true
+      }
+    ]
+  },
+  "prd-to-ship": {
+    "description": "Full lifecycle from PRD/spec: analyze → plan → implement → review → ship",
+    "trigger": [
+      "prd",
+      "spec to code",
+      "from requirements",
+      "requirement to implementation",
+      "PRD to production",
+      "spec driven",
+      "需求到上线",
+      "从PRD开始",
+      "需求驱动"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-prd",
+        "role": "Convert PRD to phased implementation plan",
+        "required": true,
+        "outputs": [
+          "plan_doc",
+          "phases",
+          "slices",
+          "decisions"
+        ]
+      },
+      {
+        "skill": "/cc-plan",
+        "role": "Create detailed tasks from plan",
+        "required": true,
+        "reads": [
+          "plan_doc",
+          "decisions"
+        ],
+        "outputs": [
+          "epic_id",
+          "task_ids"
+        ]
+      },
+      {
+        "skill": "/cc-work",
+        "role": "Execute tasks with worker isolation",
+        "required": true,
+        "reads": [
+          "epic_id",
+          "task_ids"
+        ],
+        "outputs": [
+          "completed_tasks"
+        ]
+      },
+      {
+        "skill": "/cc-epic-review",
+        "role": "Verify all requirements met",
+        "required": true
+      },
+      {
+        "skill": "/cc-ship",
+        "role": "Version bump + PR + release",
+        "required": true
+      }
+    ]
+  },
+  "testing": {
+    "description": "Write comprehensive tests: strategy → implement → coverage → verify",
+    "trigger": [
+      "write tests",
+      "add tests",
+      "test coverage",
+      "test suite",
+      "testing",
+      "写测试",
+      "加测试",
+      "测试覆盖"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-python-testing",
+        "role": "Test strategy and patterns",
+        "required": true,
+        "outputs": [
+          "test_strategy",
+          "test_files"
+        ]
+      },
+      {
+        "skill": "/cc-tdd",
+        "role": "Implement tests (red-green-refactor)",
+        "required": true,
+        "reads": [
+          "test_strategy"
+        ],
+        "outputs": [
+          "test_results",
+          "coverage"
+        ]
+      },
+      {
+        "skill": "/cc-verification",
+        "role": "Verify all tests pass + coverage",
+        "required": true
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit tests",
+        "required": true
+      }
+    ]
+  },
+  "logging-observability": {
+    "description": "Add logging and observability: setup → implement → verify",
+    "trigger": [
+      "add logging",
+      "logging",
+      "observability",
+      "monitoring",
+      "tracing",
+      "加日志",
+      "日志",
+      "监控",
+      "可观测性"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-logging",
+        "role": "Logging patterns and setup",
+        "required": true
+      },
+      {
+        "skill": "/cc-tdd",
+        "role": "Implement with tests",
+        "required": true
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Review logging quality",
+        "required": false
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit changes",
+        "required": true
+      }
+    ]
+  },
+  "error-handling": {
+    "description": "Improve error handling: audit → implement → test → review",
+    "trigger": [
+      "error handling",
+      "exception",
+      "retry",
+      "graceful degradation",
+      "错误处理",
+      "异常处理",
+      "重试"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-error-handling",
+        "role": "Error handling patterns",
+        "required": true
+      },
+      {
+        "skill": "/cc-tdd",
+        "role": "Implement with tests",
+        "required": true
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Review error paths",
+        "required": true
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit changes",
+        "required": true
+      }
+    ]
+  },
+  "product-validation": {
+    "description": "Full product validation: lens → requirements → elicit → plan",
+    "trigger": [
+      "validate product",
+      "product validation",
+      "worth building",
+      "PMF",
+      "产品验证",
+      "值不值得做"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-product-lens",
+        "role": "PMF scoring + user journey",
+        "required": true,
+        "outputs": [
+          "pmf_score",
+          "decision",
+          "mvp_scope"
+        ]
+      },
+      {
+        "skill": "/cc-requirement-gate",
+        "role": "Validate requirements clarity",
+        "required": true,
+        "reads": [
+          "mvp_scope"
+        ],
+        "outputs": [
+          "decision",
+          "complexity"
+        ]
+      },
+      {
+        "skill": "/cc-elicit",
+        "role": "Challenge assumptions (pre-mortem)",
+        "required": false
+      },
+      {
+        "skill": "/cc-brainstorm",
+        "role": "Design if validated",
+        "required": true
+      }
+    ]
+  },
+  "visual-qa": {
+    "description": "Visual QA: browser testing → accessibility → performance → fix",
+    "trigger": [
+      "visual qa",
+      "visual test",
+      "accessibility",
+      "core web vitals",
+      "WCAG",
+      "视觉测试",
+      "无障碍",
+      "性能测试"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-browser-qa",
+        "role": "Visual + performance + accessibility audit",
+        "required": true,
+        "outputs": [
+          "health_score",
+          "a11y_violations",
+          "vitals_grade"
+        ]
+      },
+      {
+        "skill": "/cc-optimize",
+        "role": "Fix performance issues",
+        "required": false
+      },
+      {
+        "skill": "/cc-qa",
+        "role": "Fix remaining bugs",
+        "required": false
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit fixes",
+        "required": true
+      }
+    ]
+  },
+  "async-backend": {
+    "description": "Async backend: patterns → implement → test → deploy",
+    "trigger": [
+      "async",
+      "asyncio",
+      "background jobs",
+      "task queue",
+      "celery",
+      "concurrent",
+      "异步",
+      "后台任务",
+      "并发"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-async-patterns",
+        "role": "Async patterns and architecture",
+        "required": true
+      },
+      {
+        "skill": "/cc-tdd",
+        "role": "Implement with tests",
+        "required": true
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Review async correctness",
+        "required": true
+      },
+      {
+        "skill": "/cc-commit",
+        "role": "Commit",
+        "required": true
+      }
+    ]
+  },
+  "team-workflow": {
+    "description": "Multi-agent workflow: build team → deps → execute → review",
+    "trigger": [
+      "multi agent",
+      "team workflow",
+      "parallel agents",
+      "dispatch team",
+      "多agent",
+      "团队工作流",
+      "并行执行"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-team-builder",
+        "role": "Analyze task + recommend team",
+        "required": true
+      },
+      {
+        "skill": "/cc-deps",
+        "role": "Compute dependency graph + critical path",
+        "required": true
+      },
+      {
+        "skill": "/cc-work",
+        "role": "Execute with team dispatch",
+        "required": true
+      },
+      {
+        "skill": "/cc-epic-review",
+        "role": "Verify completion",
+        "required": true
+      }
+    ]
+  },
+  "clone-and-ship": {
+    "description": "Clone reference site: capture → analyze → implement → QA → ship",
+    "trigger": [
+      "clone site",
+      "replicate",
+      "copy design",
+      "make it look like",
+      "仿站",
+      "照着做",
+      "模仿"
+    ],
+    "skills": [
+      {
+        "skill": "/cc-clone-site",
+        "role": "Screenshot + analyze reference",
+        "required": true
+      },
+      {
+        "skill": "/cc-browser-qa",
+        "role": "Visual comparison + accessibility",
+        "required": true
+      },
+      {
+        "skill": "/cc-review",
+        "role": "Review implementation",
+        "required": false
+      },
+      {
+        "skill": "/cc-ship",
+        "role": "Deploy",
+        "required": true
+      }
+    ]
+  }
+}

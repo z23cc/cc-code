@@ -4,20 +4,20 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 ## Architecture
 
-- `scripts/cc_flow/` — Task & workflow CLI package (53 modules, lazy-loaded, atomic writes, cross-platform)
+- `scripts/cc_flow/` — Task & workflow CLI package (55 modules, 15K LOC, lazy-loaded, atomic writes, cross-platform)
 - `scripts/morph_client.py` — Pure Python Morph API client (Apply, WarpGrep, Embed, Rerank)
 - `scripts/worktree.sh` — Git worktree manager (create/list/switch/remove/cleanup/status + nesting guard)
 - `agents/` — 11 general agents + 12 scout agents (read-only specialists), all `model: inherit`
 - `templates/ralph/` — Ralph autonomous harness (goal-driven + self-heal + receipt gates)
-- `skills/` — 69 skills (all prefixed `cc-`):
-  - **Core (43):** brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, teams, autoimmune, readiness-audit, search-strategy, git-workflow, prompt-engineering, clean-architecture, context-tips, docs, incident, dependency-upgrade, feedback-loop, web-design, ui-ux, browser, optimize, **go, work, worktree, plan-sync, epic-review, review-backend, ralph, rp, bridge, ship, autonomous-loops, clone-site, qa, qa-report, aside, grill-me, retro, office-hours**
+- `skills/` — 78 skills (all prefixed `cc-`):
+  - **Core (54):** brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, teams, autoimmune, readiness-audit, search-strategy, git-workflow, prompt-engineering, clean-architecture, context-tips, docs, incident, dependency-upgrade, feedback-loop, web-design, ui-ux, browser, optimize, go, work, worktree, plan-sync, epic-review, review-backend, ralph, rp, bridge, ship, autonomous-loops, clone-site, qa, qa-report, aside, grill-me, retro, office-hours, prd, requirement-gate, architecture, prd-validate, elicit, product-lens, browser-qa, team-builder, deps
   - **Python pack (12):** python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, scaffold, deploy, task-queues
   - **Scouts (12):** scout-practices, scout-repo, scout-docs, scout-docs-gap, scout-security, scout-testing, scout-tooling, scout-build, scout-env, scout-observability, scout-gaps, scout-context
-  - **Chains:** 22 predefined workflows (idea-to-ship, feature, bugfix, qa-fix, incident, security-audit, etc.)
-- `commands/` — 58 slash commands (all prefixed `/cc-`, every skill has a command)
-- `tests/` — 286 tests (150 cc-flow integration + 87 unit + 22 skill-flow + 19 go + 15 morph + 15 bridge)
+  - **Chains:** 36 predefined workflows in `chains.json` (idea-to-ship, feature, bugfix, hotfix, qa-fix, incident, security-audit, performance, deploy, testing, async-backend, db-migration, prd-to-ship, clone-and-ship, etc.)
+- `commands/` — 82 slash commands (all prefixed `/cc-`, every skill has a command)
+- `tests/` — 330+ tests (150 cc-flow integration + 87 unit + 22 skill-flow + 29 go + 15 morph + 15 bridge + auto + wf_executor + wisdom)
 - `rules/` — 10 always-on rules: python-style, testing, security, git, docs-sync, agent-orchestration, workflow, performance, tool-priority, proactive-suggestions
-- `hooks/` — 11 hooks across 6 events: UserPromptSubmit (auto-context), PreToolUse (worktree-guard + config-protect + mode-guard + commit-gate + push-review), PostToolUse (task-hint + edit-verify), SessionStart, PreCompact, Stop
+- `hooks/` — 13 hooks across 6 events: UserPromptSubmit (auto-context), PreToolUse (worktree-guard + config-protect + mode-guard + commit-gate + push-review), PostToolUse (task-hint + edit-verify), SessionStart, PreCompact, Stop
 
 ## Quick Decision Tree
 

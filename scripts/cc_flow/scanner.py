@@ -30,7 +30,7 @@ def scan_architecture():
     """Scan code architecture: file sizes, function counts, module structure."""
     findings = []
     for py in sorted(Path(".").rglob("*.py")):
-        if any(p in str(py) for p in ["__pycache__", ".venv", "node_modules", ".git"]):
+        if any(p in str(py) for p in ["__pycache__", ".venv", "node_modules", ".git", "ref/", "zcf/", "ccg-workflow/"]):
             continue
         try:
             content = py.read_text()
