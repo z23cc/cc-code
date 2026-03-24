@@ -728,6 +728,15 @@ def _add_misc_commands(sub):
     mr_p.add_argument("--path", nargs="*", default=None, help="Limit review to paths: scripts/ tests/")
     mr_p.add_argument("--dry-run", action="store_true", help="Show plan without running")
 
+    # Adversarial review
+    ar_p = sub.add_parser("adversarial-review", help="Ship Advocate vs Quality Gate debate review")
+    ar_p.add_argument("--advocate", default="gemini", help="Engine for Ship Advocate (gemini/codex/claude)")
+    ar_p.add_argument("--gate", default="gemini", help="Engine for Quality Gate (gemini/codex/claude)")
+    ar_p.add_argument("--timeout", type=int, default=300, help="Per-round timeout in seconds")
+    ar_p.add_argument("--range", default="", help="Git diff range: main..HEAD, HEAD~5")
+    ar_p.add_argument("--path", nargs="*", default=None, help="Limit to paths: scripts/ tests/")
+    ar_p.add_argument("--dry-run", action="store_true", help="Show plan without running")
+
     # Safety modes
     careful_p = sub.add_parser("careful", help="Toggle careful mode (warn on destructive ops)")
     careful_g = careful_p.add_mutually_exclusive_group()
