@@ -11,6 +11,10 @@
 set -euo pipefail
 
 MODES_FILE="$HOME/.cc-code/modes.json"
+PROFILE="${CC_HOOK_PROFILE:-standard}"
+
+# In minimal profile, skip all mode checks
+[[ "$PROFILE" == "minimal" ]] && { echo '{"decision":"approve"}'; exit 0; }
 
 # Fast exit if no modes file
 [[ -f "$MODES_FILE" ]] || { echo '{"decision":"approve"}'; exit 0; }
@@ -57,20 +61,24 @@ if [[ "$CAREFUL" == "True" && "$TOOL" == "Bash" ]]; then
   COMMAND="$(echo "$INPUT" | python3 -c "import sys,json; print(json.load(sys.stdin).get('tool_input',{}).get('command',''))" 2>/dev/null || echo "")"
 
   # Check for destructive patterns
+  # In strict profile, destructive ops are blocked. In standard, they warn.
+  ENFORCE="warn"
+  [[ "$PROFILE" == "strict" ]] && ENFORCE="block"
+
   if echo "$COMMAND" | grep -qE 'rm\s+(-[a-zA-Z]*r[a-zA-Z]*f|--force\s+--recursive|-rf)'; then
-    warn "Careful mode: detected 'rm -rf' — destructive file deletion. Proceed with caution."
+    $ENFORCE "Careful mode: detected 'rm -rf' — destructive file deletion."
   fi
 
   if echo "$COMMAND" | grep -qiE 'DROP\s+TABLE'; then
-    warn "Careful mode: detected 'DROP TABLE' — destructive database operation. Proceed with caution."
+    $ENFORCE "Careful mode: detected 'DROP TABLE' — destructive database operation."
   fi
 
   if echo "$COMMAND" | grep -qE 'git\s+push\s+(-[a-zA-Z]*f|--force)'; then
-    warn "Careful mode: detected 'git push -f' — force push can overwrite remote history."
+    $ENFORCE "Careful mode: detected 'git push -f' — force push can overwrite remote history."
   fi
 
   if echo "$COMMAND" | grep -qE 'git\s+reset\s+--hard'; then
-    warn "Careful mode: detected 'git reset --hard' — will discard all uncommitted changes."
+    $ENFORCE "Careful mode: detected 'git reset --hard' — will discard all uncommitted changes."
   fi
 fi
 

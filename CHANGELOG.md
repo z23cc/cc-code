@@ -1,5 +1,20 @@
 # Changelog
 
+## [5.13.0] - 2026-03-24
+### Added
+- **Hook enforcement levels** (PACEflow inspired):
+  - `pre-commit-gate.sh`: strict mode **blocks** commits without recent `cc-flow verify` (within 5 min)
+  - `mode-guard.sh`: strict mode **blocks** destructive ops (rm -rf, DROP TABLE, git push -f), standard mode warns
+  - `cc-flow verify` now records timestamp to `.tasks/last_verify.json` for strict enforcement
+- **Runtime hook profiles** (`CC_HOOK_PROFILE` env var):
+  - `minimal` — safety hooks only (worktree-guard, mode-guard skip)
+  - `standard` — current default behavior (warn but allow)
+  - `strict` — all hooks + DENY mode (blocks commits without verify, blocks destructive ops)
+- **Complexity-adaptive routing** in `cc-flow go`:
+  - Estimates complexity: simple (hotfix keywords, short queries), medium (standard chains), complex (architecture/system/rewrite keywords, long queries)
+  - Routes: simple→hotfix chain, medium→matched chain, complex→Ralph
+  - Output includes `complexity` field showing why mode was chosen
+
 ## [5.12.0] - 2026-03-24
 ### Added
 - **Wisdom system** (inspired by CCW) — persistent cross-chain knowledge accumulation:

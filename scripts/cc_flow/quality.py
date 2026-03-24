@@ -316,6 +316,16 @@ def cmd_verify(args):
             "error": stderr if not passed else "",
         })
 
+    # Record verification timestamp for strict hook enforcement
+    if all_passed:
+        try:
+            from cc_flow.core import TASKS_DIR, atomic_write, now_iso
+            TASKS_DIR.mkdir(parents=True, exist_ok=True)
+            atomic_write(TASKS_DIR / "last_verify.json",
+                         json.dumps({"timestamp": now_iso(), "language": lang, "steps": len(results)}) + "\n")
+        except Exception:
+            pass
+
     print(json.dumps({
         "success": all_passed,
         "language": lang,

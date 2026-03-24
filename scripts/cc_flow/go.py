@@ -63,8 +63,56 @@ HOTFIX_KEYWORDS = {"hotfix", "typo", "trivial", "one-liner", "urgent", "revert",
                    "紧急", "快速修复", "小改动", "回滚"}
 
 
+COMPLEX_KEYWORDS = {"architecture", "system", "platform", "redesign", "rewrite",
+                     "multi-service", "microservice", "monorepo", "migrate",
+                     "架构", "系统", "平台", "重写", "微服务"}
+
+
+def _estimate_complexity(query, chain_data):
+    """Estimate task complexity: simple, medium, complex.
+
+    Signals:
+      simple  — short query, hotfix keywords, chain ≤ 3 steps
+      medium  — standard chain (3-5 steps), specific task
+      complex — long query, architecture keywords, no chain match, multi-system
+    """
+    words = set(query.lower().split())
+    word_count = len(words)
+
+    # Hotfix keywords → simple
+    if words & HOTFIX_KEYWORDS:
+        return "simple"
+
+    # Complex keywords → complex
+    if words & COMPLEX_KEYWORDS:
+        return "complex"
+
+    # Long queries (>10 words) tend to be complex
+    if word_count > 10:
+        return "complex"
+
+    # Short queries with chain match → medium
+    if chain_data:
+        required = sum(1 for s in chain_data.get("skills", []) if s.get("required"))
+        if required <= 3:
+            return "simple"
+        return "medium"
+
+    # No chain match + moderate length → complex
+    if word_count > 5:
+        return "complex"
+
+    return "medium"
+
+
 def decide_mode(query, route_result, chain_name, chain_data, force_mode=""):
-    """Decide execution mode: chain, ralph, or auto."""
+    """Decide execution mode based on complexity-adaptive routing.
+
+    Simple  → hotfix chain (3 steps, skip brainstorm/plan)
+    Medium  → standard chain (matched chain, ≤5 steps)
+    Complex → Ralph (autonomous, creates tasks from goal)
+    Auto    → OODA loop (scan/improve keywords)
+    """
     if force_mode:
         return force_mode
 
@@ -76,17 +124,30 @@ def decide_mode(query, route_result, chain_name, chain_data, force_mode=""):
     if route_cmd in ("/autoimmune", "auto") or words & AUTO_KEYWORDS:
         return "auto"
 
-    # 2. Hotfix fast-track: always chain mode
-    if words & HOTFIX_KEYWORDS or any(kw in query_lower for kw in HOTFIX_KEYWORDS):
-        return "chain"
+    # 2. Estimate complexity
+    complexity = _estimate_complexity(query, chain_data)
 
-    # 3. Chain mode if chain found and lightweight (≤ 5 required steps)
-    if chain_data:
+    # 3. Route by complexity
+    if complexity == "simple":
+        return "chain"  # hotfix or small chain
+
+    if complexity == "medium" and chain_data:
         required = sum(1 for s in chain_data.get("skills", []) if s.get("required"))
         if required <= 5:
             return "chain"
 
-    # 4. Ralph for everything else (complex, needs task generation)
+    if complexity == "complex":
+        # Complex with a matching chain → still use chain if ≤5 steps
+        if chain_data:
+            required = sum(1 for s in chain_data.get("skills", []) if s.get("required"))
+            if required <= 5:
+                return "chain"
+        # Otherwise → Ralph
+        return "ralph"
+
+    # Fallback: chain if available, ralph otherwise
+    if chain_data:
+        return "chain"
     return "ralph"
 
 
@@ -210,7 +271,7 @@ def _execute_resume(state):
 
 # ── Executors ──
 
-def _execute_chain(chain_name, chain_data, query, dry_run=False):
+def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="medium"):
     """Execute a skill chain with full auto-execution protocol."""
     steps = chain_data["skills"]
 
@@ -258,6 +319,7 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False):
     result = {
         "success": True,
         "mode": "chain",
+        "complexity": complexity,
         "chain": chain_name,
         "description": chain_data.get("description", ""),
         "goal": query,
@@ -407,11 +469,12 @@ def cmd_go(args):
     chain_name, chain_data = _find_chain(query)
 
     # 2. Decide
+    complexity = _estimate_complexity(query, chain_data)
     mode = decide_mode(query, route_result, chain_name, chain_data, force_mode)
 
-    # 3. Execute
+    # 3. Execute (pass complexity for output)
     if mode == "chain" and chain_data:
-        _execute_chain(chain_name, chain_data, query, dry_run)
+        _execute_chain(chain_name, chain_data, query, dry_run, complexity=complexity)
     elif mode == "auto":
         _execute_auto(query, dry_run)
     else:
