@@ -95,29 +95,29 @@ def _build_review_context():
 
 # ── Engine Runners ──
 
-def _run_codex(context, timeout=120):
-    """Run codex review via exec (non-interactive, captures output)."""
-    prompt = (
-        "Review these code changes. Output findings as a markdown table:\n"
-        "| Severity | File | Description |\n"
-        "End with a line: Verdict: SHIP or NEEDS_WORK or MAJOR_RETHINK\n\n"
-        f"Changed files: {', '.join(context['files'])}\n\n"
-        f"Diff:\n```\n{context['diff'][:30000]}\n```"
+def _run_codex(context, timeout=180):
+    """Run codex review CLI (it auto-detects git changes)."""
+    custom_prompt = (
+        "Focus on: correctness, edge cases, error handling. "
+        "Output findings as: severity (critical/high/medium/low): description. "
+        "End with: Verdict: SHIP or NEEDS_WORK or MAJOR_RETHINK."
     )
     try:
-        # Use 'codex exec' for non-interactive structured output
+        # codex review auto-reads git diff, just pass custom instructions
         r = subprocess.run(
-            ["codex", "exec", "--approval-mode", "never", "-q", prompt],
+            ["codex", "review", custom_prompt],
             check=False, capture_output=True, text=True, timeout=timeout,
         )
         output = r.stdout
-        # Codex exec outputs stream with headers — extract the actual content
-        # Filter out MCP/session lines
-        lines = []
-        for line in output.split("\n"):
-            if any(skip in line for skip in ["mcp:", "session id:", "--------", "workdir:", "model:", "provider:", "approval:", "sandbox:", "reasoning"]):
-                continue
-            lines.append(line)
+        # Filter MCP/session header noise
+        lines = [
+            line for line in output.split("\n")
+            if not any(skip in line for skip in [
+                "mcp:", "session id:", "--------", "workdir:", "model:",
+                "provider:", "approval:", "sandbox:", "reasoning", "OpenAI Codex",
+                "tokens used",
+            ])
+        ]
         clean_output = "\n".join(lines).strip()
         return {"success": True, "output": clean_output, "stderr": r.stderr, "exit_code": r.returncode}
     except subprocess.TimeoutExpired:
