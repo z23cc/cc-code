@@ -1,5 +1,12 @@
 # Changelog
 
+## [5.17.0] - 2026-03-24
+### Added (Everything Claude Code inspired)
+- **`/cc-product-lens`** — product thinking before building: founder review, PMF scoring (0-50), user journey audit, RICE prioritization. BUILD/VALIDATE/DEFER decision.
+- **`/cc-browser-qa`** — automated visual QA: smoke tests, Core Web Vitals (LCP/CLS/TTFB), WCAG AA accessibility, responsive breakpoints (mobile/tablet/desktop), dark mode, visual regression baselines.
+- **`/cc-team-builder`** — dynamic agent composition: analyzes task (file types, domains, complexity), checks past success from wisdom system, recommends optimal team + execution mode.
+- 3 new skills + commands (77 skills, 66 commands total)
+
 ## [5.16.0] - 2026-03-24
 ### Added (BMAD-METHOD inspired)
 - **`/cc-architecture` skill** — Solutioning phase: document ADRs (API, data model, auth, testing, deployment) before coding. Inserted into feature chain between plan and tdd as optional step. Prevents multi-agent style conflicts.
