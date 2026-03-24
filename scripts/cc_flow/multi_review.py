@@ -98,15 +98,17 @@ def _build_review_context():
 def _run_codex(context, timeout=120):
     """Run codex review CLI."""
     prompt = (
-        "Review these code changes. For each issue found, output severity (critical/high/medium/low), "
-        "file path, and description. End with a verdict: SHIP, NEEDS_WORK, or MAJOR_RETHINK.\n\n"
-        f"Changed files: {', '.join(context['files'])}\n\n"
-        f"Diff:\n{context['diff'][:8000]}"
+        "Review these code changes. For each issue, output a markdown table with columns: "
+        "Severity (critical/high/medium/low), File, Description. "
+        "End with verdict: SHIP, NEEDS_WORK, or MAJOR_RETHINK.\n\n"
+        f"Changed files: {', '.join(context['files'])}"
     )
     try:
+        # Use --uncommitted for codex to review working tree
         r = subprocess.run(
             ["codex", "review", "--uncommitted", prompt],
             check=False, capture_output=True, text=True, timeout=timeout,
+            input=context["diff"][:30000],  # pass diff via stdin
         )
         return {"success": True, "output": r.stdout, "stderr": r.stderr, "exit_code": r.returncode}
     except subprocess.TimeoutExpired:
@@ -123,10 +125,10 @@ def _run_gemini(context, timeout=120):
 
     prompt = (
         "Review these code changes from an architecture and scalability perspective. "
-        "For each issue, output severity (critical/high/medium/low), file, and description. "
-        "End with verdict: SHIP, NEEDS_WORK, or MAJOR_RETHINK.\n\n"
+        "Output findings as a markdown table: | Severity | File | Description |. "
+        "End with verdict line: SHIP, NEEDS_WORK, or MAJOR_RETHINK.\n\n"
         f"Changed files: {', '.join(context['files'])}\n\n"
-        f"Diff:\n{context['diff'][:8000]}"
+        f"Diff:\n{context['diff'][:30000]}"
     )
     try:
         r = subprocess.run(
@@ -156,13 +158,15 @@ def _run_rp(context, timeout=120):
 
 
 def _run_agent(context, timeout=60):
-    """Run built-in agent review (lightweight — just lint + basic checks)."""
+    """Run built-in agent review — lint only changed files."""
     findings = []
-    # Quick lint check
+    # Lint only changed files (not whole project)
+    changed_files = [f for f in context.get("files", []) if f.endswith(".py")]
+    if not changed_files:
+        return {"success": True, "output": "No Python files changed", "findings": [], "verdict": "SHIP"}
     try:
-        from cc_flow.quality import _ruff_targets
         r = subprocess.run(
-            ["ruff", "check", *_ruff_targets(), "--output-format", "json"],
+            ["ruff", "check", *changed_files, "--output-format", "json"],
             check=False, capture_output=True, text=True, timeout=15,
         )
         if r.stdout.strip():
@@ -211,22 +215,48 @@ def _parse_verdict(text):
 
 
 def _parse_findings(text):
-    """Extract findings from engine output. Best-effort parsing."""
+    """Extract findings from engine output. Multi-format parser."""
     findings = []
-    # Look for severity markers
+
+    # Format 1: "severity: description" or "[severity] description"
     for match in re.finditer(
-        r"(?:^|\n)\s*[-*]?\s*\[?(critical|high|medium|low)\]?\s*[:\-—]\s*(.+?)(?=\n\s*[-*]?\s*\[?(?:critical|high|medium|low)\]?|\n\n|\Z)",
+        r"(?:^|\n)\s*[-*]?\s*\[?\*{0,2}(critical|high|medium|low)\*{0,2}\]?\s*[:\-—|]\s*(.+?)(?=\n\s*[-*]?\s*\[?\*{0,2}(?:critical|high|medium|low)|\n\n|\Z)",
         text, re.IGNORECASE | re.DOTALL,
     ):
         severity = match.group(1).lower()
         desc = match.group(2).strip()
-        # Try to extract file path
-        file_match = re.search(r'(?:in |file |at )?([a-zA-Z0-9_/.-]+\.\w{1,4})', desc)
+        file_match = re.search(r'(?:in |file |at )?[`]?([a-zA-Z0-9_/.-]+\.\w{1,4})[`]?', desc)
         findings.append({
             "severity": severity,
             "file": file_match.group(1) if file_match else "",
-            "description": desc[:200],
+            "description": re.sub(r'\*{1,2}', '', desc)[:200],
         })
+
+    # Format 2: Markdown table "| severity | file | description |"
+    if not findings:
+        for match in re.finditer(
+            r"\|\s*\*{0,2}(critical|high|medium|low)\*{0,2}\s*\|\s*[`]?([^|`]*)[`]?\s*\|\s*\*{0,2}([^|]*)\*{0,2}\s*\|",
+            text, re.IGNORECASE,
+        ):
+            findings.append({
+                "severity": match.group(1).lower().strip("* "),
+                "file": match.group(2).strip("` "),
+                "description": re.sub(r'\*{1,2}', '', match.group(3).strip())[:200],
+            })
+
+    # Format 3: Numbered list "1. [HIGH] description"
+    if not findings:
+        for match in re.finditer(
+            r"\d+\.\s*\[?(critical|high|medium|low)\]?\s*[:\-—]\s*(.+?)(?=\n\d+\.|\n\n|\Z)",
+            text, re.IGNORECASE | re.DOTALL,
+        ):
+            desc = match.group(2).strip()
+            file_match = re.search(r'[`]?([a-zA-Z0-9_/.-]+\.\w{1,4})[`]?', desc)
+            findings.append({
+                "severity": match.group(1).lower(),
+                "file": file_match.group(1) if file_match else "",
+                "description": desc[:200],
+            })
 
     return findings
 

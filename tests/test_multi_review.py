@@ -47,6 +47,20 @@ class TestParseFindings:
         assert len(findings) >= 2
         assert findings[0]["severity"] == "high"
 
+    def test_markdown_table(self):
+        text = (
+            "| Severity | File | Description |\n"
+            "| :--- | :--- | :--- |\n"
+            "| **High** | `scripts/auth.py` | Missing validation |\n"
+            "| **Medium** | `scripts/db.py` | N+1 query |\n"
+            "| **Low** | `scripts/util.py` | Unused import |\n"
+        )
+        findings = _parse_findings(text)
+        assert len(findings) == 3
+        assert findings[0]["severity"] == "high"
+        assert "auth.py" in findings[0]["file"]
+        assert findings[1]["severity"] == "medium"
+
     def test_no_findings(self):
         assert _parse_findings("All good, no issues.") == []
 
