@@ -334,6 +334,22 @@ SKILL_CHAINS = {
             {"skill": "/cc-commit", "role": "Commit migration", "required": True},
         ],
     },
+    # ── PRD-driven workflows ──
+    "prd-to-ship": {
+        "description": "Full lifecycle from PRD/spec: analyze → plan → implement → review → ship",
+        "trigger": ["prd", "spec to code", "from requirements", "requirement to implementation",
+                     "PRD to production", "spec driven", "需求到上线", "从PRD开始", "需求驱动"],
+        "skills": [
+            {"skill": "/cc-prd", "role": "Convert PRD to phased implementation plan", "required": True,
+             "outputs": ["plan_doc", "phases", "slices", "decisions"]},
+            {"skill": "/cc-plan", "role": "Create detailed tasks from plan", "required": True,
+             "reads": ["plan_doc", "decisions"], "outputs": ["epic_id", "task_ids"]},
+            {"skill": "/cc-work", "role": "Execute tasks with worker isolation", "required": True,
+             "reads": ["epic_id", "task_ids"], "outputs": ["completed_tasks"]},
+            {"skill": "/cc-epic-review", "role": "Verify all requirements met", "required": True},
+            {"skill": "/cc-ship", "role": "Version bump + PR + release", "required": True},
+        ],
+    },
 }
 
 

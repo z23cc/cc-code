@@ -1,5 +1,16 @@
 # Changelog
 
+## [5.14.0] - 2026-03-24
+### Added
+- **SKILL.md template validation** (gstack pattern):
+  - Enhanced `cc-flow validate-skills` with NOT FOR, flow graph, On Completion checks
+  - Cross-reference validation: skill↔command sync, broken flow refs, alias-aware
+  - 69 skills validated, 23 real missing commands identified (vs 58 false positives before)
+- **`/cc-prd` skill** — Convert PRD/spec to phased implementation plan with architectural decisions, vertical slices, and tracer-bullet first milestone
+- **`prd-to-ship` chain** (28 chains total): prd → plan → work → epic-review → ship
+  - Full lifecycle from requirements document to deployed code
+  - Bridges the brainstorm→plan gap with explicit architectural decisions
+
 ## [5.13.0] - 2026-03-24
 ### Added
 - **Hook enforcement levels** (PACEflow inspired):
