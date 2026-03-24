@@ -66,29 +66,53 @@ def _get_chain_summary():
         for name, chain in SKILL_CHAINS.items():
             desc = chain.get("description", "")
             steps = len(chain.get("skills", []))
-            triggers = chain.get("trigger", [])[:3]
-            lines.append(f"- {name} ({steps} steps): {desc}. Triggers: {', '.join(triggers)}")
+            lines.append(f"- {name} ({steps} steps): {desc}")
         return "\n".join(lines)
     except ImportError:
         return ""
 
 
+def _get_command_summary():
+    """Build standalone command catalog (skills not in any chain)."""
+    commands = [
+        ("review", "Code review — auto 3-engine debate"),
+        ("autopilot", "3-engine guided autonomous execution"),
+        ("multi-plan", "3-engine collaborative planning"),
+        ("prime", "Run all 12 scouts in parallel (project health)"),
+        ("audit", "8-pillar readiness assessment"),
+        ("interview", "Structured requirements interview"),
+        ("scout", "Run specific scout: practices/repo/security/testing/docs/etc"),
+        ("research", "Deep codebase investigation"),
+        ("retro", "Weekly engineering retrospective"),
+        ("verify", "Run lint + tests"),
+        ("dashboard", "Project overview"),
+        ("doctor", "Health check"),
+        ("health", "Health score 0-100"),
+    ]
+    return "\n".join(f"- {name}: {desc}" for name, desc in commands)
+
+
 # ── AI Router Prompt ──
 
 ROUTER_PROMPT = """\
-You are a routing agent. Given a user's goal, select the best workflow.
+You are a routing agent. Given a user's goal, select the best workflow or command.
 
-Available workflows:
+Available workflow chains (multi-step):
 {chain_list}
 
+Standalone commands (single action):
+{command_list}
+
 Special modes:
-- autopilot: For complex cross-system tasks (redesign, rewrite, migrate). Uses 3-engine guided execution.
+- autopilot: For complex cross-system tasks (redesign, rewrite, migrate). 3-engine guided execution.
 - auto: For improvement/scan tasks (lint, quality, auto-fix)
+- review: For code review requests. Auto-selects 3-engine debate.
+- prime: For project health assessment. Runs all 12 scouts.
 
 User's goal: "{query}"
 
 Respond with ONLY a JSON object (no markdown, no explanation):
-{{"chain": "<chain-name or autopilot or auto>", "complexity": "<simple|medium|complex>", "reason": "<one sentence why>"}}"""
+{{"chain": "<chain-name or command-name or autopilot or auto or review or prime>", "complexity": "<simple|medium|complex>", "reason": "<one sentence why>"}}"""
 
 
 # ── Engine Execution ──
@@ -96,7 +120,8 @@ Respond with ONLY a JSON object (no markdown, no explanation):
 def _run_router(query, timeout=30):
     """Run the AI router using the fastest available engine."""
     chain_list = _get_chain_summary()
-    prompt = ROUTER_PROMPT.format(chain_list=chain_list, query=query)
+    command_list = _get_command_summary()
+    prompt = ROUTER_PROMPT.format(chain_list=chain_list, command_list=command_list, query=query)
 
     # Try gemini first (fastest), then claude
     engines = []

@@ -477,6 +477,10 @@ def cmd_go(args):
         ai_result = ai_route(query)
         ai_chain = ai_result["chain"] if ai_result else None
 
+        # Standalone command routing
+        STANDALONE_COMMANDS = {"review", "prime", "audit", "interview", "scout",
+                               "research", "retro", "verify", "dashboard", "doctor", "health"}
+
         if ai_chain == "autopilot":
             mode = "multi-engine"
             chain_name, chain_data = None, None
@@ -485,6 +489,11 @@ def cmd_go(args):
             mode = "auto"
             chain_name, chain_data = None, None
             complexity = ai_result.get("complexity", "medium")
+        elif ai_chain in STANDALONE_COMMANDS:
+            mode = "command"
+            chain_name = ai_chain
+            chain_data = None
+            complexity = ai_result.get("complexity", "simple")
         elif ai_chain and ai_chain in SKILL_CHAINS:
             chain_name = ai_chain
             chain_data = SKILL_CHAINS[ai_chain]
@@ -508,7 +517,34 @@ def cmd_go(args):
             intent_analysis["from_cache"] = ai_result.get("from_cache", False)
 
     # Execute
-    if mode == "chain" and chain_data:
+    if mode == "command":
+        # Standalone command — dispatch directly
+        cmd_map = {
+            "review": "cc-flow review",
+            "prime": "cc-flow scan --create",
+            "audit": "cc-flow scan --create",
+            "verify": "cc-flow verify",
+            "dashboard": "cc-flow dashboard",
+            "doctor": "cc-flow doctor",
+            "health": "cc-flow health",
+            "retro": "/cc-retro",
+            "interview": "/cc-interview",
+            "research": "/cc-research",
+            "scout": "/cc-scout",
+        }
+        target = cmd_map.get(chain_name, f"/cc-{chain_name}")
+        reason = intent_analysis.get("ai_reason", "")
+        print(json.dumps({
+            "success": True,
+            "mode": "command",
+            "command": target,
+            "goal": query,
+            "dry_run": dry_run,
+            "ai_routed": True,
+            "ai_reason": reason,
+            "instruction": f"Run: {target}\nReason: {reason}",
+        }))
+    elif mode == "chain" and chain_data:
         _execute_chain(chain_name, chain_data, query, dry_run, complexity=complexity,
                        intent=intent_analysis)
     elif mode == "multi-engine":
