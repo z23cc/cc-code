@@ -720,6 +720,12 @@ def _add_misc_commands(sub):
     review_setup_p.add_argument("--scope", default="", choices=["", "plan", "impl", "completion"],
                                 help="Set backend for specific review type only")
 
+    # Multi-engine review
+    mr_p = sub.add_parser("multi-review", help="Multi-engine code review with consensus (codex+gemini+rp+agent)")
+    mr_p.add_argument("--engines", default="", help="Comma-separated engines: codex,gemini,rp,agent")
+    mr_p.add_argument("--timeout", type=int, default=120, help="Per-engine timeout in seconds")
+    mr_p.add_argument("--dry-run", action="store_true", help="Show plan without running")
+
     # Safety modes
     careful_p = sub.add_parser("careful", help="Toggle careful mode (warn on destructive ops)")
     careful_g = careful_p.add_mutually_exclusive_group()
