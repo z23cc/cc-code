@@ -65,3 +65,11 @@ Structure the output as: **Shipped** (commits grouped by category with counts),
 **What Could Improve**, **Action Items** (3-5 checkboxes).
 
 Save output to `docs/retros/YYYY-MM-DD-retro.md` if `docs/` exists.
+
+## On Completion
+
+When the retrospective is written:
+```bash
+cc-flow skill ctx save cc-retro --data '{"action_items": ["..."], "shipped_count": 15, "retro_doc": "docs/retros/YYYY-MM-DD-retro.md"}'
+cc-flow skill next
+```

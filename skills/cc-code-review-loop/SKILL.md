@@ -178,6 +178,14 @@ Loop 2 — Re-Review:
 | Issues per review | Trending down | Same issue type recurring = systematic problem |
 | MAJOR_RETHINK rate | < 10% | High rate = plan quality issue |
 
+## On Completion
+
+When the review reaches a SHIP verdict:
+```bash
+cc-flow skill ctx save cc-code-review-loop --data '{"verdict": "SHIP", "loops": 2, "issues_fixed": 3}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-verification** — verify after each fix iteration

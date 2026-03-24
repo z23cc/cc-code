@@ -241,6 +241,14 @@ cc-flow config set work.max_attempts 3          # retries before blocking
 cc-flow config set work.plan_sync true          # auto-sync downstream specs
 ```
 
+## On Completion
+
+When all tasks in the epic are done:
+```bash
+cc-flow skill ctx save cc-work --data '{"completed_tasks": ["..."], "epic_id": "<id>", "epic_status": "all done"}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-worktree** — worktree management (create/remove/cleanup)

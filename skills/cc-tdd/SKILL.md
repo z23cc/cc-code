@@ -154,6 +154,14 @@ REFACTOR: Extract regex pattern, add parametrize for edge cases
 - **cc-debugging** — when tests fail unexpectedly, switch to systematic debugging
 - **cc-plan** — each plan task follows Red-Green-Refactor
 
+## On Completion
+
+When all tests pass and implementation is done:
+```bash
+cc-flow skill ctx save cc-tdd --data '{"test_results": "all pass", "files_changed": ["..."], "coverage": "85%"}'
+cc-flow skill next
+```
+
 ## Verification Checklist
 
 - [ ] Every new function has a test

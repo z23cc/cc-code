@@ -113,6 +113,13 @@ _SUBCMD_MAP = {
     "chain": ("chain_cmd", {
         "list": "skill_chains:cmd_chain_list", "show": "skill_chains:cmd_chain_show",
         "suggest": "skill_chains:cmd_chain_suggest", "run": "skill_chains:cmd_chain_run",
+        "advance": "skill_chains:cmd_chain_advance",
+    }),
+    "skill": ("skill_cmd", {
+        "next": "skill_flow:cmd_next",
+        "graph": "skill_flow:cmd_graph_show",
+        "graph-build": "skill_flow:cmd_graph_build",
+        "ctx": "skill_flow:cmd_ctx",
     }),
     "worktree": ("wt_cmd", {
         "create": "worktree_cmd:_cmd_create", "list": "worktree_cmd:_cmd_list",

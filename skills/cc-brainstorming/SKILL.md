@@ -151,6 +151,14 @@ Design Spec Output:
 → Next: /plan to create implementation tasks
 ```
 
+## On Completion
+
+When brainstorming is complete and the user has approved the design:
+```bash
+cc-flow skill ctx save cc-brainstorming --data '{"design_doc": "<path-to-spec>", "decisions": ["..."], "acceptance_criteria": ["..."]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-plan** — invoke AFTER brainstorming to create implementation plan

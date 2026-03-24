@@ -190,6 +190,14 @@ Depends on: Task 2
 - **cc-verification** — verify each phase before moving to the next
 - **cc-task-tracking** — convert plan to cc-flow tasks for tracking
 
+## On Completion
+
+When the plan is written and imported to cc-flow:
+```bash
+cc-flow skill ctx save cc-plan --data '{"epic_id": "<id>", "task_ids": ["..."], "plan_doc": "<path>"}'
+cc-flow skill next
+```
+
 ## Remember
 - Exact file paths always
 - Complete code in plan (not "add validation")

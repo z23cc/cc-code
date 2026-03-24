@@ -69,6 +69,14 @@ Ready to build: Yes / Yes with changes / Not yet
 - **Increasingly specific** -- start broad, then drill into weak spots
 - **Challenge, don't block** -- improve the plan, not kill it
 
+## On Completion
+
+When the grill is done and verdict is given:
+```bash
+cc-flow skill ctx save cc-grill-me --data '{"verdict": "Yes with changes", "challenges": ["..."], "mitigations": ["..."]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-brainstorming** -- when there's no plan yet to challenge

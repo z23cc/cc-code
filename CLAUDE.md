@@ -4,7 +4,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 ## Architecture
 
-- `scripts/cc_flow/` — Task & workflow CLI package (51 modules, lazy-loaded, atomic writes, cross-platform)
+- `scripts/cc_flow/` — Task & workflow CLI package (52 modules, lazy-loaded, atomic writes, cross-platform)
 - `scripts/morph_client.py` — Pure Python Morph API client (Apply, WarpGrep, Embed, Rerank)
 - `scripts/worktree.sh` — Git worktree manager (create/list/switch/remove/cleanup/status + nesting guard)
 - `agents/` — 11 general agents + 12 scout agents (read-only specialists), all `model: inherit`
@@ -15,7 +15,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
   - **Scouts (12):** scout-practices, scout-repo, scout-docs, scout-docs-gap, scout-security, scout-testing, scout-tooling, scout-build, scout-env, scout-observability, scout-gaps, scout-context
   - **Chains:** 22 predefined workflows (idea-to-ship, feature, bugfix, qa-fix, incident, security-audit, etc.)
 - `commands/` — 57 slash commands (all prefixed `/cc-`, every skill has a command)
-- `tests/` — 245 tests (128 cc-flow integration + 87 unit + 15 morph + 15 bridge)
+- `tests/` — 267 tests (150 cc-flow integration + 87 unit + 15 morph + 15 bridge)
 - `rules/` — 10 always-on rules: python-style, testing, security, git, docs-sync, agent-orchestration, workflow, performance, tool-priority, proactive-suggestions
 - `hooks/` — 11 hooks across 6 events: UserPromptSubmit (auto-context), PreToolUse (worktree-guard + config-protect + mode-guard + commit-gate + push-review), PostToolUse (task-hint + edit-verify), SessionStart, PreCompact, Stop
 

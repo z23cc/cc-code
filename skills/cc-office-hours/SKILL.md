@@ -72,6 +72,14 @@ Produce a single-page brief with sections: **Problem** (from Q1), **Status Quo**
 **Our Approach** (Q3), **MVP Scope** (Q4), **Key Insight** (Q5), **Validation Score** (N/25),
 **Recommended Next Step** (`/cc-brainstorm` | rethink dimension X | talk to N more users).
 
+## On Completion
+
+When the design brief is produced:
+```bash
+cc-flow skill ctx save cc-office-hours --data '{"design_brief": "...", "validation_score": 22, "recommended_next": "/cc-brainstorm"}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-brainstorming** -- validated ideas flow into design exploration

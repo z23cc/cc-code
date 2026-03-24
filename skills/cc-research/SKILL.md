@@ -160,6 +160,14 @@ Phase 4 — Findings:
   - Add idempotency key to webhook handler
 ```
 
+## On Completion
+
+When research findings are synthesized:
+```bash
+cc-flow skill ctx save cc-research --data '{"findings": "...", "architecture_notes": "...", "risks": ["..."], "recommendations": ["..."]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-search-strategy** — which tools to use for each search layer

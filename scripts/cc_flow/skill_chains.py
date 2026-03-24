@@ -360,8 +360,17 @@ def cmd_chain_suggest(args):
     print(json.dumps(result))
 
 
+def _skill_name_from_cmd(cmd):
+    """Extract skill name from command string like '/cc-brainstorm'."""
+    return cmd.lstrip("/").strip()
+
+
 def cmd_chain_run(args):
-    """Execute a skill chain — outputs step-by-step instructions for the agent."""
+    """Execute a skill chain — context-aware step-by-step instructions.
+
+    Each step includes context loaded from the previous step's output.
+    Chain state is persisted for resume via `cc-flow chain advance`.
+    """
     name = args.name
     if name not in SKILL_CHAINS:
         error(f"Chain not found: {name}. Available: {', '.join(SKILL_CHAINS.keys())}")
@@ -373,24 +382,153 @@ def cmd_chain_run(args):
     if only_required:
         steps = [s for s in steps if s["required"]]
 
+    # Load context from previous skills and save chain state
+    try:
+        from cc_flow.skill_flow import (
+            load_skill_ctx, set_current, save_chain_state,
+        )
+        # Save chain state for resume
+        save_chain_state(name, steps, current_step=0)
+        # Set first skill as current
+        first_skill = _skill_name_from_cmd(steps[0]["skill"])
+        set_current(first_skill, chain_name=name)
+    except ImportError:
+        pass
+
+    execute_steps = []
+    for i, s in enumerate(steps):
+        skill_name = _skill_name_from_cmd(s["skill"])
+        step_info = {
+            "step": i + 1,
+            "skill": s["skill"],
+            "role": s["role"],
+            "required": s["required"],
+            "instruction": f"Run: {s['skill']}",
+        }
+
+        # Load context from previous step
+        if i > 0:
+            prev_skill = _skill_name_from_cmd(steps[i - 1]["skill"])
+            try:
+                prev_ctx = load_skill_ctx(prev_skill)
+                if prev_ctx:
+                    step_info["prev_context"] = prev_ctx
+            except (ImportError, Exception):
+                pass
+
+        # Add context-save reminder
+        step_info["on_completion"] = (
+            f"After completing this step, save context:\n"
+            f"  cc-flow skill ctx save {skill_name} --data '{{...}}'\n"
+            f"Then advance the chain:\n"
+            f"  cc-flow chain advance"
+        )
+
+        execute_steps.append(step_info)
+
     print(json.dumps({
         "success": True,
         "chain": name,
         "description": chain["description"],
-        "execute": [
-            {
-                "step": i + 1,
-                "skill": s["skill"],
-                "role": s["role"],
-                "required": s["required"],
-                "instruction": f"Run: {s['skill']}",
-            }
-            for i, s in enumerate(steps)
-        ],
+        "execute": execute_steps,
         "total_steps": len(steps),
         "instruction": (
             f"Execute this {name} chain step by step:\n"
-            + "\n".join(f"  {i + 1}. {s['skill']} — {s['role']}" for i, s in enumerate(steps))
-            + "\n\nStart with step 1. After each step completes, proceed to the next."
+            + "\n".join(
+                f"  {i + 1}. {s['skill']} — {s['role']}"
+                for i, s in enumerate(steps)
+            )
+            + "\n\nAfter each step: save context with `cc-flow skill ctx save <name> --data '{{...}}'`"
+            + "\nThen advance: `cc-flow chain advance`"
         ),
+    }))
+
+
+def cmd_chain_advance(args):
+    """Advance chain to the next step after current step completes.
+
+    Optionally saves context data from the completed step.
+    Returns the next step info or signals chain completion.
+    """
+    try:
+        from cc_flow.skill_flow import (
+            load_chain_state, advance_chain_state, set_current,
+            save_skill_ctx, load_skill_ctx,
+        )
+    except ImportError:
+        error("skill_flow module not available")
+
+    state = load_chain_state()
+    if not state:
+        error("No active chain. Start one with: cc-flow chain run <name>")
+
+    chain_name = state.get("chain", "")
+    current_step = state.get("current_step", 0)
+    step_skills = state.get("steps", [])
+
+    # Save context from completed step if --data provided
+    data_str = getattr(args, "data", "{}")
+    if data_str and data_str != "{}":
+        try:
+            data = json.loads(data_str)
+            if current_step < len(step_skills):
+                completed_skill = _skill_name_from_cmd(step_skills[current_step])
+                save_skill_ctx(completed_skill, data)
+        except (json.JSONDecodeError, Exception):
+            pass
+
+    # Advance to next step
+    new_state = advance_chain_state()
+    if not new_state:
+        error("No active chain state")
+
+    if new_state.get("complete"):
+        print(json.dumps({
+            "success": True,
+            "complete": True,
+            "chain": chain_name,
+            "message": f"Chain '{chain_name}' complete! All steps finished.",
+        }))
+        return
+
+    # Get next step info from chain definition
+    next_step_idx = new_state["current_step"]
+    if chain_name in SKILL_CHAINS:
+        chain = SKILL_CHAINS[chain_name]
+        steps = chain["skills"]
+        if next_step_idx < len(steps):
+            next_step = steps[next_step_idx]
+            next_skill = _skill_name_from_cmd(next_step["skill"])
+
+            # Set as current skill
+            set_current(next_skill, chain_name=chain_name)
+
+            # Load context from previous step
+            prev_ctx = None
+            if next_step_idx > 0:
+                prev_skill = _skill_name_from_cmd(steps[next_step_idx - 1]["skill"])
+                prev_ctx = load_skill_ctx(prev_skill)
+
+            result = {
+                "success": True,
+                "chain": chain_name,
+                "step": next_step_idx + 1,
+                "total_steps": len(steps),
+                "skill": next_step["skill"],
+                "role": next_step["role"],
+                "required": next_step["required"],
+                "instruction": f"NEXT -> Run: {next_step['skill']} — {next_step['role']}",
+            }
+            if prev_ctx:
+                result["prev_context"] = prev_ctx
+
+            print(json.dumps(result))
+            return
+
+    # Fallback: just show step number
+    print(json.dumps({
+        "success": True,
+        "chain": chain_name,
+        "step": next_step_idx + 1,
+        "message": f"Advanced to step {next_step_idx + 1}",
     }))

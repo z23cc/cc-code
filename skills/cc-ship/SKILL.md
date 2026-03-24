@@ -66,6 +66,14 @@ gh pr create --title "Release v$NEW_VERSION" --body "## Changes..."
 
 Print the PR URL when done.
 
+## On Completion
+
+When the PR is created and pushed:
+```bash
+cc-flow skill ctx save cc-ship --data '{"pr_url": "https://...", "version": "1.2.0", "branch": "feature-x"}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-review** — code review (runs in Phase 3)

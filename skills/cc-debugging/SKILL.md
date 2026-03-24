@@ -97,6 +97,14 @@ NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 - Proposing solutions before tracing data flow
 - "One more fix attempt" after 2+ failures
 
+## On Completion
+
+When the bug is fixed and regression test passes:
+```bash
+cc-flow skill ctx save cc-debugging --data '{"root_cause": "...", "fix_description": "...", "regression_test": "test_file::test_name"}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-verification** — verify fix with evidence before claiming success

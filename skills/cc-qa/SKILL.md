@@ -116,3 +116,11 @@ Stop the loop after 5 fix iterations max to avoid infinite cycles.
 - Never skip Phase 1 framework detection — it informs test strategy
 - If the dev server is not running, start it first and wait for ready
 - After all fixes, run the full test suite if one exists (`cc-flow verify`)
+
+## On Completion
+
+When QA testing and fixes are done:
+```bash
+cc-flow skill ctx save cc-qa --data '{"health_score": 92, "bugs_found": 5, "bugs_fixed": 4, "remaining": ["..."]}'
+cc-flow skill next
+```

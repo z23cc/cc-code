@@ -170,6 +170,8 @@ def _add_workflow_commands(sub):
     chain_run = chain_sub.add_parser("run", help="Execute a skill chain")
     chain_run.add_argument("name")
     chain_run.add_argument("--required-only", action="store_true", default=False)
+    chain_advance = chain_sub.add_parser("advance", help="Advance chain to next step")
+    chain_advance.add_argument("--data", default="{}", help="JSON context from completed step")
 
 
 def _add_template_commands(sub):
@@ -572,6 +574,38 @@ def _add_checkpoint_commands(sub):
     sub.add_parser("context-budget", help="Analyze token overhead from plugins, rules, skills")
 
 
+def _add_skill_flow_commands(sub):
+    """Add skill flow graph and context subcommands."""
+    skill_p = sub.add_parser("skill", help="Skill flow graph and context protocol")
+    skill_sub = skill_p.add_subparsers(dest="skill_cmd")
+
+    # skill next [--skill name]
+    skill_next = skill_sub.add_parser("next", help="Suggest next skill based on flow graph")
+    skill_next.add_argument("--skill", default="", help="Which skill just completed")
+
+    # skill graph [--for name]
+    skill_graph = skill_sub.add_parser("graph", help="Show skill flow graph")
+    skill_graph.add_argument("--for", dest="for_skill", default="", help="Show graph for a specific skill")
+
+    # skill graph-build
+    skill_sub.add_parser("graph-build", help="Force rebuild the skill flow graph cache")
+
+    # skill ctx {save|load|current|clear}
+    skill_ctx = skill_sub.add_parser("ctx", help="Skill context operations")
+    ctx_sub = skill_ctx.add_subparsers(dest="ctx_cmd")
+
+    ctx_save = ctx_sub.add_parser("save", help="Save skill output context")
+    ctx_save.add_argument("name", help="Skill name")
+    ctx_save.add_argument("--data", required=True, help="JSON context data")
+
+    ctx_load = ctx_sub.add_parser("load", help="Load skill context")
+    ctx_load.add_argument("name", help="Skill name")
+
+    ctx_sub.add_parser("current", help="Show current active skill")
+    ctx_clear = ctx_sub.add_parser("clear", help="Clear skill context")
+    ctx_clear.add_argument("--all", action="store_true", default=False, help="Clear all context, not just current")
+
+
 def _add_misc_commands(sub):
     """Add misc subcommands: log, summary, archive, stats, perf, insights, version, config."""
     perf_p = sub.add_parser("perf", help="Command performance analytics")
@@ -700,6 +734,7 @@ def build_parser():
     _add_eval_commands(sub)
     _add_rp_commands(sub)
     _add_checkpoint_commands(sub)
+    _add_skill_flow_commands(sub)
     _add_misc_commands(sub)
 
     # Let plugins register their own commands
