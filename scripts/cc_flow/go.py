@@ -221,9 +221,10 @@ def _estimate_complexity(query, chain_data):
 def decide_mode(query, route_result, chain_name, chain_data, force_mode=""):
     """Decide execution mode based on complexity-adaptive routing.
 
-    Simple  → hotfix chain (3 steps, skip brainstorm/plan)
+    Simple  → light chain (2-3 steps, skip brainstorm/plan)
     Medium  → standard chain (matched chain, ≤5 steps)
-    Complex → Ralph (autonomous, creates tasks from goal)
+    Complex → multi-engine chain (multi-plan → work → review → commit)
+    Very complex (no chain match) → Ralph (autonomous)
     Auto    → OODA loop (scan/improve keywords)
     """
     if force_mode:
@@ -242,7 +243,7 @@ def decide_mode(query, route_result, chain_name, chain_data, force_mode=""):
 
     # 3. Route by complexity
     if complexity == "simple":
-        return "chain"  # hotfix or small chain
+        return "chain"
 
     if complexity == "medium" and chain_data:
         required = sum(1 for s in chain_data.get("skills", []) if s.get("required"))
@@ -250,18 +251,17 @@ def decide_mode(query, route_result, chain_name, chain_data, force_mode=""):
             return "chain"
 
     if complexity == "complex":
-        # Complex with a matching chain → still use chain if ≤5 steps
         if chain_data:
             required = sum(1 for s in chain_data.get("skills", []) if s.get("required"))
             if required <= 5:
                 return "chain"
-        # Otherwise → Ralph
-        return "ralph"
+        # Complex without matching chain → use multi-engine chain
+        return "multi-engine"
 
-    # Fallback: chain if available, ralph otherwise
+    # Fallback: chain if available, multi-engine otherwise
     if chain_data:
         return "chain"
-    return "ralph"
+    return "multi-engine"
 
 
 # ── Phase-based parallel execution ──
@@ -708,12 +708,20 @@ def cmd_go(args):
         intent_analysis["multi_goal"] = True
         intent_analysis["goal_count"] = goals
 
-    # 4. Execute (pass complexity + intent for output)
+    # 6. Execute
     if mode == "chain" and chain_data:
         _execute_chain(chain_name, chain_data, query, dry_run, complexity=complexity,
                        intent=intent_analysis)
+    elif mode == "multi-engine":
+        # Complex task → use multi-engine chain (multi-plan → work → review → commit)
+        from cc_flow.skill_chains import SKILL_CHAINS
+        me_chain = SKILL_CHAINS.get("multi-engine")
+        if me_chain:
+            _execute_chain("multi-engine", me_chain, query, dry_run, complexity="complex",
+                           intent=intent_analysis)
+        else:
+            _execute_ralph(query, max_iter, dry_run)
     elif mode == "auto":
         _execute_auto(query, dry_run)
     else:
-        # ralph (default for anything complex)
         _execute_ralph(query, max_iter, dry_run)

@@ -165,10 +165,10 @@ class TestDecideModePure:
         ]}
         assert decide_mode("fix bug", {}, "bugfix", chain_data) == "chain"
 
-    def test_ralph_mode_no_chain(self):
+    def test_multi_engine_mode_no_chain(self):
         from cc_flow.go import decide_mode
-        # No chain data + complex query → ralph
-        assert decide_mode("redesign the entire platform from scratch", {}, None, None) == "ralph"
+        # No chain data + complex query → multi-engine
+        assert decide_mode("redesign the entire platform from scratch", {}, None, None) == "multi-engine"
 
     def test_force_mode(self):
         from cc_flow.go import decide_mode
