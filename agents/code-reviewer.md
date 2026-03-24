@@ -2,6 +2,7 @@
 name: code-reviewer
 emoji: "👁️"
 description: General code review specialist — quality, security, maintainability. Use after writing or modifying code.
+lens: "code quality, maintainability, correctness, error handling"
 deliverables: "Review summary with severity-rated findings and approve/warn/block verdict"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit

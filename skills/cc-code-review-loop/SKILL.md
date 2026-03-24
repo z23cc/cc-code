@@ -46,6 +46,28 @@ File: src/api/users.py:55
 Fix: Use AppError with standard JSON structure
 ```
 
+## Severity-Weighted Consensus
+
+Verdicts are determined by **severity weight**, not reviewer vote count:
+
+| Severity | Weight | Effect |
+|----------|--------|--------|
+| CRITICAL | 4 | **Blocks** — always NEEDS_WORK regardless of other verdicts |
+| HIGH | 3 | **Blocks** — 1 HIGH finding = NEEDS_WORK even if 2/3 approve |
+| MEDIUM | 2 | **Flags** — does not block alone, but 3+ MEDIUM = NEEDS_WORK |
+| LOW | 1 | **Notes** — informational, never blocks |
+
+**Consensus rules:**
+1. Any CRITICAL or HIGH finding → verdict = NEEDS_WORK (auto-fix required)
+2. 3+ MEDIUM findings → verdict = NEEDS_WORK
+3. Only LOW findings → verdict = SHIP
+4. Conflicting reviewer verdicts → report top 5 findings by severity weight
+
+Each finding MUST include:
+- `severity`: CRITICAL / HIGH / MEDIUM / LOW
+- `confidence`: how certain the reviewer is (high/medium/low)
+- `lens`: what perspective the reviewer used (e.g., "security posture", "code quality", "performance")
+
 ## The Loop Protocol
 
 ### Step 1: Review (dispatch reviewer agent)
@@ -182,7 +204,7 @@ Loop 2 — Re-Review:
 
 When the review reaches a SHIP verdict:
 ```bash
-cc-flow skill ctx save cc-code-review-loop --data '{"verdict": "SHIP", "loops": 2, "issues_fixed": 3}'
+cc-flow skill ctx save cc-code-review-loop --data '{"verdict": "SHIP", "loops": 2, "issues_fixed": 3, "severity_summary": {"critical": 0, "high": 0, "medium": 1, "low": 2}}'
 cc-flow skill next
 ```
 

@@ -1,5 +1,22 @@
 # Changelog
 
+## [5.15.0] - 2026-03-24
+### Added (AegisFlow inspired)
+- **Severity-weighted review consensus** — verdicts based on finding severity, not reviewer vote count:
+  - CRITICAL/HIGH finding = NEEDS_WORK even if majority approve
+  - 3+ MEDIUM = NEEDS_WORK
+  - Each finding must include severity, confidence, and lens
+- **`/cc-requirement-gate` skill** — validates requirements before planning:
+  - Assesses 5 dimensions: clarity, completeness, complexity, feasibility, testability
+  - Decision: PROCEED / CONFIRM / CLARIFY
+  - Inserted into feature + idea-to-ship chains (optional step)
+- **Agent lens tagging** — each reviewer agent tagged with semantic lens:
+  - code-reviewer: "code quality, maintainability, correctness"
+  - python-reviewer: "PEP 8, type safety, Pythonic idioms"
+  - security-reviewer: "OWASP Top 10, secrets, injection vectors"
+  - db-reviewer: "query performance, schema design, migration safety"
+- New skill + command: cc-requirement-gate (71 skills, 60 commands total)
+
 ## [5.14.0] - 2026-03-24
 ### Added
 - **SKILL.md template validation** (gstack pattern):

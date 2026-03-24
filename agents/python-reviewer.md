@@ -2,6 +2,7 @@
 name: python-reviewer
 emoji: "🐍"
 description: Expert Python code reviewer — PEP 8, type hints, security, Pythonic idioms, performance. MUST BE USED for all Python code changes.
+lens: "PEP 8 compliance, type safety, Pythonic idioms, performance patterns"
 deliverables: "Python-specific review with PEP 8 compliance, type hint audit, and Pythonic pattern suggestions"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
