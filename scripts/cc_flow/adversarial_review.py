@@ -245,8 +245,43 @@ def _compute_verdict(engine_results):
 
 # ── Main Runner ──
 
+def _gather_rp_context(context, timeout=120):
+    """Phase 0: Use RP builder to gather deep codebase context.
+
+    RP auto-selects related files, analyzes cross-file dependencies,
+    and produces architectural context that the diff alone can't show.
+    This context is injected into each engine's Round 1 prompt.
+    """
+    try:
+        files_str = ", ".join(context.get("files", [])[:10])
+        summary = (
+            f"Analyze the architectural context for these changed files: {files_str}. "
+            "Focus on: what modules are affected, cross-file dependencies, "
+            "contracts that could break, and design patterns in use. "
+            "Output a concise architectural summary (not a review)."
+        )
+        r = subprocess.run(
+            ["cc-flow", "rp", "builder", summary, "--type", "question"],
+            check=False, capture_output=True, text=True, timeout=timeout,
+        )
+        if r.returncode == 0 and r.stdout.strip():
+            # Extract response from RP JSON
+            try:
+                data = json.loads(r.stdout)
+                review_obj = data.get("review", {})
+                response = review_obj.get("response", "") if isinstance(review_obj, dict) else ""
+                if not response:
+                    response = data.get("response", r.stdout)
+                return str(response)[:3000]
+            except (json.JSONDecodeError, TypeError):
+                return r.stdout[:3000]
+    except (subprocess.TimeoutExpired, OSError):
+        pass
+    return ""
+
+
 def run_debate(context, engines=None, timeout=300, dry_run=False):
-    """Run 3-engine adversarial debate."""
+    """Run 3-engine adversarial debate with RP deep context."""
     # Detect available engines
     if engines:
         active = {e: ENGINE_CONFIG[e] for e in engines if e in ENGINE_CONFIG and ENGINE_CONFIG[e]["detect"]()}
@@ -256,6 +291,14 @@ def run_debate(context, engines=None, timeout=300, dry_run=False):
     if len(active) < 2:
         return {"success": False, "error": f"Need 2+ engines. Available: {list(active.keys())}"}
 
+    # Check if RP is available for deep context
+    rp_available = False
+    try:
+        from cc_flow.multi_review import _detect_rp
+        rp_available = _detect_rp()
+    except ImportError:
+        pass
+
     engine_names = list(active.keys())
     files_str = ", ".join(context.get("files", [])[:15])
     diff = context.get("diff", "")[:30000]
@@ -264,14 +307,17 @@ def run_debate(context, engines=None, timeout=300, dry_run=False):
         return {
             "success": True, "dry_run": True,
             "engines": engine_names,
+            "rp_context": rp_available,
             "engine_details": {e: {"label": c["label"], "lens": c["lens"]} for e, c in active.items()},
             "files": context.get("files", []),
             "diff_bytes": len(diff),
             "instruction": (
                 "3-Engine Adversarial Debate:\n"
+                + ("  Phase 0: RP Builder gathers deep codebase context\n" if rp_available else "")
                 + "\n".join(f"  {c['label']} — {c['lens']}" for c in active.values())
-                + f"\n  Round 1: Independent review (parallel)\n"
-                f"  Round 2: See each other's arguments, debate (parallel)\n"
+                + "\n  Round 1: Independent review (parallel)"
+                + (" + RP context injected" if rp_available else "")
+                + f"\n  Round 2: See each other's arguments, debate (parallel)\n"
                 f"  Round 3: Majority vote + surviving issues\n"
                 f"  Reviewing {len(context.get('files', []))} files"
             ),
@@ -280,8 +326,25 @@ def run_debate(context, engines=None, timeout=300, dry_run=False):
     start = time.time()
     engine_results = {}
 
-    # ── Round 1: Independent (PARALLEL) ──
-    print(json.dumps({"status": "round1", "engines": engine_names}), file=sys.stderr)
+    # ── Phase 0: RP deep context (if available) ──
+    rp_context = ""
+    if rp_available:
+        print(json.dumps({"status": "phase0", "message": "RP gathering deep context..."}), file=sys.stderr)
+        rp_context = _gather_rp_context(context)
+        if rp_context:
+            print(json.dumps({"status": "phase0_done", "context_chars": len(rp_context)}), file=sys.stderr)
+
+    # ── Round 1: Independent (PARALLEL) — with RP context injected ──
+    print(json.dumps({"status": "round1", "engines": engine_names, "rp_context": bool(rp_context)}), file=sys.stderr)
+
+    rp_section = ""
+    if rp_context:
+        rp_section = (
+            "\n\nArchitectural context from RepoPrompt (deep codebase analysis):\n"
+            f"```\n{rp_context}\n```\n"
+            "Use this context to inform your review — it shows cross-file dependencies "
+            "and design patterns that the diff alone doesn't reveal."
+        )
 
     with ThreadPoolExecutor(max_workers=len(active)) as pool:
         futures = {}
@@ -289,7 +352,7 @@ def run_debate(context, engines=None, timeout=300, dry_run=False):
             prompt = R1_PROMPT.format(
                 label=config["label"], lens=config["lens"],
                 files=files_str, diff=diff,
-            )
+            ) + rp_section
             futures[pool.submit(config["run"], prompt, timeout)] = name
 
         for future in futures:
@@ -378,6 +441,8 @@ def run_debate(context, engines=None, timeout=300, dry_run=False):
             "changed_position": r["r1_verdict"] != r["r2_verdict"] and r["r2_verdict"] != "UNKNOWN",
         } for e, r in engine_results.items()},
         "all_issues": all_issues[:10],
+        "rp_context_used": bool(rp_context),
+        "rp_context_chars": len(rp_context),
         "elapsed_seconds": elapsed,
     }
     report_path = review_dir / f"debate-{ts}.json"
