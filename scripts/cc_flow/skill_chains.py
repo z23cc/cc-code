@@ -269,6 +269,71 @@ SKILL_CHAINS = {
             {"skill": "/cc-refinement", "role": "Edge case hardening", "required": False},
         ],
     },
+    # ── Fast-track workflows ──
+    "hotfix": {
+        "description": "Emergency/trivial fix — skip brainstorm+plan, minimal review, fast commit",
+        "trigger": ["hotfix", "quick fix", "trivial", "typo", "one-liner", "urgent fix",
+                     "emergency fix", "config change", "revert", "bump version",
+                     "紧急修复", "快速修复", "小改动", "配置修改", "回滚"],
+        "skills": [
+            {"skill": "/cc-tdd", "role": "Implement fix (skip TDD if <10 lines)", "required": True,
+             "outputs": ["fix_description", "files_changed"]},
+            {"skill": "/cc-review", "role": "Quick review (1 loop max)", "required": True,
+             "reads": ["files_changed"], "outputs": ["verdict"]},
+            {"skill": "/cc-commit", "role": "Commit immediately", "required": True,
+             "reads": ["verdict"]},
+        ],
+    },
+    "pr-review": {
+        "description": "Review an incoming PR: fetch → review → feedback",
+        "trigger": ["review pr", "review pull request", "check this pr", "pr review",
+                     "审查PR", "看看PR", "PR审查"],
+        "skills": [
+            {"skill": "/cc-research", "role": "Understand PR changes", "required": True},
+            {"skill": "/cc-code-review-loop", "role": "Verdict-driven review", "required": True},
+        ],
+    },
+    "perf-regression": {
+        "description": "Detect and fix performance regression",
+        "trigger": ["slow down", "regression", "performance regression", "slower", "latency",
+                     "性能回退", "变慢了", "延迟增加"],
+        "skills": [
+            {"skill": "/cc-performance", "role": "Profile and identify bottleneck", "required": True,
+             "outputs": ["bottleneck", "baseline_metrics"]},
+            {"skill": "/cc-research", "role": "Bisect commit causing regression", "required": True,
+             "reads": ["bottleneck"], "outputs": ["root_cause", "commit"]},
+            {"skill": "/cc-tdd", "role": "Fix + regression test", "required": True,
+             "reads": ["root_cause"], "outputs": ["fix_description", "test_results"]},
+            {"skill": "/cc-review", "role": "Verify fix + no side effects", "required": True},
+            {"skill": "/cc-commit", "role": "Commit fix", "required": True},
+        ],
+    },
+    "tech-debt": {
+        "description": "Structured technical debt reduction sprint",
+        "trigger": ["tech debt", "technical debt", "debt sprint", "cleanup sprint",
+                     "技术债", "债务清理", "还债"],
+        "skills": [
+            {"skill": "/cc-research", "role": "Map debt hotspots", "required": True},
+            {"skill": "/cc-plan", "role": "Prioritize by ROI", "required": True},
+            {"skill": "/cc-simplify", "role": "Refactor highest-ROI items", "required": True},
+            {"skill": "/cc-review", "role": "Verify behavior preserved", "required": True},
+            {"skill": "/cc-commit", "role": "Commit improvements", "required": True},
+        ],
+    },
+    "db-migration": {
+        "description": "Database schema migration: plan → script → test → deploy",
+        "trigger": ["migration", "schema change", "database migration", "alter table",
+                     "数据库迁移", "改表", "加字段"],
+        "skills": [
+            {"skill": "/cc-database", "role": "Design migration plan", "required": True,
+             "outputs": ["migration_plan", "rollback_plan"]},
+            {"skill": "/cc-tdd", "role": "Write migration + test on clean DB", "required": True,
+             "reads": ["migration_plan"], "outputs": ["migration_file", "test_results"]},
+            {"skill": "/cc-security-review", "role": "Check for data safety", "required": True},
+            {"skill": "/cc-review", "role": "Review migration script", "required": True},
+            {"skill": "/cc-commit", "role": "Commit migration", "required": True},
+        ],
+    },
 }
 
 

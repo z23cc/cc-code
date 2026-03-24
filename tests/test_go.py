@@ -32,11 +32,12 @@ class TestModeDecision:
         assert data["mode"] == "chain"
         assert data["dry_run"] is True
 
-    def test_new_feature_routes_to_ralph(self):
+    def test_new_feature_routes_to_chain(self):
         out, _, code = run(["go", "implement", "user", "authentication", "--dry-run"])
         assert code == 0
         data = json.loads(out)
-        assert data["mode"] == "ralph"
+        # "implement" triggers feature chain (5 required steps, ≤5 threshold)
+        assert data["mode"] == "chain"
 
     def test_improve_routes_to_auto(self):
         out, _, code = run(["go", "improve", "code", "quality", "--dry-run"])
@@ -122,15 +123,15 @@ class TestRalphMode:
     """Test ralph mode output."""
 
     def test_ralph_has_goal(self):
-        out, _, code = run(["go", "implement", "user", "auth", "--dry-run"])
+        """Goals that don't match any chain trigger go to ralph."""
+        out, _, code = run(["go", "build", "a", "completely", "new", "saas", "platform", "--dry-run", "--mode=ralph"])
         assert code == 0
         data = json.loads(out)
         assert data["mode"] == "ralph"
-        assert "implement user auth" in data["goal"]
         assert data["max_iterations"] == 25
 
     def test_ralph_custom_max(self):
-        out, _, code = run(["go", "implement", "user", "auth", "--dry-run", "--max", "50"])
+        out, _, code = run(["go", "something", "complex", "--dry-run", "--max", "50", "--mode=ralph"])
         assert code == 0
         data = json.loads(out)
         assert data["mode"] == "ralph"
@@ -172,6 +173,30 @@ class TestDecideModePure:
         from cc_flow.go import decide_mode
         assert decide_mode("anything", {}, "x", {}, force_mode="ralph") == "ralph"
         assert decide_mode("anything", {}, "x", {}, force_mode="auto") == "auto"
+
+    def test_hotfix_keywords(self):
+        from cc_flow.go import decide_mode
+        assert decide_mode("hotfix typo", {}, None, None) == "chain"
+        assert decide_mode("urgent fix needed", {}, None, None) == "chain"
+        assert decide_mode("revert last commit", {}, None, None) == "chain"
+
+
+class TestHotfixChain:
+    """Test hotfix fast-track routing."""
+
+    def test_hotfix_routes_to_hotfix_chain(self):
+        out, _, code = run(["go", "hotfix:", "fix", "typo", "--dry-run"])
+        assert code == 0
+        data = json.loads(out)
+        assert data["mode"] == "chain"
+        assert data["chain"] == "hotfix"
+        assert data["total_steps"] == 3  # tdd → review → commit
+
+    def test_trivial_routes_to_hotfix(self):
+        out, _, code = run(["go", "trivial", "config", "change", "--dry-run"])
+        assert code == 0
+        data = json.loads(out)
+        assert data["chain"] == "hotfix"
 
 
 class TestAutoExecInstruction:

@@ -58,6 +58,10 @@ def _find_chain(query):
 AUTO_KEYWORDS = {"improve", "autoimmune", "auto", "scan", "lint", "quality",
                  "改进", "自动", "扫描", "质量"}
 
+HOTFIX_KEYWORDS = {"hotfix", "typo", "trivial", "one-liner", "urgent", "revert",
+                   "quick fix", "config change", "bump version", "emergency",
+                   "紧急", "快速修复", "小改动", "回滚"}
+
 
 def decide_mode(query, route_result, chain_name, chain_data, force_mode=""):
     """Decide execution mode: chain, ralph, or auto."""
@@ -72,13 +76,17 @@ def decide_mode(query, route_result, chain_name, chain_data, force_mode=""):
     if route_cmd in ("/autoimmune", "auto") or words & AUTO_KEYWORDS:
         return "auto"
 
-    # 2. Chain mode if chain found and lightweight (≤ 4 required steps)
+    # 2. Hotfix fast-track: always chain mode
+    if words & HOTFIX_KEYWORDS or any(kw in query_lower for kw in HOTFIX_KEYWORDS):
+        return "chain"
+
+    # 3. Chain mode if chain found and lightweight (≤ 5 required steps)
     if chain_data:
         required = sum(1 for s in chain_data.get("skills", []) if s.get("required"))
-        if required <= 4:
+        if required <= 5:
             return "chain"
 
-    # 3. Ralph for everything else (complex, needs task generation)
+    # 4. Ralph for everything else (complex, needs task generation)
     return "ralph"
 
 

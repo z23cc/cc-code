@@ -1,5 +1,21 @@
 # Changelog
 
+## [5.10.0] - 2026-03-24
+### Added
+- **5 new chains** (27 total): hotfix (3-step fast-track), pr-review, perf-regression, tech-debt, db-migration
+- **8 new TEAM_PATTERNS** (14 total): performance, database, api, incident, config, frontend, dependency, devops — aligned with skill chains for better auto-routing
+- **Hotfix fast-track** — `cc-flow go "hotfix: fix typo"` routes to 3-step chain (implement → review → commit), skips brainstorm/plan
+- **Enforceable workflow gates** in workflow.md:
+  - Before commit: verification must pass, chain steps must have context, review must be SHIP
+  - Before push: tests pass, no secrets, diff reviewed
+  - Before deploy: deps check pass, readiness score ≥ 70
+  - After chain: must record learning, metrics auto-tracked
+
+### Improved
+- Chain threshold raised from ≤4 to ≤5 required steps (feature chain now executes inline instead of launching Ralph)
+- Hotfix keywords bypass chain matching and force chain mode directly
+- workflow.md restructured: sequences → gates → dependency protocol → context protocol → auto-learn
+
 ## [5.9.0] - 2026-03-24
 ### Added
 - **Metrics-boosted chain suggest** — `cc-flow chain suggest` now factors in historical success rates. Chains with higher completion rates get a score bonus (up to +3 points). Output includes run history and success rate.

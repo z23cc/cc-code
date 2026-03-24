@@ -99,6 +99,103 @@ TEAM_PATTERNS = [
         ],
         "max_diff": 30,
     },
+    # ── Additional patterns (aligned with skill chains) ──
+    {
+        "keywords": ["slow", "performance", "bottleneck", "latency", "profile", "optimize",
+                     "memory", "cpu", "N+1", "query_count"],
+        "template": "performance",
+        "agents": ["researcher", "code-reviewer"],
+        "steps": [
+            "Dispatch researcher: profile and identify the bottleneck",
+            "Apply targeted optimization (caching, query fix, algorithm change)",
+            "Benchmark before/after to verify improvement",
+        ],
+        "max_diff": 40,
+    },
+    {
+        "keywords": ["database", "query", "sql", "migration", "schema", "index", "model",
+                     "orm", "sqlalchemy", "alembic", "table"],
+        "template": "database",
+        "agents": ["researcher", "db-reviewer", "build-fixer"],
+        "steps": [
+            "Dispatch researcher: analyze the schema/query issue",
+            "Dispatch db-reviewer: verify query safety and index usage",
+            "Apply fix, run migration tests if applicable",
+        ],
+        "max_diff": 30,
+    },
+    {
+        "keywords": ["api", "endpoint", "route", "handler", "request", "response",
+                     "rest", "graphql", "fastapi", "flask", "http"],
+        "template": "api",
+        "agents": ["researcher", "code-reviewer", "security-reviewer"],
+        "steps": [
+            "Dispatch researcher: understand the endpoint behavior",
+            "Fix/implement the endpoint change",
+            "Dispatch security-reviewer: verify input validation + auth",
+        ],
+        "max_diff": 40,
+    },
+    {
+        "keywords": ["incident", "outage", "production", "down", "crash", "500",
+                     "timeout", "alert", "sev1", "sev2", "urgent"],
+        "template": "incident",
+        "agents": ["researcher", "build-fixer"],
+        "steps": [
+            "Dispatch researcher: trace the error from logs/stacktrace",
+            "Apply minimal hotfix to restore service",
+            "Add monitoring/test to prevent recurrence",
+        ],
+        "max_diff": 20,
+    },
+    {
+        "keywords": ["config", "env", "environment", "secret", "setting", "variable",
+                     "dotenv", "yaml", "toml"],
+        "template": "config",
+        "agents": ["security-reviewer", "build-fixer"],
+        "steps": [
+            "Dispatch security-reviewer: check for exposed secrets",
+            "Apply config change with validation",
+            "Verify config loads correctly in all environments",
+        ],
+        "max_diff": 15,
+    },
+    {
+        "keywords": ["frontend", "ui", "css", "component", "layout", "responsive",
+                     "accessibility", "a11y", "style", "design"],
+        "template": "frontend",
+        "agents": ["researcher", "code-reviewer"],
+        "steps": [
+            "Dispatch researcher: understand the UI component structure",
+            "Apply the visual/layout fix",
+            "Verify responsive behavior and accessibility",
+        ],
+        "max_diff": 40,
+    },
+    {
+        "keywords": ["dependency", "upgrade", "outdated", "cve", "vulnerable",
+                     "pip", "npm", "package", "version"],
+        "template": "dependency",
+        "agents": ["researcher", "build-fixer"],
+        "steps": [
+            "Dispatch researcher: check compatibility of new version",
+            "Apply version bump in requirements/package.json",
+            "Run full test suite to catch breaking changes",
+        ],
+        "max_diff": 20,
+    },
+    {
+        "keywords": ["ci", "cd", "pipeline", "github actions", "workflow", "deploy",
+                     "docker", "container", "dockerfile"],
+        "template": "devops",
+        "agents": ["researcher", "build-fixer"],
+        "steps": [
+            "Dispatch researcher: understand current CI/CD configuration",
+            "Apply pipeline/container fix",
+            "Verify build succeeds locally before pushing",
+        ],
+        "max_diff": 30,
+    },
 ]
 
 DEFAULT_TEAM = {
