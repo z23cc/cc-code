@@ -118,6 +118,12 @@ _SUBCMD_MAP = {
         "advance": "skill_chains:cmd_chain_advance",
         "stats": "skill_flow:cmd_chain_stats",
     }),
+    "wf": ("wf_cmd", {
+        "run": "wf_executor:cmd_wf_run",
+        "list": "wf_executor:cmd_wf_list",
+        "show": "wf_executor:cmd_wf_show",
+        "export": "wf_executor:cmd_wf_export",
+    }),
     "skill": ("skill_cmd", {
         "next": "skill_flow:cmd_next",
         "graph": "skill_flow:cmd_graph_show",

@@ -50,8 +50,9 @@ Package structure (53 modules, 145 commands):
     worktree_state.py → cross-worktree state management
     skill_flow.py    → skill flow graph, context protocol, next-skill queries
     go.py            → unified entry point (route → decide mode → execute)
+    wf_executor.py   → cc-wf-studio workflow executor (run/list/export/show)
   morph_client.py    → pure Python Morph API client (5 APIs)
   cc-flow.py         → backward-compatible shim
 """
 
-VERSION = "5.10.0"
+VERSION = "5.11.0"

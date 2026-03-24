@@ -1,5 +1,26 @@
 # Changelog
 
+## [5.11.0] - 2026-03-24
+### Added
+- **cc-wf-studio integration** — `cc-flow wf` command group for bidirectional workflow interop:
+  - `cc-flow wf run <workflow.json>` — execute cc-wf-studio visual workflows natively
+  - `cc-flow wf run <workflow.json> --dry-run` — preview execution plan
+  - `cc-flow wf list` — list available .vscode/workflows/*.json files
+  - `cc-flow wf show <workflow.json>` — show workflow node details
+  - `cc-flow wf export <chain>` — export cc-code chain as cc-wf-studio workflow JSON
+  - `cc-flow wf export all` — export all 27 chains as visual workflows
+- Workflow executor supports: SubAgent, Skill, Prompt, AskUserQuestion, IfElse, Switch, MCP, SubAgentFlow nodes
+- Auto-execution instruction format (same as `cc-flow go` chain mode)
+- New module: `wf_executor.py` (54 modules total)
+
+### How it works
+```
+cc-wf-studio (VS Code)    ←→    cc-code (CLI)
+  Visual design                  Execute workflows
+  .vscode/workflows/*.json       cc-flow wf run
+  Export → .claude/commands/     cc-flow wf export
+```
+
 ## [5.10.0] - 2026-03-24
 ### Added
 - **5 new chains** (27 total): hotfix (3-step fast-track), pr-review, perf-regression, tech-debt, db-migration

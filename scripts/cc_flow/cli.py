@@ -624,6 +624,24 @@ def _add_go_command(sub):
                        help="Resume interrupted chain from last step")
 
 
+def _add_wf_commands(sub):
+    """Add cc-wf-studio workflow commands."""
+    wf_p = sub.add_parser("wf", help="cc-wf-studio workflow executor (run/list/export/show)")
+    wf_sub = wf_p.add_subparsers(dest="wf_cmd")
+
+    wf_run = wf_sub.add_parser("run", help="Execute a workflow JSON file")
+    wf_run.add_argument("path", help="Workflow JSON path or name")
+    wf_run.add_argument("--dry-run", action="store_true", default=False)
+
+    wf_sub.add_parser("list", help="List available workflows")
+
+    wf_show = wf_sub.add_parser("show", help="Show workflow details")
+    wf_show.add_argument("path", help="Workflow JSON path or name")
+
+    wf_export = wf_sub.add_parser("export", help="Export cc-code chain as workflow JSON")
+    wf_export.add_argument("name", help="Chain name (or 'all')")
+
+
 def _add_misc_commands(sub):
     """Add misc subcommands: log, summary, archive, stats, perf, insights, version, config."""
     perf_p = sub.add_parser("perf", help="Command performance analytics")
@@ -757,6 +775,7 @@ def build_parser():
     _add_checkpoint_commands(sub)
     _add_skill_flow_commands(sub)
     _add_go_command(sub)
+    _add_wf_commands(sub)
     _add_misc_commands(sub)
 
     # Let plugins register their own commands
