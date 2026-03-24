@@ -7,6 +7,7 @@ description: >
 user-invocable: true
 argument-hint: [TARGET=<value>]
   FLOWS INTO: cc-review, cc-refinement.
+  DEPENDS ON: cc-browser-qa.
 ---
 
 # Frontend Performance Optimization

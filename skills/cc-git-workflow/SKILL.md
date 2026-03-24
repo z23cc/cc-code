@@ -4,6 +4,7 @@ description: >
   Git branching, conventional commits, PR workflow, and collaboration patterns.
   TRIGGER: 'git', 'branch', 'commit', 'PR', 'merge', 'rebase', 'Git工作流', '分支策略'
   NOT FOR: code review content, deployment, CI/CD pipelines
+  FLOWS INTO: cc-commit, cc-ship.
 ---
 
 # Git Workflow

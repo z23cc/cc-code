@@ -6,6 +6,7 @@ description: >
   TRIGGER: 'sync plan', 'update downstream', 'plan drift', 'specs outdated',
   'tasks out of date', '同步计划', '更新下游任务', '计划偏移'.
   NOT FOR: creating plans — use cc-plan. This is for fixing drift AFTER implementation.
+  DEPENDS ON: cc-work.
 ---
 
 # Plan Sync — Implementation Drift Detection

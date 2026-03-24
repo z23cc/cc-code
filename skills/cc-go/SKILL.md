@@ -7,6 +7,7 @@ description: >
   TRIGGER: 'go', 'just do it', 'automate', 'do everything', 'run everything',
   '全自动', '一键执行', '帮我做', '自动完成'.
   NOT FOR: specific skill invocation — use the skill directly.
+  FLOWS INTO: cc-work, cc-ralph.
 ---
 
 # cc-flow go — One Command, Full Automation

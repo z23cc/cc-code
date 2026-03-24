@@ -1,5 +1,14 @@
 # Changelog
 
+## [5.20.0] - 2026-03-24
+### Added
+- **8 new chains** (36 total): testing, logging-observability, error-handling, product-validation, visual-qa, async-backend, team-workflow, clone-and-ship
+- **Fixed 6 orphan skills** with flow edges: cc-feedback-loop, cc-git-workflow, cc-go, cc-optimize, cc-plan-sync, cc-ralph
+- **Skill graph 92% connected** (was 86%): 72/78 skills have flow relationships
+- **58 skills now in chains** (was 48): 10 more skills reachable via `cc-flow go`
+- **0 routing gaps** (was 2): "write tests" → testing chain, "async patterns" → async-backend chain
+- All common queries now route: visual qa, error handling, logging, clone site, team workflow, product validation
+
 ## [5.19.0] - 2026-03-24
 ### Added (Ruflo inspired)
 - **Infinite Context Autopilot** — survives context compaction:

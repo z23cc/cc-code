@@ -6,6 +6,7 @@ description: >
   TRIGGER: 'ralph', 'autonomous mode', 'unattended run', 'run all tasks autonomously',
   '自治模式', '无人值守', '自动跑任务', '自动执行'.
   NOT FOR: interactive development — use cc-work instead.
+  DEPENDS ON: cc-work, cc-teams.
 ---
 
 # Ralph — Autonomous Execution Loop

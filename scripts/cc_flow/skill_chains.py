@@ -355,6 +355,100 @@ SKILL_CHAINS = {
             {"skill": "/cc-ship", "role": "Version bump + PR + release", "required": True},
         ],
     },
+    # ── Missing coverage chains ──
+    "testing": {
+        "description": "Write comprehensive tests: strategy → implement → coverage → verify",
+        "trigger": ["write tests", "add tests", "test coverage", "test suite", "testing",
+                     "写测试", "加测试", "测试覆盖"],
+        "skills": [
+            {"skill": "/cc-python-testing", "role": "Test strategy and patterns", "required": True,
+             "outputs": ["test_strategy", "test_files"]},
+            {"skill": "/cc-tdd", "role": "Implement tests (red-green-refactor)", "required": True,
+             "reads": ["test_strategy"], "outputs": ["test_results", "coverage"]},
+            {"skill": "/cc-verification", "role": "Verify all tests pass + coverage", "required": True},
+            {"skill": "/cc-commit", "role": "Commit tests", "required": True},
+        ],
+    },
+    "logging-observability": {
+        "description": "Add logging and observability: setup → implement → verify",
+        "trigger": ["add logging", "logging", "observability", "monitoring", "tracing",
+                     "加日志", "日志", "监控", "可观测性"],
+        "skills": [
+            {"skill": "/cc-logging", "role": "Logging patterns and setup", "required": True},
+            {"skill": "/cc-tdd", "role": "Implement with tests", "required": True},
+            {"skill": "/cc-review", "role": "Review logging quality", "required": False},
+            {"skill": "/cc-commit", "role": "Commit changes", "required": True},
+        ],
+    },
+    "error-handling": {
+        "description": "Improve error handling: audit → implement → test → review",
+        "trigger": ["error handling", "exception", "retry", "graceful degradation",
+                     "错误处理", "异常处理", "重试"],
+        "skills": [
+            {"skill": "/cc-error-handling", "role": "Error handling patterns", "required": True},
+            {"skill": "/cc-tdd", "role": "Implement with tests", "required": True},
+            {"skill": "/cc-review", "role": "Review error paths", "required": True},
+            {"skill": "/cc-commit", "role": "Commit changes", "required": True},
+        ],
+    },
+    "product-validation": {
+        "description": "Full product validation: lens → requirements → elicit → plan",
+        "trigger": ["validate product", "product validation", "worth building", "PMF",
+                     "产品验证", "值不值得做"],
+        "skills": [
+            {"skill": "/cc-product-lens", "role": "PMF scoring + user journey", "required": True,
+             "outputs": ["pmf_score", "decision", "mvp_scope"]},
+            {"skill": "/cc-requirement-gate", "role": "Validate requirements clarity", "required": True,
+             "reads": ["mvp_scope"], "outputs": ["decision", "complexity"]},
+            {"skill": "/cc-elicit", "role": "Challenge assumptions (pre-mortem)", "required": False},
+            {"skill": "/cc-brainstorm", "role": "Design if validated", "required": True},
+        ],
+    },
+    "visual-qa": {
+        "description": "Visual QA: browser testing → accessibility → performance → fix",
+        "trigger": ["visual qa", "visual test", "accessibility", "core web vitals", "WCAG",
+                     "视觉测试", "无障碍", "性能测试"],
+        "skills": [
+            {"skill": "/cc-browser-qa", "role": "Visual + performance + accessibility audit", "required": True,
+             "outputs": ["health_score", "a11y_violations", "vitals_grade"]},
+            {"skill": "/cc-optimize", "role": "Fix performance issues", "required": False},
+            {"skill": "/cc-qa", "role": "Fix remaining bugs", "required": False},
+            {"skill": "/cc-commit", "role": "Commit fixes", "required": True},
+        ],
+    },
+    "async-backend": {
+        "description": "Async backend: patterns → implement → test → deploy",
+        "trigger": ["async", "asyncio", "background jobs", "task queue", "celery", "concurrent",
+                     "异步", "后台任务", "并发"],
+        "skills": [
+            {"skill": "/cc-async-patterns", "role": "Async patterns and architecture", "required": True},
+            {"skill": "/cc-tdd", "role": "Implement with tests", "required": True},
+            {"skill": "/cc-review", "role": "Review async correctness", "required": True},
+            {"skill": "/cc-commit", "role": "Commit", "required": True},
+        ],
+    },
+    "team-workflow": {
+        "description": "Multi-agent workflow: build team → deps → execute → review",
+        "trigger": ["multi agent", "team workflow", "parallel agents", "dispatch team",
+                     "多agent", "团队工作流", "并行执行"],
+        "skills": [
+            {"skill": "/cc-team-builder", "role": "Analyze task + recommend team", "required": True},
+            {"skill": "/cc-deps", "role": "Compute dependency graph + critical path", "required": True},
+            {"skill": "/cc-work", "role": "Execute with team dispatch", "required": True},
+            {"skill": "/cc-epic-review", "role": "Verify completion", "required": True},
+        ],
+    },
+    "clone-and-ship": {
+        "description": "Clone reference site: capture → analyze → implement → QA → ship",
+        "trigger": ["clone site", "replicate", "copy design", "make it look like",
+                     "仿站", "照着做", "模仿"],
+        "skills": [
+            {"skill": "/cc-clone-site", "role": "Screenshot + analyze reference", "required": True},
+            {"skill": "/cc-browser-qa", "role": "Visual comparison + accessibility", "required": True},
+            {"skill": "/cc-review", "role": "Review implementation", "required": False},
+            {"skill": "/cc-ship", "role": "Deploy", "required": True},
+        ],
+    },
 }
 
 
