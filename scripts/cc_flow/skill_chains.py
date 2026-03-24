@@ -625,14 +625,32 @@ def cmd_chain_advance(args):
         except Exception:
             pass
 
+        # Auto-record wisdom
+        try:
+            from cc_flow.wisdom import record_chain_wisdom
+            record_chain_wisdom(chain_name, "success", total)
+        except (ImportError, Exception):
+            pass
+
         print(json.dumps({
             "success": True,
             "complete": True,
             "chain": chain_name,
             "message": f"Chain '{chain_name}' complete! All steps finished.",
+            "wisdom_recorded": True,
             "auto_learn": f"cc-flow learn --task '{chain_name} chain' --outcome success --approach 'chain execution' --lesson 'completed {total} steps'",
         }))
         return
+
+    # Checkpoint gate: run quality check at configured intervals
+    checkpoint_result = None
+    try:
+        from cc_flow.wisdom import should_checkpoint, run_checkpoint
+        total = state.get("total_steps", 0)
+        if should_checkpoint(chain_name, current_step, total):
+            checkpoint_result = run_checkpoint(chain_name, current_step)
+    except (ImportError, Exception):
+        pass
 
     # Get next step info from chain definition
     next_step_idx = new_state["current_step"]
@@ -679,6 +697,8 @@ def cmd_chain_advance(args):
                 result["schema_warnings"] = schema_warnings
             if reads_check:
                 result["reads_warnings"] = reads_check
+            if checkpoint_result:
+                result["checkpoint"] = checkpoint_result
 
             print(json.dumps(result))
             return

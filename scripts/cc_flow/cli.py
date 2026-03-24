@@ -642,6 +642,31 @@ def _add_wf_commands(sub):
     wf_export.add_argument("name", help="Chain name (or 'all')")
 
 
+def _add_wisdom_commands(sub):
+    """Add wisdom and exploration cache commands."""
+    # Wisdom
+    wis_p = sub.add_parser("wisdom", help="Persistent knowledge: learnings, decisions, conventions")
+    wis_sub = wis_p.add_subparsers(dest="wisdom_cmd")
+    wis_show = wis_sub.add_parser("show", help="Show wisdom entries")
+    wis_show.add_argument("--category", choices=["all", "learnings", "decisions", "conventions"], default="all")
+    wis_show.add_argument("--limit", type=int, default=20)
+    wis_search = wis_sub.add_parser("search", help="Search wisdom by keyword")
+    wis_search.add_argument("query", nargs="+")
+    wis_add = wis_sub.add_parser("add", help="Add wisdom entry")
+    wis_add.add_argument("category", choices=["learnings", "decisions", "conventions"])
+    wis_add.add_argument("--content", required=True)
+    wis_clear = wis_sub.add_parser("clear", help="Clear wisdom")
+    wis_clear.add_argument("--category", choices=["all", "learnings", "decisions", "conventions"], default="all")
+
+    # Exploration cache
+    exp_p = sub.add_parser("explore", help="Exploration cache — prevent redundant research")
+    exp_sub = exp_p.add_subparsers(dest="explore_cmd")
+    exp_sub.add_parser("cache", help="Show cache stats")
+    exp_lookup = exp_sub.add_parser("lookup", help="Look up cached exploration")
+    exp_lookup.add_argument("query", nargs="+")
+    exp_sub.add_parser("clear", help="Clear exploration cache")
+
+
 def _add_misc_commands(sub):
     """Add misc subcommands: log, summary, archive, stats, perf, insights, version, config."""
     perf_p = sub.add_parser("perf", help="Command performance analytics")
@@ -776,6 +801,7 @@ def build_parser():
     _add_skill_flow_commands(sub)
     _add_go_command(sub)
     _add_wf_commands(sub)
+    _add_wisdom_commands(sub)
     _add_misc_commands(sub)
 
     # Let plugins register their own commands

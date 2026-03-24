@@ -1,5 +1,23 @@
 # Changelog
 
+## [5.12.0] - 2026-03-24
+### Added
+- **Wisdom system** (inspired by CCW) — persistent cross-chain knowledge accumulation:
+  - `cc-flow wisdom show/search/add/clear` — manage learnings, decisions, conventions
+  - `.tasks/wisdom/{learnings,decisions,conventions}.jsonl` — append-only stores
+  - Auto-records on chain completion (chain name, outcome, steps)
+  - Search by keyword across all wisdom categories
+- **Exploration cache** — prevent redundant research:
+  - `cc-flow explore cache/lookup/clear` — manage cached explorations
+  - `.tasks/explorations/` with fuzzy query matching (70% word overlap)
+  - Cache index for fast lookups
+- **Checkpoint supervisor gate** — auto quality checks in long chains:
+  - Fires every 2 steps in chains with >3 total steps
+  - Runs `cc-flow verify` (lint + tests) + syntax check on changed files
+  - Verdict: pass/warn/block — included in `chain advance` output
+  - Results persisted in `.tasks/checkpoints/`
+- New module: `wisdom.py` (55 modules total)
+
 ## [5.11.0] - 2026-03-24
 ### Added
 - **cc-wf-studio integration** — `cc-flow wf` command group for bidirectional workflow interop:

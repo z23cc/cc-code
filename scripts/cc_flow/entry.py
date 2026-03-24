@@ -118,6 +118,17 @@ _SUBCMD_MAP = {
         "advance": "skill_chains:cmd_chain_advance",
         "stats": "skill_flow:cmd_chain_stats",
     }),
+    "wisdom": ("wisdom_cmd", {
+        "show": "wisdom:cmd_wisdom_show",
+        "search": "wisdom:cmd_wisdom_search",
+        "add": "wisdom:cmd_wisdom_add",
+        "clear": "wisdom:cmd_wisdom_clear",
+    }),
+    "explore": ("explore_cmd", {
+        "cache": "wisdom:cmd_explore_cache",
+        "lookup": "wisdom:cmd_explore_lookup",
+        "clear": "wisdom:cmd_explore_clear",
+    }),
     "wf": ("wf_cmd", {
         "run": "wf_executor:cmd_wf_run",
         "list": "wf_executor:cmd_wf_list",
