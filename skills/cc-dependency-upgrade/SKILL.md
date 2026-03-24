@@ -78,6 +78,15 @@ run-tests
 - [ ] Manual smoke test of critical paths
 - [ ] Lock file committed (requirements.txt, package-lock.json, go.sum, Cargo.lock)
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-dependency-upgrade --data '{"done": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-security-review** — security audit drives urgency of upgrades

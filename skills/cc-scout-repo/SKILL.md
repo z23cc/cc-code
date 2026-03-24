@@ -107,6 +107,15 @@ grep -rn "except\|raise\|try:" src/ | head -10
 - Flag reusable code prominently (prevent duplication)
 - Note anything non-obvious about the project structure
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-scout-repo --data '{"score": 85, "findings": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-scout-practices** — community best practices (external)

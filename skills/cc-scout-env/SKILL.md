@@ -87,6 +87,15 @@ ls -la poetry.lock requirements.txt package-lock.json yarn.lock pnpm-lock.yaml C
 1. [Most impactful fix]
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-scout-env --data '{"score": 85, "findings": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-scout-build** — build system analysis

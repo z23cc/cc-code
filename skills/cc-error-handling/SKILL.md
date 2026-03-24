@@ -175,6 +175,15 @@ async def get_user_profile(user_id: str) -> UserProfile:
 | Logging boundary (middleware) | Catch, log, return error response |
 | Don't know what to do | Let it propagate |
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-error-handling --data '{"error_handling": "improved", "patterns": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-logging** — structured error logging with context

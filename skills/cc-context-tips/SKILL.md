@@ -132,6 +132,15 @@ cc-flow checkpoint restore latest
    $ cc-flow next                    # What's next?
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-context-tips --data '{"done": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-worker-protocol** — fresh context per task

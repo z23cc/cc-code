@@ -74,6 +74,15 @@ grep -rn "health\|healthz\|ready\|readiness\|liveness" src/ 2>/dev/null | head -
 1. [Most critical gap]
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-scout-observability --data '{"score": 85, "findings": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-logging** — Python logging patterns

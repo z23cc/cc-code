@@ -181,6 +181,15 @@ $ cc-flow route "auth returning 403"
 # Confidence jumped from 75 → 92 because of the recorded learning
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-feedback-loop --data '{"route": "...", "learned": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-teams** — router suggests the right team template

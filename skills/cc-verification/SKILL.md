@@ -116,6 +116,15 @@ RIGHT way: "pytest shows 4/4 pass (ran just now)" ✓
 
 **Full verification = ALL four pass.** Partial verification (e.g., only lint) is not sufficient for completion claims.
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-verification --data '{"all_pass": true, "steps": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-tdd** — TDD requires verification at each Red/Green step

@@ -142,6 +142,15 @@ After agents return:
 3. Run full test suite
 4. Spot check agent changes
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-parallel-agents --data '{"agents_dispatched": 3, "results": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-worker-protocol** — single-task worker agents with fresh context

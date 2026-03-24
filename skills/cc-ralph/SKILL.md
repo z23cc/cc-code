@@ -265,6 +265,15 @@ Attempt 5: MAX_ATTEMPTS reached → auto-block task
 | Monitoring | Summary command | Watch mode + progress file |
 | Safety | Revert on fail | Guard hooks + sentinels |
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-ralph --data '{"iterations": 5, "goal_achieved": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-review-backend** — review backend configuration and routing

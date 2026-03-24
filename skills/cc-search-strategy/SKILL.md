@@ -132,6 +132,15 @@ Step 3: rp -e 'builder "trace user input flow"'        # Data flow
 | Manual multi-file analysis | Use `rp context_builder` |
 | Slow manual edits | Use `cc-flow apply` (10x faster) |
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-search-strategy --data '{"done": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-debugging** — use search during Phase 1 (root cause)

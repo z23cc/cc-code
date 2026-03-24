@@ -145,6 +145,15 @@ Add to project `.gitignore`:
 .claude/worktrees/
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-worktree --data '{"completed_tasks": [...], "epic_status": "done"}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-worker-protocol** — task isolation pattern, worktree enables parallel workers

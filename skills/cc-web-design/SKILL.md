@@ -111,6 +111,15 @@ cc-flow auto deep   # includes architecture scan
 cc-flow verify      # runs lint (catches some UI issues)
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-web-design --data '{"done": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-code-review-loop** — general code review with verdict system

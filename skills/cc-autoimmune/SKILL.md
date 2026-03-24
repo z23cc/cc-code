@@ -272,6 +272,15 @@ $ cc-flow dashboard
 # ╚══════════════════════════════════════════╝
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-autoimmune --data '{"scanned": true, "fixed": 3}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-task-tracking** — `.tasks/` integration for structured task management

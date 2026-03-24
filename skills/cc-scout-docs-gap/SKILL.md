@@ -62,6 +62,15 @@ find . -name "ARCHITECTURE*" 2>/dev/null
 - Check existing doc style and follow the pattern
 - Flag if docs directory doesn't exist (recommend creating)
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-scout-docs-gap --data '{"score": 85, "findings": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-docs** — actually update the documentation

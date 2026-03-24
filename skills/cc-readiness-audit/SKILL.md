@@ -143,6 +143,15 @@ cc-flow task create --epic <epic-id> --title "[P1] Fix ruff: 3 unused imports"
 # /autoimmune scan — does a similar scan + auto-generates the task list
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-readiness-audit --data '{"done": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-autoimmune** — audit findings feed into improvement loop (Mode D does similar scan)

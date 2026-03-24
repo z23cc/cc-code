@@ -57,6 +57,15 @@ Step 3: "Back to the auth refactor -- we were about to extract the token
 validation into its own function in src/auth/tokens.py."
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-aside --data '{"done": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-research** -- use when the "aside" turns out to need deep investigation

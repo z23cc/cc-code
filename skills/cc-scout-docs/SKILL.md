@@ -87,6 +87,15 @@ gh search issues "[feature] bug" --repo [framework/repo] --state open -L 5
 - Prefer official docs > source code > blog posts
 - Flag version-specific gotchas prominently
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-scout-docs --data '{"score": 85, "findings": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-scout-practices** — community best practices beyond official docs

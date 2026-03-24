@@ -214,6 +214,15 @@ async def login(request: Request, data: LoginRequest):
     ...
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-fastapi --data '{"done": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-async-patterns** — asyncio patterns used throughout FastAPI

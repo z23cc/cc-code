@@ -226,6 +226,15 @@ outside the assigned worktree. Shared state dirs (`.tasks/`, `.flow/`) are allow
 Session state (window/tab binding) is stored in `.git/cc-flow-state/rp-session.json`,
 shared across all worktrees in the same repo.
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-rp --data '{"done": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-review-backend** — multi-backend review routing (agent/rp/codex/export)

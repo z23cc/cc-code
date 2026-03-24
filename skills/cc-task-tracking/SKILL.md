@@ -161,6 +161,15 @@ NEXT_ID=$(echo "$READY" | python3 -c "import sys,json; r=json.load(sys.stdin)['r
 | Multiple epics in parallel | `.tasks/` (epic grouping) |
 | Need progress tracking | `.tasks/` (progress bars) |
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-task-tracking --data '{"tasks_managed": [...], "status": "..."}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-plan** — creates the task list; this skill tracks execution

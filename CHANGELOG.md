@@ -1,5 +1,13 @@
 # Changelog
 
+## [5.21.0] - 2026-03-24
+### Improved
+- **100% On Completion coverage** — all 78 skills now have standardized `## On Completion` section with:
+  - Skill-specific context save keys (e.g., test skills save `test_results`+`coverage`, security saves `vulnerabilities`+`verdict`)
+  - `cc-flow skill ctx save` + `cc-flow skill next` commands
+  - Previously only 21/78 had this (27%), now 78/78 (100%)
+- Every skill now participates in the context protocol: output from any skill is available to the next skill in the chain
+
 ## [5.20.0] - 2026-03-24
 ### Added
 - **8 new chains** (36 total): testing, logging-observability, error-handling, product-validation, visual-qa, async-backend, team-workflow, clone-and-ship

@@ -168,6 +168,15 @@ Always fix in this order (highest risk first):
 5. **Performance** — within budget (user experience)
 6. **Dependencies** — no known vulnerabilities
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-refinement --data '{"quality_score": 90, "hardened": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-tdd** — refinement happens AFTER TDD green

@@ -120,6 +120,15 @@ Total: ~1,100 tokens (vs ~15,000 for reading all 3 files fully)
 Result: Complete understanding of auth flow
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-scout-context --data '{"score": 85, "findings": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-research** — deeper investigation (uses more context but finds more)

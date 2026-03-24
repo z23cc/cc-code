@@ -199,6 +199,15 @@ score = evaluate_prompt(system + prompt, test_cases, "sonnet")
 # Target: score >= 0.9 (90% of test cases correct)
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-prompt-engineering --data '{"done": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-fastapi** — integrating LLM calls into API endpoints

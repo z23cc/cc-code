@@ -101,6 +101,15 @@ After mitigation, follow the debugging skill's 4-phase process:
 - **Action items must be tracked.** Use cc-flow or issue tracker.
 - **Schedule follow-up.** Review action items in 2 weeks.
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-incident --data '{"resolved": true, "postmortem": "..."}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-debugging** — systematic root cause investigation (Phase 1-4)

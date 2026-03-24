@@ -72,6 +72,15 @@ grep -A10 "repos:" .pre-commit-config.yaml 2>/dev/null | head -15
 2. [Priority 2]
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-scout-tooling --data '{"score": 85, "findings": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-scout-build** — build system analysis

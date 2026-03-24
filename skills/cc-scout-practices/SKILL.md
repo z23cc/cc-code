@@ -94,6 +94,15 @@ gh api repos/{owner}/{repo} --jq '{stars: .stargazers_count, pushed: .pushed_at}
 - Focus on non-obvious gotchas
 - Keep code snippets < 10 lines (illustrate the point, not full implementation)
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-scout-practices --data '{"score": 85, "findings": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-scout-repo** — find existing patterns in THIS codebase

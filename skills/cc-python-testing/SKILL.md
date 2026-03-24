@@ -155,6 +155,15 @@ def test_bulk_insert_performance():
 **DO:** Test behavior not implementation, use fixtures, mock external deps, test edge cases, follow the pyramid
 **DON'T:** Test third-party code, share state between tests, use complex conditionals in tests, catch exceptions (use `pytest.raises`)
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-python-testing --data '{"test_results": "pass", "coverage": "85%"}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-tdd** — TDD workflow that drives test writing

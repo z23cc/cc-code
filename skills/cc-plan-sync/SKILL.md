@@ -114,6 +114,15 @@ When `work.plan_sync=true`, plan-sync runs automatically after each task:
 cc-flow config set work.plan_sync true   # Enable auto-sync in /cc-work
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-plan-sync --data '{"epic_id": "<id>", "task_ids": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-work** — orchestrates the full execution pipeline including plan-sync

@@ -113,3 +113,11 @@ This will:
 - Use the reference's font stack or find closest Google Fonts match
 - Compare at pixel level for spacing — use browser dev tools overlay
 - For dynamic content (carousels, modals), capture multiple states
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-clone-site --data '{"match_score": 95, "pages_cloned": 3}'
+cc-flow skill next
+```

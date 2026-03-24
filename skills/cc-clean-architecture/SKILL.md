@@ -193,6 +193,15 @@ wc -l src/adapters/api/*.py | sort -rn | head -5
 | **Adapters** | Integration | Real DB / test containers | < 500ms |
 | **Infrastructure** | E2E | Full stack | < 2s |
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-clean-architecture --data '{"adrs": [...], "architecture_doc": "..."}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-fastapi** — adapter layer patterns (routes, deps, middleware)

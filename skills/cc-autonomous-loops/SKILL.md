@@ -118,6 +118,15 @@ bash scripts/ralph/ralph.sh
 | Exploratory improvement | OODA Deep |
 | **Achieve a specific outcome** | **Goal-Driven** |
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-autonomous-loops --data '{"loop_completed": true, "iterations": 5}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-ralph** — Ralph autonomous harness (Patterns 2 + 6)

@@ -144,6 +144,15 @@ celery -A myapp inspect stats
 - [ ] Task time limits set (`task_soft_time_limit`, `task_time_limit`)
 - [ ] Separate queues for priority levels
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-task-queues --data '{"tasks_managed": [...], "status": "..."}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-async-patterns** — when to use asyncio vs Celery

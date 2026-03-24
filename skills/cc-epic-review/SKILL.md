@@ -136,6 +136,15 @@ When `/cc-work` completes all tasks in an epic:
 | **Standard** | All explicit requirements + tests | Default |
 | **Deep** | Requirements + code paths + edge cases + docs | Critical features |
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-epic-review --data '{"verdict": "SHIP", "issues_fixed": 0}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-work** — the execution pipeline that triggers epic review

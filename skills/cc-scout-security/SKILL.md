@@ -99,6 +99,15 @@ ls -la .github/workflows/codeql*.yml 2>/dev/null
 - Never output actual secret values
 - Flag critical issues prominently
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-scout-security --data '{"vulnerabilities": 0, "verdict": "pass"}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-security-review** — code-level security patterns

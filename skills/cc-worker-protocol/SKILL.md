@@ -211,6 +211,15 @@ Final:
 | Worker runtime | < 5 min | Simplify scope |
 | Context bleed incidents | 0 | Always fresh agent |
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-worker-protocol --data '{"completed_tasks": [...], "epic_status": "done"}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-plan** — the plan that workers execute

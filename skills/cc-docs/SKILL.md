@@ -104,6 +104,15 @@ For API projects, maintain:
 5. Verify all code examples still work
 6. Commit: `docs: update documentation for vX.Y.Z`
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-docs --data '{"docs_updated": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-git-workflow** — conventional commits feed CHANGELOG

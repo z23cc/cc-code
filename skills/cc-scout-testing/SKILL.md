@@ -101,6 +101,15 @@ grep "coverage" .github/workflows/*.yml 2>/dev/null
 1. [Most impactful improvement]
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-scout-testing --data '{"test_results": "pass", "coverage": "85%"}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-tdd** — test-driven development workflow

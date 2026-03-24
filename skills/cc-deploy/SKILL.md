@@ -144,6 +144,15 @@ class Settings(BaseSettings):
 settings = Settings()
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-deploy --data '{"deployed": true, "url": "..."}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-security-review** — security checklist before deployment

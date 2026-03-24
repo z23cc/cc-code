@@ -251,6 +251,15 @@ Task: "Login returns 403 for valid users"
      --score 5 --used-command /team
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-teams --data '{"done": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-parallel-agents** — dispatch patterns and coordination

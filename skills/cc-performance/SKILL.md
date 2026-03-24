@@ -131,6 +131,15 @@ def benchmark(func):
     return wrapper
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-performance --data '{"improvements": [...], "metrics": {...}}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-python-patterns** — foundational patterns including concurrency

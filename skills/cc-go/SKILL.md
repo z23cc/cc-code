@@ -84,3 +84,11 @@ When `go` picks auto mode, it:
 1. OBSERVE: scans for lint, type, test issues
 2. DECIDE: picks next task, recommends team
 3. ACT: auto-fixes lint, runs tests
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-go --data '{"done": true}'
+cc-flow skill next
+```

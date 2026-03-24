@@ -146,6 +146,15 @@ jobs:
 - [ ] `.github/workflows/ci.yml` for CI
 - [ ] `git init` and initial commit
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-scaffold --data '{"project_path": "...", "structure": "created"}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-deploy** — Dockerfile and CI templates used by scaffold

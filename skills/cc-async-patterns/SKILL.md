@@ -145,6 +145,15 @@ async def test_concurrent_fetch():
     assert len(users) == 3
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-async-patterns --data '{"patterns_applied": [...], "tested": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-python-patterns** — sync patterns and general Python idioms

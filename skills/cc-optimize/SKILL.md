@@ -270,3 +270,11 @@ Test that optimizations worked:
 - **User perception**: Does it *feel* faster?
 
 Remember: Performance is a feature. Fast experiences feel more responsive, more polished, more professional. Optimize systematically, measure ruthlessly, and prioritize user-perceived performance.
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-optimize --data '{"improvements": [...], "metrics": {...}}'
+cc-flow skill next
+```

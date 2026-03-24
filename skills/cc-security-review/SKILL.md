@@ -82,6 +82,15 @@ safety check               # Vulnerability check
 | Debug mode in prod | Info disclosure | Disable debug |
 | Bare `except` | Silent failure | Catch specific exceptions |
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-security-review --data '{"verdict": "SHIP", "issues_fixed": 0}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-refinement** — security scan is one dimension of quality hardening

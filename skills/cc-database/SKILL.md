@@ -151,6 +151,15 @@ async def get_user(session: AsyncSession, user_id: int) -> User | None:
     return result.scalars().first()
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-database --data '{"schema_updated": true, "migrations": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-async-patterns** — async database access with asyncpg/asyncio

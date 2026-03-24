@@ -75,3 +75,11 @@ For every page, using `agent-browser`:
 - Screenshot every issue as evidence
 - Include reproduction steps for each issue
 - If dev server is not running, start it and wait for ready
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-qa-report --data '{"health_score": 90, "bugs_fixed": 0}'
+cc-flow skill next
+```

@@ -86,6 +86,15 @@ grep "dist\|build\|__pycache__" .gitignore 2>/dev/null
 1. [Priority fix]
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-scout-build --data '{"score": 85, "findings": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-scout-tooling** — lint/format/type check tools

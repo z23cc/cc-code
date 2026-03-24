@@ -232,6 +232,15 @@ On NEEDS_WORK verdict (max 3 iterations):
 5. Repeat until SHIP or max iterations
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-review-backend --data '{"verdict": "SHIP", "issues_fixed": 0}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-code-review-loop** — the verdict gate pattern (SHIP/NEEDS_WORK/MAJOR_RETHINK)

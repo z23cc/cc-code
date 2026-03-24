@@ -117,6 +117,15 @@ Gap Analysis:
 - Prioritize: what blocks architecture > what blocks UX > nice-to-have
 - Flag security-sensitive gaps prominently
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-scout-gaps --data '{"score": 85, "findings": [...]}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-brainstorming** — gaps feed into design exploration

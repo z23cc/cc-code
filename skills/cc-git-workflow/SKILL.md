@@ -152,6 +152,15 @@ Before creating a PR, verify:
 | PR with messy commits | `git rebase -i` to squash | Clean before merge |
 | Conflict-heavy rebase | `git merge` instead | Less painful |
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-git-workflow --data '{"completed_tasks": [...], "epic_status": "done"}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-verification** — run lint+test before every commit

@@ -142,6 +142,15 @@ async def health():
     return JSONResponse({"status": status, **checks}, status_code=code)
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-logging --data '{"logging_setup": "structured", "coverage": "..."}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-deploy** — health checks and production logging config

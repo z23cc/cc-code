@@ -85,6 +85,15 @@ Returns JSON with three sections:
 - **`bridge_loops`** — all 6 loops with name, chain direction, and triggering command.
 - **`all_systems_connected`** — `true` only when all three systems are reachable. Partial connectivity still works for loops that only need two systems.
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-bridge --data '{"done": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-rp** — RepoPrompt operations (select, builder, chat, git)

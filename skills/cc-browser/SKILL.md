@@ -690,3 +690,11 @@ Lightpanda does not support `--extension`, `--profile`, `--state`, or `--allow-f
 - **cc-qa** — Full QA test + fix: diff-aware page detection, health scoring (0-100), issue taxonomy, auto-fix loop
 - **cc-qa-report** — Report-only QA: same testing methodology, documents bugs with evidence, never modifies code
 - **cc-bridge** — Deep search + memory-enhanced analysis for understanding test failures
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-browser --data '{"pages_tested": 5, "screenshots": [...]}'
+cc-flow skill next
+```

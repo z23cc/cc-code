@@ -155,6 +155,15 @@ pytest --cov=mypackage     # Test + coverage
 bandit -r .                # Security
 ```
 
+
+## On Completion
+
+When done:
+```bash
+cc-flow skill ctx save cc-python-patterns --data '{"done": true}'
+cc-flow skill next
+```
+
 ## Related Skills
 
 - **cc-async-patterns** — async/await patterns for concurrent I/O
