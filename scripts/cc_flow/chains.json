@@ -819,10 +819,14 @@
     ],
     "skills": [
       {
-        "skill": "/cc-browser",
-        "role": "Screenshot reference at 3 viewports",
+        "skill": "/cc-clone-site",
+        "role": "Screenshot + analyze reference site",
         "required": true,
-        "phase": "mutate"
+        "phase": "observe",
+        "outputs": [
+          "screenshots",
+          "design_tokens"
+        ]
       },
       {
         "skill": "/cc-ui-ux",
