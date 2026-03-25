@@ -1,5 +1,20 @@
 # Changelog
 
+## [5.27.0] - 2026-03-25
+### Added
+- **Team Agent Executor** — native Claude Code Agent dispatch replaces claude -p subprocess
+- **disallowedTools** — 18 agents restricted (reviewers/scouts read-only)
+- **Continuous Learning Observer** — async PostToolUse hook auto-learns tool patterns
+- **Semantic Verification** — blocks commits with sensitive files (exit 2)
+- **Web Dashboard** — real-time 3-engine visualization (Express + React + WebSocket + SQLite)
+- **Native Agent Frontmatter** — effort/maxTurns/skills/isolation on all 23 agents
+- **15 hooks across 7 events** — failure-counter, learn-observer, subagent-complete, semantic-verify
+
+### Changed
+- Default execution: Team Agent (native Agent tool) not skill_executor (claude -p)
+- config-protect: warn → hard block (exit 2)
+- All Codex calls read stderr, unified 1000s timeouts, early exit on unanimous
+
 ## [5.26.0] - 2026-03-25
 ### Added
 - **Design Review** — 3-engine scoring across 10 UI/UX dimensions (0-10), auto-fix below 8

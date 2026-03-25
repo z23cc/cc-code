@@ -28,4 +28,4 @@ Architecture (facade modules → implementation modules):
     browser_qa.py    → visual QA with screenshots
 """
 
-VERSION = "5.26.0"
+VERSION = "5.27.0"

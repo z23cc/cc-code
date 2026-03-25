@@ -1,6 +1,6 @@
 {
   "name": "cc-code",
-  "version": "5.26.0",
+  "version": "5.27.0",
   "description": "AI-routed development toolkit — one command does everything. 3-engine review (Claude × Codex × Gemini), collaborative planning, autopilot execution, PUA mutual challenge, failure recovery, 78 skills, 46 chains.",
   "author": {
     "name": "z23cc"
