@@ -741,11 +741,14 @@ def cmd_go(args):
     elif mode == "multi-engine":
         from cc_flow.autopilot import run_autopilot
         result = run_autopilot(query, timeout=300, dry_run=dry_run)
-        if result.get("success"):
-            print(json.dumps(result))
-        else:
-            _execute_ralph(query, max_iter, dry_run)
+        print(json.dumps(result))
     elif mode == "auto":
         _execute_auto(query, dry_run)
-    else:
+    elif mode == "ralph":
+        # Legacy: explicit --mode=ralph still works
         _execute_ralph(query, max_iter, dry_run)
+    else:
+        # Default fallback: autopilot (3-engine guided)
+        from cc_flow.autopilot import run_autopilot
+        result = run_autopilot(query, timeout=300, dry_run=dry_run)
+        print(json.dumps(result))

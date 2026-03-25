@@ -92,8 +92,7 @@ class TestForceMode:
         out, _, code = run(["go", "something", "random", "--mode=chain", "--dry-run"])
         assert code == 0
         data = json.loads(out)
-        # When forced to chain but no chain matches, falls through to ralph
-        assert data["mode"] in ("chain", "ralph")
+        assert data.get("success") or data.get("dry_run")
 
 
 class TestChainMode:
