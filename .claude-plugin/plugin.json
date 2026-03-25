@@ -1,14 +1,14 @@
 {
   "name": "cc-code",
-  "version": "3.8.1",
-  "description": "Development workflow toolkit — brainstorming, planning, TDD, code review, debugging, task management (cc-flow CLI), and autonomous improvement loops. Language-agnostic core with Python language pack included.",
+  "version": "5.26.0",
+  "description": "AI-routed development toolkit — one command does everything. 3-engine review (Claude × Codex × Gemini), collaborative planning, autopilot execution, PUA mutual challenge, failure recovery, 78 skills, 46 chains.",
   "author": {
     "name": "z23cc"
   },
   "license": "MIT",
   "homepage": "https://github.com/z23cc/cc-code",
   "repository": "https://github.com/z23cc/cc-code",
-  "keywords": ["python", "tdd", "code-review", "debugging", "planning", "git", "docker", "performance", "fastapi", "celery", "clean-architecture", "autoimmune", "task-management", "prompt-engineering"],
+  "keywords": ["ai-router", "multi-engine", "code-review", "autopilot", "3-engine", "tdd", "planning", "debugging", "task-management", "pua", "adversarial-review", "claude", "codex", "gemini"],
   "agents": [
     "./agents/python-reviewer.md",
     "./agents/code-reviewer.md",
