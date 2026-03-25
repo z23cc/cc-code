@@ -633,6 +633,17 @@ def cmd_go(args):
             intent_analysis["ai_reason"] = ai_result.get("reason", "")
             intent_analysis["from_cache"] = ai_result.get("from_cache", False)
 
+            # Dashboard: emit routing decision
+            try:
+                from cc_flow.dashboard_events import emit_router_decision
+                emit_router_decision(query, ai_chain or "autopilot",
+                                     ai_result.get("complexity", "medium"),
+                                     ai_result.get("router_engine", ""),
+                                     ai_result.get("reason", ""),
+                                     ai_result.get("from_cache", False))
+            except ImportError:
+                pass
+
     # Execute — everything goes through 3-engine autopilot
     if mode == "command":
         # Standalone command — dispatch directly

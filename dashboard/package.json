@@ -1,0 +1,20 @@
+{
+  "name": "cc-code-dashboard",
+  "version": "1.0.0",
+  "description": "Real-time visualization dashboard for cc-code 3-engine workflows",
+  "scripts": {
+    "dev": "concurrently \"node server/index.js\" \"cd client && npx vite\"",
+    "start": "node server/index.js",
+    "build": "cd client && npx vite build",
+    "setup": "npm install && cd client && npm install"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0"
+  }
+}

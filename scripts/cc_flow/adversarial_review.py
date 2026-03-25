@@ -388,6 +388,15 @@ def run_debate(context, engines=None, timeout=300, dry_run=False):
 
     print(json.dumps({"status": "round1_done", "verdicts": r1_verdicts}), file=sys.stderr)
 
+    # Dashboard events
+    try:
+        from cc_flow.dashboard_events import emit_debate_round, emit_engine_complete
+        for e, r in engine_results.items():
+            emit_engine_complete(e, r["r1_verdict"], len(r.get("issues", [])), phase="review")
+        emit_debate_round(1, r1_verdicts, sum(len(r.get("issues", [])) for r in engine_results.values()))
+    except ImportError:
+        pass
+
     # Early exit: if all engines agree in Round 1, skip Round 2
     if len(known_verdicts) == 1 and len(known_verdicts) <= len(engine_results):
         unanimous = known_verdicts.pop()
