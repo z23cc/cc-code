@@ -165,6 +165,19 @@ def cmd_unified_review(args):
             "instruction": f"Agent review: {raw.get('verdict', 'UNKNOWN')}",
         }
 
+    # Auto-learn: record review outcome
+    if isinstance(result, dict) and not dry_run:
+        try:
+            from cc_flow.auto_learn import on_review_complete
+            on_review_complete(
+                verdict=result.get("verdict", "UNKNOWN"),
+                engines_used=list(engines.keys()),
+                issues_found=result.get("total_issues", 0),
+                pua_escalated=result.get("pua_escalated", False),
+            )
+        except (ImportError, Exception):
+            pass
+
     # Output
     if isinstance(result, dict):
         result["mode"] = mode

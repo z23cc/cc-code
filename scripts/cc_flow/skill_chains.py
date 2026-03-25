@@ -338,6 +338,13 @@ def cmd_chain_advance(args):
         except (ImportError, Exception):
             pass
 
+        # Auto-learn: feed all subsystems
+        try:
+            from cc_flow.auto_learn import on_chain_complete
+            on_chain_complete(chain_name, chain_name, total, total, "success")
+        except (ImportError, Exception):
+            pass
+
         print(json.dumps({
             "success": True,
             "complete": True,

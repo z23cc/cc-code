@@ -338,6 +338,18 @@ def run_checkpoint(progress="", step=0, total=0):
     else:
         instruction += "\n\n**CONTINUE**: Proceed with the next phase of the plan."
 
+    # Auto-learn: record checkpoint outcome
+    try:
+        from cc_flow.auto_learn import _record_wisdom
+        _record_wisdom(
+            "decisions",
+            f"Autopilot checkpoint {step}/{total}: {consensus['verdict']}. "
+            f"Adjustments: {len(consensus['adjustments'])}",
+            source="autopilot-checkpoint",
+        )
+    except (ImportError, Exception):
+        pass
+
     return {
         "success": True,
         "verdict": consensus["verdict"],

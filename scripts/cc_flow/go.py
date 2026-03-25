@@ -468,6 +468,14 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="med
             if intent.get("ai_reason"):
                 result["ai_reason"] = intent["ai_reason"]
 
+    # Auto-learn: record chain start (completion recorded by chain advance)
+    if not dry_run:
+        try:
+            from cc_flow.auto_learn import on_chain_complete
+            on_chain_complete(chain_name, query, 0, len(steps), "started")
+        except (ImportError, Exception):
+            pass
+
     print(json.dumps(result))
 
 
