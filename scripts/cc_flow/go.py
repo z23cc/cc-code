@@ -644,7 +644,30 @@ def cmd_go(args):
             except ImportError:
                 pass
 
-    # Execute — everything goes through 3-engine autopilot
+    # Execute — Team Agents + 3-engine system
+    if auto_exec and mode == "chain" and chain_data and not dry_run:
+        # Team Agent execution: native Agent tool with full access
+        from cc_flow.team_executor import build_team_instruction
+        team_instruction = build_team_instruction(chain_name, chain_data, query, complexity)
+
+        # Emit dashboard event
+        try:
+            from cc_flow.dashboard_events import emit_pipeline_stage
+            emit_pipeline_stage("team_exec", "started", f"Chain: {chain_name}")
+        except ImportError:
+            pass
+
+        print(json.dumps({
+            "success": True,
+            "mode": "team",
+            "chain": chain_name,
+            "goal": query,
+            "complexity": complexity,
+            "instruction": team_instruction,
+            "ai_routed": True,
+        }))
+        return
+
     if mode == "command":
         # Standalone command — dispatch directly
         cmd_map = {
@@ -683,25 +706,6 @@ def cmd_go(args):
         }))
     elif mode == "auto":
         _execute_auto(query, dry_run)
-    elif auto_exec and chain_data and not dry_run:
-        # Full auto-exec: skill steps as subprocess + 3-engine review
-        from cc_flow.skill_executor import execute_chain_auto
-        result = execute_chain_auto(chain_name, chain_data, query)
-        # After chain execution, run 3-engine review
-        if result.get("success"):
-            try:
-                from cc_flow.unified_review import _detect_engines
-                engines, _ = _detect_engines()
-                if len(engines) >= 2:
-                    # Plan verification: did we build what we planned?
-                    print(json.dumps({"status": "plan_verify", "message": "3-engine plan verification..."}), file=sys.stderr)
-                    subprocess.run(["cc-flow", "plan-verify"], check=False, timeout=600)
-                    # 3-engine review
-                    print(json.dumps({"status": "auto_review", "message": "Running 3-engine review..."}), file=sys.stderr)
-                    subprocess.run(["cc-flow", "review"], check=False, timeout=600)
-            except (ImportError, subprocess.TimeoutExpired, OSError):
-                pass
-        print(json.dumps(result))
     elif chain_data:
         # Dry-run or --no-auto-exec: output instruction
         _execute_chain(chain_name, chain_data, query, dry_run, complexity=complexity,
