@@ -4,6 +4,7 @@ emoji: "✅"
 description: "Analyze test framework setup, coverage configuration, test organization, and CI integration. Reports test health score."
 deliverables: "Test infrastructure audit with health score, coverage gaps, and CI integration status"
 tools: ["Read", "Grep", "Glob", "Bash"]
+disallowedTools: ["Write", "Edit", "NotebookEdit", "Bash"]
 model: inherit
 effort: "medium"
 maxTurns: 5

@@ -4,6 +4,7 @@ emoji: "⚙️"
 description: "Analyze build system, scripts, CI/CD configuration, and monorepo setup. Reports build health score."
 deliverables: "Build system audit with health score, scripts summary, and CI/CD coverage report"
 tools: ["Read", "Grep", "Glob", "Bash"]
+disallowedTools: ["Write", "Edit", "NotebookEdit", "Bash"]
 model: inherit
 effort: "medium"
 maxTurns: 5

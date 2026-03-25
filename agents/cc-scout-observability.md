@@ -4,6 +4,7 @@ emoji: "📊"
 description: "Scan logging, tracing, metrics, health endpoints, and error tracking setup. Reports observability coverage percentage."
 deliverables: "Observability audit covering 6 pillars with coverage score and gap recommendations"
 tools: ["Read", "Grep", "Glob", "Bash"]
+disallowedTools: ["Write", "Edit", "NotebookEdit", "Bash"]
 model: inherit
 effort: "medium"
 maxTurns: 5

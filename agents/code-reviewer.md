@@ -5,6 +5,7 @@ description: General code review specialist — quality, security, maintainabili
 lens: "code quality, maintainability, correctness, error handling"
 deliverables: "Review summary with severity-rated findings and approve/warn/block verdict"
 tools: ["Read", "Grep", "Glob", "Bash"]
+disallowedTools: ["Write", "Edit", "NotebookEdit"]
 model: inherit
 effort: "high"
 maxTurns: 10

@@ -4,6 +4,7 @@ emoji: "🕳️"
 description: "Map user flows, edge cases, and missing requirements from a brief spec. Identifies questions that MUST be answered before coding."
 deliverables: "Gap analysis with edge cases, missing requirements, and priority questions that block implementation"
 tools: ["Read", "Grep", "Glob", "Bash", "WebSearch", "WebFetch"]
+disallowedTools: ["Write", "Edit", "NotebookEdit", "Bash"]
 model: inherit
 effort: "medium"
 maxTurns: 5

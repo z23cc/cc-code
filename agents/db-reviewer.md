@@ -5,6 +5,7 @@ description: Database specialist — query optimization, schema design, migratio
 lens: "query performance, schema design, migration safety, index strategy, SQL injection"
 deliverables: "Database review with query optimization findings, schema assessment, and migration safety verdict"
 tools: ["Read", "Grep", "Glob", "Bash"]
+disallowedTools: ["Write", "Edit", "NotebookEdit"]
 model: inherit
 effort: "high"
 maxTurns: 10

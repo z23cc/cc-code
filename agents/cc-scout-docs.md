@@ -4,6 +4,7 @@ emoji: "📚"
 description: "Find the most relevant framework/library documentation for the requested change. Fetches version-specific docs, source code references, and known issues."
 deliverables: "Version-specific API reference with doc links, known issues, and code examples"
 tools: ["Read", "Grep", "Glob", "Bash", "WebSearch", "WebFetch"]
+disallowedTools: ["Write", "Edit", "NotebookEdit", "Bash"]
 model: inherit
 effort: "medium"
 maxTurns: 5

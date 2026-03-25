@@ -4,6 +4,7 @@ emoji: "🛡️"
 description: "Scan security configuration — branch protection, secrets management, dependency automation, CODEOWNERS, and security scanning tools."
 deliverables: "Security posture report with 8-point checklist score and prioritized remediation steps"
 tools: ["Read", "Grep", "Glob", "Bash"]
+disallowedTools: ["Write", "Edit", "NotebookEdit", "Bash"]
 model: inherit
 effort: "medium"
 maxTurns: 5

@@ -4,6 +4,7 @@ emoji: "📖"
 description: "Identify documentation that may need updates based on planned changes. Scans README, CHANGELOG, API docs, ADRs, and inline docs."
 deliverables: "Docs gap checklist mapping each planned change to affected documentation files"
 tools: ["Read", "Grep", "Glob", "Bash"]
+disallowedTools: ["Write", "Edit", "NotebookEdit", "Bash"]
 model: inherit
 effort: "medium"
 maxTurns: 5

@@ -4,6 +4,7 @@ emoji: "🔨"
 description: "Check linting, formatting, type checking, and pre-commit hook configuration. Reports tooling completeness score."
 deliverables: "Tooling audit with lint/format/type-check/pre-commit status and completeness score"
 tools: ["Read", "Grep", "Glob", "Bash"]
+disallowedTools: ["Write", "Edit", "NotebookEdit", "Bash"]
 model: inherit
 effort: "medium"
 maxTurns: 5

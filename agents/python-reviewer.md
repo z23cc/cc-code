@@ -5,6 +5,7 @@ description: Expert Python code reviewer — PEP 8, type hints, security, Python
 lens: "PEP 8 compliance, type safety, Pythonic idioms, performance patterns"
 deliverables: "Python-specific review with PEP 8 compliance, type hint audit, and Pythonic pattern suggestions"
 tools: ["Read", "Grep", "Glob", "Bash"]
+disallowedTools: ["Write", "Edit", "NotebookEdit"]
 model: inherit
 effort: "high"
 maxTurns: 10

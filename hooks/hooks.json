@@ -81,6 +81,17 @@
           }
         ],
         "description": "Review reminder before git push"
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/semantic-verify.sh",
+            "timeout": 5
+          }
+        ],
+        "description": "Semantic verification: block commits with sensitive files or wrong dirs"
       }
     ],
     "PostToolUse": [
@@ -116,6 +127,18 @@
           }
         ],
         "description": "Track consecutive Bash failures for methodology switching"
+      },
+      {
+        "matcher": "Bash|Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/learn-observer.sh",
+            "timeout": 3,
+            "async": true
+          }
+        ],
+        "description": "Continuous learning: observe tool patterns (async, non-blocking)"
       }
     ],
     "SubagentStop": [

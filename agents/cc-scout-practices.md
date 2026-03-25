@@ -4,6 +4,7 @@ emoji: "✨"
 description: "Gather modern best practices and pitfalls BEFORE implementing a change. Searches official docs, GitHub repos, and community guidance for current year."
 deliverables: "Best practices brief with DO/DON'T list, real-world examples, and anti-patterns to avoid"
 tools: ["Read", "Grep", "Glob", "Bash", "WebSearch", "WebFetch"]
+disallowedTools: ["Write", "Edit", "NotebookEdit", "Bash"]
 model: inherit
 effort: "medium"
 maxTurns: 5
