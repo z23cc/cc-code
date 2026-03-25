@@ -76,6 +76,36 @@ def analyze_intent(query):
     }
 
 
+# ── Skill to Agent mapping ──
+
+_SKILL_AGENT_MAP = {
+    "cc-brainstorm": "cc-code:cc-brainstorm", "cc-brainstorming": "cc-code:cc-brainstorm",
+    "cc-plan": "cc-code:cc-plan", "cc-architecture": "cc-code:cc-architecture",
+    "cc-requirement-gate": "cc-code:cc-requirement-gate",
+    "cc-tdd": "cc-code:cc-tdd", "cc-review": "cc-code:cc-review",
+    "cc-debug": "cc-code:cc-debug", "cc-research": "cc-code:cc-research",
+    "cc-scout-repo": "cc-code:cc-scout-repo", "cc-scout-practices": "cc-code:cc-scout-practices",
+    "cc-scout-gaps": "cc-code:cc-scout-gaps", "cc-scout-security": "cc-code:cc-scout-security",
+    "cc-scout-testing": "cc-code:cc-scout-testing", "cc-scout-docs": "cc-code:cc-scout-docs",
+    "cc-scout-docs-gap": "cc-code:cc-scout-docs-gap", "cc-scout-build": "cc-code:cc-scout-build",
+    "cc-scout-env": "cc-code:cc-scout-env", "cc-scout-tooling": "cc-code:cc-scout-tooling",
+    "cc-scout-observability": "cc-code:cc-scout-observability", "cc-scout-context": "cc-code:cc-scout-context",
+    "cc-security-review": "cc-code:security-reviewer",
+    "cc-code-review-loop": "cc-code:code-reviewer",
+    "cc-simplify": "cc-code:refactor-cleaner",
+    "cc-performance": "cc-code:cc-perf",
+    "cc-office-hours": "cc-code:cc-office-hours",
+    "cc-grill-me": "cc-code:cc-grill-me",
+    "cc-elicit": "cc-code:cc-elicit",
+    "cc-prd-validate": "cc-code:cc-prd-validate",
+}
+
+
+def _skill_to_agent(skill_name):
+    """Map a skill name to the best agent subagent_type."""
+    return _SKILL_AGENT_MAP.get(skill_name, "general-purpose")
+
+
 # ── Phase-based parallel execution ──
 
 def _group_into_phases(steps):
@@ -143,25 +173,22 @@ def _build_auto_exec_instruction(chain_name, chain_data, query, steps):
         phase_label = phase["phase"].upper()
 
         if phase["parallel"]:
-            lines.append(f"## Phase {pi+1}/{total_phases}: PARALLEL [{phase_label}] — {len(phase['steps'])} agents simultaneously")
+            n_agents = len(phase["steps"])
+            lines.append(f"## Phase {pi+1}/{total_phases}: PARALLEL [{phase_label}] — {n_agents} agents simultaneously")
             lines.append("")
-            lines.append("**Launch ALL of these in a single message (multiple Agent tool calls):**")
+            lines.append(f"**DISPATCH ALL {n_agents} AGENTS IN ONE MESSAGE** (use multiple Agent tool calls):")
             lines.append("")
             for s in phase["steps"]:
                 step_num += 1
-                required_tag = "REQUIRED" if s["required"] else "OPTIONAL"
-                lines.append(f"- **{s['skill']}** [{required_tag}]: {s['role']}")
-            lines.append("")
-            lines.append("Wait for ALL parallel agents to complete, then save each context:")
-            for s in phase["steps"]:
                 skill_name = s["skill"].lstrip("/").strip()
-                outputs = s.get("outputs", [])
-                if outputs:
-                    ctx_json = ", ".join(f'"{k}": "..."' for k in outputs)
-                    lines.append(f"  `cc-flow skill ctx save {skill_name} --data '{{{ctx_json}}}'`")
-                else:
-                    lines.append(f"  `cc-flow skill ctx save {skill_name} --data '{{\"done\": true}}'`")
-            lines.append("Then advance: `cc-flow chain advance`")
+                agent_type = _skill_to_agent(skill_name)
+                lines.append(f"Agent {step_num}: {s['skill']} — {s['role']}")
+                lines.append(f"  subagent_type: \"{agent_type}\"")
+                lines.append(f"  prompt: \"Activate {skill_name} skill for: {query}\"")
+                lines.append("  run_in_background: true")
+                lines.append("")
+            lines.append(f"Wait for ALL {n_agents} agents, then save context + advance:")
+            lines.append("`cc-flow chain advance`")
             lines.append("")
         else:
             for s in phase["steps"]:
