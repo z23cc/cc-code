@@ -65,6 +65,7 @@ _COMMANDS = {
     "failure": "failure_engine:cmd_failure",
     "plan-verify": "plan_verify:cmd_plan_verify",
     "browser-qa": "browser_qa:cmd_browser_qa",
+    "review-dashboard": "review_dashboard:cmd_review_dashboard",
     "pua": "pua_engine:cmd_pua",
     # skill validation
     "validate-skills": "skill_validate:cmd_validate_skills",

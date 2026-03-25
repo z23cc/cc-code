@@ -753,6 +753,11 @@ def _add_misc_commands(sub):
     mp_p.add_argument("--timeout", type=int, default=300, help="Per-engine timeout")
     mp_p.add_argument("--dry-run", action="store_true", help="Show plan without running")
 
+    # Review dashboard + readiness gate
+    rd_p = sub.add_parser("review-dashboard", help="Review history dashboard + ship readiness gate")
+    rd_sub = rd_p.add_subparsers(dest="dashboard_cmd")
+    rd_sub.add_parser("gate", help="Check if ready to ship (readiness gate)")
+
     # Browser QA (visual testing with screenshots)
     bqa_p = sub.add_parser("browser-qa", help="Visual QA: screenshot pages, detect issues")
     bqa_p.add_argument("--url", default="", help="URL to test")
