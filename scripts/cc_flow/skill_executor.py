@@ -175,7 +175,7 @@ def execute_chain_auto(chain_name, chain_data, goal, dry_run=False, timeout=600)
             results.append({"phase": pi + 1, "type": "gate", "success": commit_ok})
             continue
 
-        # observe/design/mutate → execute via claude -p
+        # observe/design/mutate → execute via claude -p (with failure detection)
         if phase.get("parallel") and len(phase_steps) > 1:
             # Parallel execution with ThreadPoolExecutor
             from concurrent.futures import ThreadPoolExecutor
@@ -198,17 +198,49 @@ def execute_chain_auto(chain_name, chain_data, goal, dry_run=False, timeout=600)
                     step_result["phase"] = pi + 1
                     results.append(step_result)
         else:
-            # Sequential execution
+            # Sequential execution with failure detection
             for s in phase_steps:
                 skill_name = s["skill"].lstrip("/").strip()
                 step_result = execute_step(skill_name, goal, s["role"], phase_type, prev_ctx, timeout)
                 step_result["skill"] = skill_name
                 step_result["phase"] = pi + 1
-                results.append(step_result)
 
-                # Pass output as context to next step
-                if step_result.get("success") and step_result.get("output"):
+                if step_result.get("success"):
+                    # Success → reset failures, pass context
+                    try:
+                        from cc_flow.failure_engine import record_success
+                        record_success()
+                    except ImportError:
+                        pass
                     prev_ctx = {"skill": skill_name, "output_summary": step_result["output"][:1000]}
+                else:
+                    # Failure → record + check if methodology switch needed
+                    try:
+                        from cc_flow.failure_engine import diagnose_and_switch, record_failure, should_switch_methodology
+                        state = record_failure(step_result.get("error", ""))
+                        if should_switch_methodology(state["count"]):
+                            print(json.dumps({"auto_exec": "methodology_switch", "failures": state["count"]}), file=sys.stderr)
+                            switch = diagnose_and_switch(goal, timeout=120)
+                            step_result["methodology_switch"] = switch
+                            # Retry with new methodology injected into context
+                            prev_ctx = {
+                                "skill": skill_name,
+                                "methodology": switch.get("methodology_name", ""),
+                                "methodology_prompt": switch.get("prompt_injection", ""),
+                                "first_step": switch.get("first_step", ""),
+                                "diagnosis": switch.get("diagnosis", ""),
+                            }
+                            # Retry the step with new methodology
+                            retry_result = execute_step(skill_name, goal, s["role"], phase_type, prev_ctx, timeout)
+                            if retry_result.get("success"):
+                                step_result = retry_result
+                                step_result["retried_with"] = switch.get("methodology", "")
+                    except ImportError:
+                        pass
+
+                step_result["skill"] = skill_name
+                step_result["phase"] = pi + 1
+                results.append(step_result)
 
     elapsed = round(time.time() - start, 1)
     success_count = sum(1 for r in results if r.get("success"))

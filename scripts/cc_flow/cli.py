@@ -753,6 +753,16 @@ def _add_misc_commands(sub):
     mp_p.add_argument("--timeout", type=int, default=300, help="Per-engine timeout")
     mp_p.add_argument("--dry-run", action="store_true", help="Show plan without running")
 
+    # Failure engine (3-engine methodology switching)
+    fail_p = sub.add_parser("failure", help="Failure detection + 3-engine methodology switch")
+    fail_sub = fail_p.add_subparsers(dest="failure_cmd")
+    fail_sub.add_parser("status", help="Show failure state")
+    fail_rec = fail_sub.add_parser("record", help="Record a failure")
+    fail_rec.add_argument("--error", default="", help="Error message")
+    fail_diag = fail_sub.add_parser("diagnose", help="3-engine diagnosis + methodology switch")
+    fail_diag.add_argument("--goal", default="", help="Current goal")
+    fail_sub.add_parser("reset", help="Reset failure state")
+
     # PUA engine (3-model mutual challenge)
     pua_p = sub.add_parser("pua", help="3-model PUA: engines mutually challenge until optimal")
     pua_p.add_argument("--mode", default="code", choices=["code", "plan", "review"], help="PUA mode")
