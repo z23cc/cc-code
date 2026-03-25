@@ -609,6 +609,7 @@ def cmd_go(args):
     max_iter = getattr(args, "max", 25)
     dry_run = getattr(args, "dry_run", False)
     resume = getattr(args, "resume", False)
+    auto_exec = getattr(args, "auto_exec", False)
 
     # Resume mode
     if resume:
@@ -693,6 +694,13 @@ def cmd_go(args):
             intent_analysis["from_cache"] = ai_result.get("from_cache", False)
 
     # Execute
+    if auto_exec and mode == "chain" and chain_data:
+        # Full auto: every skill step runs as subprocess (claude -p)
+        from cc_flow.skill_executor import execute_chain_auto
+        result = execute_chain_auto(chain_name, chain_data, query, dry_run=dry_run)
+        print(json.dumps(result))
+        return
+
     if mode == "command":
         # Standalone command — dispatch directly
         cmd_map = {
