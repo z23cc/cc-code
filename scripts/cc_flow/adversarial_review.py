@@ -131,7 +131,7 @@ def _filter_noise(text):
     ).strip()
 
 
-def _exec_claude(prompt, timeout=300):
+def _exec_claude(prompt, timeout=1000):
     try:
         r = subprocess.run(
             ["claude", "-p", "--output-format", "text", prompt],
@@ -159,7 +159,7 @@ def _exec_codex(prompt, timeout=1000):
         return {"success": False, "error": str(e)}
 
 
-def _exec_gemini(prompt, timeout=300):
+def _exec_gemini(prompt, timeout=1000):
     cmd = shutil.which("gemini") or shutil.which("gemini-cli")
     if not cmd:
         return {"success": False, "error": "gemini not found"}
@@ -256,7 +256,7 @@ def _compute_verdict(engine_results):
 
 # ── Main Runner ──
 
-def _gather_rp_context(context, timeout=120):
+def _gather_rp_context(context, timeout=1000):
     """Phase 0: Use RP builder to gather deep codebase context.
 
     RP auto-selects related files, analyzes cross-file dependencies,

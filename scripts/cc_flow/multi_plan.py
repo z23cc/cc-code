@@ -181,7 +181,7 @@ def _filter_noise(text):
     ).strip()
 
 
-def _exec_claude(prompt, timeout=300):
+def _exec_claude(prompt, timeout=1000):
     try:
         r = subprocess.run(
             ["claude", "-p", "--output-format", "text", prompt],
@@ -208,7 +208,7 @@ def _exec_codex(prompt, timeout=1000):
         return {"success": False, "error": str(e)}
 
 
-def _exec_gemini(prompt, timeout=300):
+def _exec_gemini(prompt, timeout=1000):
     cmd = shutil.which("gemini") or shutil.which("gemini-cli")
     if not cmd:
         return {"success": False, "error": "gemini not found"}
@@ -231,7 +231,7 @@ def _gather_rp_context(goal):
     try:
         r = subprocess.run(
             ["cc-flow", "rp", "builder", f"What code is relevant to: {goal}", "--type", "question"],
-            check=False, capture_output=True, text=True, timeout=120,
+            check=False, capture_output=True, text=True, timeout=1000,
         )
         if r.returncode == 0 and r.stdout.strip():
             try:

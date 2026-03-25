@@ -314,7 +314,7 @@ def run_checkpoint(progress="", step=0, total=0):
         engines,
         CHECKPOINT_PROMPT,
         {"goal": goal, "plan_summary": plan_summary, "progress": progress, "step": step, "total": total},
-        timeout=min(timeout, 120),
+        timeout=min(timeout, 300),
     )
 
     consensus = _consensus_checkpoint(responses)

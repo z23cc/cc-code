@@ -152,7 +152,7 @@ def _run_codex(context, timeout=1000):
         return {"success": False, "error": str(e)}
 
 
-def _run_gemini(context, timeout=120):
+def _run_gemini(context, timeout=1000):
     """Run gemini CLI review."""
     cmd = shutil.which("gemini") or shutil.which("gemini-cli")
     if not cmd:

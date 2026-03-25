@@ -126,7 +126,7 @@ Respond with ONLY JSON:
 {{"diagnosis": "why stuck in 1 sentence", "recommended_method": "<method_id>", "first_step": "specific action to try", "confidence": 0.0-1.0}}"""
 
 
-def _exec_engine(engine, prompt, timeout=120):
+def _exec_engine(engine, prompt, timeout=300):
     """Run prompt on engine."""
     if engine == "claude":
         cmd = ["claude", "-p", "--output-format", "text", prompt]
@@ -155,7 +155,7 @@ def _exec_engine(engine, prompt, timeout=120):
     return None
 
 
-def diagnose_and_switch(goal, timeout=120):
+def diagnose_and_switch(goal, timeout=300):
     """3 engines diagnose why stuck and vote on methodology switch.
 
     Returns: {methodology, diagnosis, first_step, engine_votes}
