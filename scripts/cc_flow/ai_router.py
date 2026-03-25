@@ -95,6 +95,9 @@ def _get_command_summary():
         ("embed-structure", "Embed code structure for similarity search (Morph vectors)"),
         ("bridge-status", "Check Morph × RP × Supermemory connection status"),
         ("pua", "3-model PUA: engines challenge each other until code is optimal"),
+        ("design-review", "3-engine design scoring: 10 UI/UX dimensions, 0-10 each, auto-fix below 8"),
+        ("plan-verify", "3-engine plan→diff verification: did we build what we planned?"),
+        ("review-dashboard", "Review history dashboard + ship readiness gate"),
     ]
     return "\n".join(f"- {name}: {desc}" for name, desc in commands)
 
@@ -199,7 +202,12 @@ def ai_route(query, use_cache=True):
         try:
             from cc_flow.skill_chains import SKILL_CHAINS
             chain = result.get("chain", "")
-            if chain not in SKILL_CHAINS and chain not in ("autopilot", "auto"):
+            # Known standalone commands — don't fuzzy-correct these
+            KNOWN_COMMANDS = {"review", "prime", "audit", "interview", "scout",
+                              "research", "retro", "verify", "dashboard", "doctor", "health",
+                              "deep-search", "smart-chat", "recall-review", "embed-structure",
+                              "bridge-status", "pua", "design-review", "plan-verify", "review-dashboard"}
+            if chain not in SKILL_CHAINS and chain not in ("autopilot", "auto") and chain not in KNOWN_COMMANDS:
                 # AI hallucinated a chain name — try fuzzy match
                 best_match = None
                 best_score = 0

@@ -596,7 +596,7 @@ def cmd_go(args):
         STANDALONE_COMMANDS = {"review", "prime", "audit", "interview", "scout",
                                "research", "retro", "verify", "dashboard", "doctor", "health",
                                "deep-search", "smart-chat", "recall-review", "embed-structure", "bridge-status",
-                               "pua"}
+                               "pua", "design-review", "plan-verify", "review-dashboard"}
 
         if ai_chain == "autopilot":
             mode = "multi-engine"
@@ -654,6 +654,9 @@ def cmd_go(args):
             "embed-structure": "cc-flow embed-structure",
             "bridge-status": "cc-flow bridge-status",
             "pua": "cc-flow pua",
+            "design-review": "cc-flow design-review",
+            "plan-verify": "cc-flow plan-verify",
+            "review-dashboard": "cc-flow review-dashboard",
         }
         target = cmd_map.get(chain_name, f"/cc-{chain_name}")
         reason = intent_analysis.get("ai_reason", "")
