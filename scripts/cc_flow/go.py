@@ -693,14 +693,7 @@ def cmd_go(args):
             intent_analysis["ai_reason"] = ai_result.get("reason", "")
             intent_analysis["from_cache"] = ai_result.get("from_cache", False)
 
-    # Execute
-    if auto_exec and mode == "chain" and chain_data and not dry_run:
-        # Full auto: every skill step runs as subprocess (claude -p)
-        from cc_flow.skill_executor import execute_chain_auto
-        result = execute_chain_auto(chain_name, chain_data, query)
-        print(json.dumps(result))
-        return
-
+    # Execute — everything goes through 3-engine autopilot
     if mode == "command":
         # Standalone command — dispatch directly
         cmd_map = {
@@ -715,10 +708,9 @@ def cmd_go(args):
             "interview": "/cc-interview",
             "research": "/cc-research",
             "scout": "/cc-scout",
-            # Bridge (Morph × RP × Supermemory)
-            "deep-search": f"cc-flow deep-search \"{query}\"",
-            "smart-chat": f"cc-flow smart-chat \"{query}\"",
-            "recall-review": f"cc-flow recall-review \"{query}\"",
+            "deep-search": f'cc-flow deep-search "{query}"',
+            "smart-chat": f'cc-flow smart-chat "{query}"',
+            "recall-review": f'cc-flow recall-review "{query}"',
             "embed-structure": "cc-flow embed-structure",
             "bridge-status": "cc-flow bridge-status",
             "pua": "cc-flow pua",
@@ -735,20 +727,32 @@ def cmd_go(args):
             "ai_reason": reason,
             "instruction": f"Run: {target}\nReason: {reason}",
         }))
-    elif mode == "chain" and chain_data:
-        _execute_chain(chain_name, chain_data, query, dry_run, complexity=complexity,
-                       intent=intent_analysis)
-    elif mode == "multi-engine":
-        from cc_flow.autopilot import run_autopilot
-        result = run_autopilot(query, timeout=300, dry_run=dry_run)
-        print(json.dumps(result))
     elif mode == "auto":
         _execute_auto(query, dry_run)
     elif mode == "ralph":
-        # Legacy: explicit --mode=ralph still works
+        # Legacy: explicit --mode=ralph
         _execute_ralph(query, max_iter, dry_run)
+    elif auto_exec and chain_data and not dry_run:
+        # Full auto-exec: skill steps as subprocess + 3-engine review
+        from cc_flow.skill_executor import execute_chain_auto
+        result = execute_chain_auto(chain_name, chain_data, query)
+        # After chain execution, run 3-engine review
+        if result.get("success"):
+            try:
+                from cc_flow.unified_review import _detect_engines
+                engines, _ = _detect_engines()
+                if len(engines) >= 2:
+                    print(json.dumps({"status": "auto_review", "message": "Running 3-engine review..."}), file=sys.stderr)
+                    subprocess.run(["cc-flow", "review"], check=False, timeout=600)
+            except (ImportError, subprocess.TimeoutExpired, OSError):
+                pass
+        print(json.dumps(result))
+    elif chain_data:
+        # Dry-run or --no-auto-exec: output instruction
+        _execute_chain(chain_name, chain_data, query, dry_run, complexity=complexity,
+                       intent=intent_analysis)
     else:
-        # Default fallback: autopilot (3-engine guided)
+        # No chain match → autopilot (3-engine plan + execute + checkpoint + review)
         from cc_flow.autopilot import run_autopilot
         result = run_autopilot(query, timeout=300, dry_run=dry_run)
         print(json.dumps(result))
