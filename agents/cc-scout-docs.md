@@ -5,6 +5,8 @@ description: "Find the most relevant framework/library documentation for the req
 deliverables: "Version-specific API reference with doc links, known issues, and code examples"
 tools: ["Read", "Grep", "Glob", "Bash", "WebSearch", "WebFetch"]
 model: inherit
+effort: "medium"
+maxTurns: 5
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

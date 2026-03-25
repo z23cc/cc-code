@@ -6,6 +6,9 @@ lens: "code quality, maintainability, correctness, error handling"
 deliverables: "Review summary with severity-rated findings and approve/warn/block verdict"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
+effort: "high"
+maxTurns: 10
+skills: ["cc-code-review-loop"]
 ---
 
 You are a senior code reviewer ensuring high standards of code quality and security.

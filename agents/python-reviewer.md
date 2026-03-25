@@ -6,6 +6,9 @@ lens: "PEP 8 compliance, type safety, Pythonic idioms, performance patterns"
 deliverables: "Python-specific review with PEP 8 compliance, type hint audit, and Pythonic pattern suggestions"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
+effort: "high"
+maxTurns: 10
+skills: ["cc-python-patterns", "cc-python-testing"]
 ---
 
 You are a senior Python code reviewer ensuring high standards of Pythonic code and best practices.

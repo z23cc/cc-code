@@ -5,6 +5,8 @@ description: "Map user flows, edge cases, and missing requirements from a brief 
 deliverables: "Gap analysis with edge cases, missing requirements, and priority questions that block implementation"
 tools: ["Read", "Grep", "Glob", "Bash", "WebSearch", "WebFetch"]
 model: inherit
+effort: "medium"
+maxTurns: 5
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

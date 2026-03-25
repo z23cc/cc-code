@@ -10,7 +10,7 @@
             "timeout": 5
           }
         ],
-        "description": "Show skills overview + recent project context at session start"
+        "description": "Show skills overview + dashboard auto-start + recent context"
       }
     ],
     "UserPromptSubmit": [
@@ -36,8 +36,7 @@
             "timeout": 3
           }
         ],
-        "description": "Worktree boundary guard: block edits outside assigned worktree (when CC_WORKTREE_PATH is set)",
-        "statusMessage": "Checking worktree boundary..."
+        "description": "Block edits outside assigned worktree"
       },
       {
         "matcher": "Edit|Write",
@@ -48,7 +47,7 @@
             "timeout": 3
           }
         ],
-        "description": "Warn when modifying linter/formatter/CI config files"
+        "description": "Block modifications to linter/formatter/CI configs (exit 2)"
       },
       {
         "matcher": "Edit|Write|Bash",
@@ -59,8 +58,7 @@
             "timeout": 3
           }
         ],
-        "description": "Session-scoped safety modes: careful (warn destructive), freeze (restrict edits), guard (both)",
-        "statusMessage": "Checking safety modes..."
+        "description": "Safety modes: careful/freeze/guard"
       },
       {
         "matcher": "Bash",
@@ -71,8 +69,7 @@
             "timeout": 5
           }
         ],
-        "description": "Quality gate: remind to verify before git commit",
-        "statusMessage": "Checking commit quality..."
+        "description": "Quality gate: require cc-flow verify before git commit"
       },
       {
         "matcher": "Bash",
@@ -83,7 +80,7 @@
             "timeout": 5
           }
         ],
-        "description": "Review reminder before git push with diff stats"
+        "description": "Review reminder before git push"
       }
     ],
     "PostToolUse": [
@@ -96,8 +93,7 @@
             "timeout": 5
           }
         ],
-        "description": "After cc-flow done/scan, suggest next steps",
-        "statusMessage": "Checking workflow hints..."
+        "description": "After cc-flow commands, suggest next steps"
       },
       {
         "matcher": "Edit|Write",
@@ -108,7 +104,31 @@
             "timeout": 3
           }
         ],
-        "description": "Remind to verify after editing source code files"
+        "description": "Remind to verify after editing source code"
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/failure-counter.sh",
+            "timeout": 3
+          }
+        ],
+        "description": "Track consecutive Bash failures for methodology switching"
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${CLAUDE_PLUGIN_ROOT}/hooks/subagent-complete.sh",
+            "timeout": 5
+          }
+        ],
+        "description": "Track subagent completion, emit dashboard event"
       }
     ],
     "PreCompact": [
@@ -121,8 +141,7 @@
             "timeout": 10
           }
         ],
-        "description": "Auto-save session state before context compaction",
-        "statusMessage": "Saving session before compaction..."
+        "description": "Auto-save session state before compaction"
       }
     ],
     "Stop": [
@@ -135,7 +154,7 @@
             "timeout": 10
           }
         ],
-        "description": "Auto-save session and consolidate learnings at session end"
+        "description": "Auto-save session and consolidate learnings"
       }
     ]
   }

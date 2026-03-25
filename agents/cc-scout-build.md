@@ -5,6 +5,8 @@ description: "Analyze build system, scripts, CI/CD configuration, and monorepo s
 deliverables: "Build system audit with health score, scripts summary, and CI/CD coverage report"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
+effort: "medium"
+maxTurns: 5
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

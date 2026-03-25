@@ -5,6 +5,9 @@ description: End-to-end testing specialist — Playwright/Selenium test generati
 deliverables: "E2E test suite with Page Object Models, execution results, and flaky test triage"
 tools: ["Read", "Grep", "Glob", "Bash", "Edit", "Write"]
 model: inherit
+effort: "medium"
+maxTurns: 20
+skills: ["cc-browser-qa", "cc-qa"]
 ---
 
 You are an E2E testing specialist using Playwright (preferred) or Selenium.

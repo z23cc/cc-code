@@ -5,6 +5,9 @@ description: System design and architecture specialist. Evaluates structure, pro
 deliverables: "Architecture review/proposal with component diagrams, trade-off analysis, and migration path"
 tools: ["Read", "Grep", "Glob"]
 model: inherit
+effort: "max"
+maxTurns: 10
+skills: ["cc-architecture", "cc-clean-architecture"]
 ---
 
 You are an expert software architect. You design systems, not implement them.

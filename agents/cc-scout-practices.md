@@ -5,6 +5,8 @@ description: "Gather modern best practices and pitfalls BEFORE implementing a ch
 deliverables: "Best practices brief with DO/DON'T list, real-world examples, and anti-patterns to avoid"
 tools: ["Read", "Grep", "Glob", "Bash", "WebSearch", "WebFetch"]
 model: inherit
+effort: "medium"
+maxTurns: 5
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

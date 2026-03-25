@@ -5,6 +5,9 @@ description: Documentation synchronization specialist — keeps README, CHANGELO
 deliverables: "Updated documentation files with change summary of what was synced"
 tools: ["Read", "Grep", "Glob", "Bash", "Edit", "Write"]
 model: inherit
+effort: "medium"
+maxTurns: 10
+skills: ["cc-docs"]
 ---
 
 You are a documentation specialist ensuring docs stay in sync with code.

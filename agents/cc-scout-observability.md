@@ -5,6 +5,8 @@ description: "Scan logging, tracing, metrics, health endpoints, and error tracki
 deliverables: "Observability audit covering 6 pillars with coverage score and gap recommendations"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
+effort: "medium"
+maxTurns: 5
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

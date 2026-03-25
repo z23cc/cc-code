@@ -5,6 +5,8 @@ description: "Check linting, formatting, type checking, and pre-commit hook conf
 deliverables: "Tooling audit with lint/format/type-check/pre-commit status and completeness score"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
+effort: "medium"
+maxTurns: 5
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

@@ -5,6 +5,8 @@ description: "Token-efficient codebase exploration. Uses file trees, code struct
 deliverables: "Codebase overview with progressive-depth findings at ~90% token savings vs full reads"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
+effort: "medium"
+maxTurns: 5
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

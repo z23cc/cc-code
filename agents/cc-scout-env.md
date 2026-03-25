@@ -5,6 +5,8 @@ description: "Scan environment setup — .env templates, Docker, devcontainer, s
 deliverables: "Environment audit with reproducibility score and new-developer setup steps"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
+effort: "medium"
+maxTurns: 5
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

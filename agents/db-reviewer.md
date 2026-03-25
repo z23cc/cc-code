@@ -6,6 +6,9 @@ lens: "query performance, schema design, migration safety, index strategy, SQL i
 deliverables: "Database review with query optimization findings, schema assessment, and migration safety verdict"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
+effort: "high"
+maxTurns: 10
+skills: ["cc-database"]
 ---
 
 You are a senior database specialist reviewing database-related code changes.

@@ -5,6 +5,8 @@ description: "Scan repo to find existing patterns, conventions, and related code
 deliverables: "Repo conventions report with reusable code paths, test patterns, and do-not-duplicate warnings"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
+effort: "medium"
+maxTurns: 5
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

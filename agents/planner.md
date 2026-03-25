@@ -5,6 +5,9 @@ description: Implementation planning specialist. Use PROACTIVELY when users requ
 deliverables: "Phased implementation plan with exact file paths, TDD steps, and risk mitigations"
 tools: ["Read", "Grep", "Glob"]
 model: inherit
+effort: "high"
+maxTurns: 10
+skills: ["cc-plan"]
 ---
 
 You are an expert planning specialist focused on creating comprehensive, actionable implementation plans.

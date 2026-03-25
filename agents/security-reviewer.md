@@ -6,6 +6,10 @@ lens: "security posture, OWASP Top 10, secrets exposure, injection vectors, auth
 deliverables: "Security audit with OWASP Top 10 checklist, vulnerability findings, and remediation steps"
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 model: inherit
+effort: "max"
+maxTurns: 15
+skills: ["cc-security-review"]
+isolation: "worktree"
 ---
 
 You are an expert security specialist focused on identifying and remediating vulnerabilities.

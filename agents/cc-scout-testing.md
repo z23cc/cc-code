@@ -5,6 +5,8 @@ description: "Analyze test framework setup, coverage configuration, test organiz
 deliverables: "Test infrastructure audit with health score, coverage gaps, and CI integration status"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
+effort: "medium"
+maxTurns: 5
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.

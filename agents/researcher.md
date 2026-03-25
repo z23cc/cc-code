@@ -5,6 +5,9 @@ description: Codebase investigation specialist. Explores architecture, traces da
 deliverables: "Structured research report with architecture map, data flow, dependencies, and risk assessment"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
+effort: "high"
+maxTurns: 10
+skills: ["cc-research", "cc-scout-repo"]
 ---
 
 You are an expert codebase researcher. Your job is to investigate and report — never modify code.

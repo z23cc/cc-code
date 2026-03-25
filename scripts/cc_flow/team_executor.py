@@ -47,6 +47,8 @@ def build_team_instruction(chain_name, chain_data, query, complexity="medium"):
             lines.append(f"- Agent: `{agent['type']}`")
             lines.append(f"  prompt: \"{agent['prompt']}\"")
             lines.append("  run_in_background: true")
+            if agent.get("effort"):
+                lines.append("  model: haiku  # fast for research")
             lines.append("")
         lines.append("**Wait for ALL to complete.** Collect their findings.")
         lines.append("")
@@ -91,6 +93,7 @@ def build_team_instruction(chain_name, chain_data, query, complexity="medium"):
             agent_type = _skill_to_agent_type(skill_name)
             lines.append(f"- Agent: `{agent_type}`")
             lines.append(f"  prompt: \"{step['role']} for: {query}. Follow TDD: write test first, then implement, then verify.\"")
+            lines.append('  isolation: "worktree"  # isolated git worktree')
             if n_workers > 1:
                 lines.append("  run_in_background: true")
             else:
@@ -145,31 +148,40 @@ def _build_research_phase(query):
     return [
         {
             "type": "cc-code:cc-scout-repo",
-            "prompt": f"Scan the current repository for existing patterns, conventions, and code relevant to: {query}",
+            "prompt": f"Scan the current repository for patterns relevant to: {query}",
+            "effort": "medium", "maxTurns": 5,
         },
         {
             "type": "cc-code:cc-scout-practices",
-            "prompt": f"Research current best practices, anti-patterns, and community guidance for: {query}",
+            "prompt": f"Research best practices and pitfalls for: {query}",
+            "effort": "medium", "maxTurns": 5,
         },
         {
             "type": "cc-code:cc-scout-gaps",
-            "prompt": f"Identify edge cases, missing requirements, and potential failure modes for: {query}",
+            "prompt": f"Identify edge cases and missing requirements for: {query}",
+            "effort": "medium", "maxTurns": 5,
         },
         {
             "type": "general-purpose",
             "prompt": (
-                f"Use mcp__morph-mcp__github_codebase_search to search GitHub "
-                f"for open source implementations of: {query}. "
-                f"Find 3-5 relevant examples and summarize their approach."
+                f"Use mcp__morph-mcp__github_codebase_search to find "
+                f"open source implementations of: {query}. "
+                f"Summarize 3-5 relevant approaches."
             ),
+            "effort": "medium", "maxTurns": 3,
         },
         {
             "type": "cc-code:cc-research",
-            "prompt": f"Deep investigate the current codebase architecture relevant to: {query}. Map dependencies and integration points.",
+            "prompt": f"Investigate codebase architecture for: {query}. Map dependencies.",
+            "effort": "high", "maxTurns": 10,
         },
         {
             "type": "general-purpose",
-            "prompt": f"Use mcp__RepoPrompt__context_builder to gather deep cross-file context for: {query}. Response type: plan.",
+            "prompt": (
+                f"Use mcp__RepoPrompt__context_builder to gather "
+                f"deep cross-file context for: {query}. Response type: plan."
+            ),
+            "effort": "high", "maxTurns": 3,
         },
     ]
 

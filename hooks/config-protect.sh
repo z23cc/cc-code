@@ -18,8 +18,8 @@ case "$BASENAME" in
   .eslintrc*|.prettierrc*|biome.json|.stylelintrc*|\
   .editorconfig|.pre-commit-config.yaml|\
   .github/workflows/*|.gitlab-ci.yml|Jenkinsfile)
-    echo "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"decision\":\"allow\",\"message\":\"⚠️ Modifying quality config: ${BASENAME}. Make sure you're not weakening lint/format rules. Set CC_ALLOW_CONFIG_EDIT=1 to suppress.\"}}"
-    exit 0
+    echo "{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"decision\":\"block\",\"message\":\"🚫 BLOCKED: Modifying quality config ${BASENAME}. Set CC_ALLOW_CONFIG_EDIT=1 to override.\"}}"
+    exit 2
     ;;
 esac
 

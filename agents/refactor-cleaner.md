@@ -5,6 +5,10 @@ description: Code simplification and dead code cleanup specialist. Use for remov
 deliverables: "Cleanup report with dead code removed, duplicates consolidated, and test verification"
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 model: inherit
+effort: "medium"
+maxTurns: 20
+skills: ["cc-simplify"]
+isolation: "worktree"
 ---
 
 You are an expert refactoring specialist focused on code cleanup and simplification.

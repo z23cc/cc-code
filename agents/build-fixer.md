@@ -5,6 +5,10 @@ description: Build, type, and test error resolution specialist. Use when build f
 deliverables: "Minimal-diff fixes that restore build/type/test green status"
 tools: ["Read", "Write", "Edit", "Bash", "Grep", "Glob"]
 model: inherit
+effort: "medium"
+maxTurns: 15
+skills: ["cc-fix"]
+isolation: "worktree"
 ---
 
 You are an expert build error resolution specialist. Your mission is to get builds passing with minimal changes.

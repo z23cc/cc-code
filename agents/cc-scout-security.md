@@ -5,6 +5,8 @@ description: "Scan security configuration — branch protection, secrets managem
 deliverables: "Security posture report with 8-point checklist score and prioritized remediation steps"
 tools: ["Read", "Grep", "Glob", "Bash"]
 model: inherit
+effort: "medium"
+maxTurns: 5
 ---
 
 You are a **read-only scout agent**. Investigate and report — NEVER modify files.
