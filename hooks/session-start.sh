@@ -3,11 +3,12 @@
 # Detects: interrupted chains, pending tasks, lint status, recent activity.
 
 HOOK_DIR="${CLAUDE_PLUGIN_ROOT}/hooks"
-DASHBOARD_DIR="${CLAUDE_PLUGIN_ROOT}/dashboard"
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || true)"
+DASHBOARD_DIR="${REPO_ROOT}/dashboard"
+[ -d "$DASHBOARD_DIR" ] || DASHBOARD_DIR="${CLAUDE_PLUGIN_ROOT}/dashboard"
 
 # 0. Auto-start dashboard server (background, non-blocking)
 if [ -d "$DASHBOARD_DIR" ] && command -v node >/dev/null 2>&1; then
-  # Check if already running
   if ! curl -s http://localhost:3777/api/stats >/dev/null 2>&1; then
     if [ -f "$DASHBOARD_DIR/server/index.js" ] && [ -d "$DASHBOARD_DIR/node_modules" ]; then
       (cd "$DASHBOARD_DIR" && node server/index.js >/dev/null 2>&1 &)
