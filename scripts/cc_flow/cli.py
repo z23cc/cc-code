@@ -752,6 +752,14 @@ def _add_misc_commands(sub):
     mp_p.add_argument("--timeout", type=int, default=300, help="Per-engine timeout")
     mp_p.add_argument("--dry-run", action="store_true", help="Show plan without running")
 
+    # PUA engine (3-model mutual challenge)
+    pua_p = sub.add_parser("pua", help="3-model PUA: engines mutually challenge until optimal")
+    pua_p.add_argument("--mode", default="code", choices=["code", "plan", "review"], help="PUA mode")
+    pua_p.add_argument("--rounds", type=int, default=3, help="Max PUA rounds")
+    pua_p.add_argument("--timeout", type=int, default=300, help="Per-engine timeout")
+    pua_p.add_argument("--range", default="", help="Git diff range")
+    pua_p.add_argument("--dry-run", action="store_true")
+
     # Adversarial review
     ar_p = sub.add_parser("adversarial-review", help="3-engine debate: Claude × Codex × Gemini review with battle")
     ar_p.add_argument("--engines", default="", help="Engines: claude,codex,gemini (default: all available)")

@@ -619,7 +619,8 @@ def cmd_go(args):
         # Standalone command routing
         STANDALONE_COMMANDS = {"review", "prime", "audit", "interview", "scout",
                                "research", "retro", "verify", "dashboard", "doctor", "health",
-                               "deep-search", "smart-chat", "recall-review", "embed-structure", "bridge-status"}
+                               "deep-search", "smart-chat", "recall-review", "embed-structure", "bridge-status",
+                               "pua"}
 
         if ai_chain == "autopilot":
             mode = "multi-engine"
@@ -677,6 +678,7 @@ def cmd_go(args):
             "recall-review": f"cc-flow recall-review \"{query}\"",
             "embed-structure": "cc-flow embed-structure",
             "bridge-status": "cc-flow bridge-status",
+            "pua": "cc-flow pua",
         }
         target = cmd_map.get(chain_name, f"/cc-{chain_name}")
         reason = intent_analysis.get("ai_reason", "")

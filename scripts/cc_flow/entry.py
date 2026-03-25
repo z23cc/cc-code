@@ -62,6 +62,7 @@ _COMMANDS = {
     "adversarial-review": "adversarial_review:cmd_adversarial_review",
     "multi-plan": "multi_plan:cmd_multi_plan",
     "autopilot": "autopilot:cmd_autopilot",
+    "pua": "pua_engine:cmd_pua",
     # skill validation
     "validate-skills": "skill_validate:cmd_validate_skills",
     # bridge (Morph × RP × Supermemory)

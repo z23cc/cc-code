@@ -94,6 +94,7 @@ def _get_command_summary():
         ("recall-review", "Recall past review findings from Supermemory"),
         ("embed-structure", "Embed code structure for similarity search (Morph vectors)"),
         ("bridge-status", "Check Morph × RP × Supermemory connection status"),
+        ("pua", "3-model PUA: engines challenge each other until code is optimal"),
     ]
     return "\n".join(f"- {name}: {desc}" for name, desc in commands)
 
