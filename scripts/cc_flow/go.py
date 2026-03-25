@@ -679,6 +679,10 @@ def cmd_go(args):
                 from cc_flow.unified_review import _detect_engines
                 engines, _ = _detect_engines()
                 if len(engines) >= 2:
+                    # Plan verification: did we build what we planned?
+                    print(json.dumps({"status": "plan_verify", "message": "3-engine plan verification..."}), file=sys.stderr)
+                    subprocess.run(["cc-flow", "plan-verify"], check=False, timeout=600)
+                    # 3-engine review
                     print(json.dumps({"status": "auto_review", "message": "Running 3-engine review..."}), file=sys.stderr)
                     subprocess.run(["cc-flow", "review"], check=False, timeout=600)
             except (ImportError, subprocess.TimeoutExpired, OSError):

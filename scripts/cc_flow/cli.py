@@ -753,6 +753,19 @@ def _add_misc_commands(sub):
     mp_p.add_argument("--timeout", type=int, default=300, help="Per-engine timeout")
     mp_p.add_argument("--dry-run", action="store_true", help="Show plan without running")
 
+    # Browser QA (visual testing with screenshots)
+    bqa_p = sub.add_parser("browser-qa", help="Visual QA: screenshot pages, detect issues")
+    bqa_p.add_argument("--url", default="", help="URL to test")
+    bqa_p.add_argument("--range", default="", help="Git diff range for page detection")
+    bqa_p.add_argument("--dry-run", action="store_true")
+
+    # Plan verification (3-engine plan→diff check)
+    pv_p = sub.add_parser("plan-verify", help="3-engine plan→diff verification: did we build what we planned?")
+    pv_p.add_argument("--plan", default="", help="Plan text or file path")
+    pv_p.add_argument("--range", default="", help="Git diff range")
+    pv_p.add_argument("--timeout", type=int, default=300)
+    pv_p.add_argument("--dry-run", action="store_true")
+
     # Failure engine (3-engine methodology switching)
     fail_p = sub.add_parser("failure", help="Failure detection + 3-engine methodology switch")
     fail_sub = fail_p.add_subparsers(dest="failure_cmd")

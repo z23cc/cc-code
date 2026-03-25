@@ -63,6 +63,8 @@ _COMMANDS = {
     "multi-plan": "multi_plan:cmd_multi_plan",
     "autopilot": "autopilot:cmd_autopilot",
     "failure": "failure_engine:cmd_failure",
+    "plan-verify": "plan_verify:cmd_plan_verify",
+    "browser-qa": "browser_qa:cmd_browser_qa",
     "pua": "pua_engine:cmd_pua",
     # skill validation
     "validate-skills": "skill_validate:cmd_validate_skills",
