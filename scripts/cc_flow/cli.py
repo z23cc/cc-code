@@ -714,8 +714,8 @@ def _add_misc_commands(sub):
 
     # Unified review (auto-selects best mode: adversarial > multi > agent)
     review_p = sub.add_parser("review", help="Code review — auto-selects best mode (3-engine debate / consensus / agent)")
-    review_p.add_argument("--mode", default="", choices=["", "adversarial", "multi", "agent"],
-                          help="Force review mode (default: auto-detect)")
+    review_p.add_argument("--mode", default="", choices=["", "adversarial", "multi", "agent", "pua"],
+                          help="Force review mode (default: auto → adversarial → PUA if disputed)")
     review_p.add_argument("--timeout", type=int, default=300, help="Per-engine timeout")
     review_p.add_argument("--range", default="", help="Git diff range: main..HEAD, HEAD~5")
     review_p.add_argument("--path", nargs="*", default=None, help="Limit to paths: scripts/ tests/")
