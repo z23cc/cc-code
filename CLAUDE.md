@@ -1,183 +1,124 @@
 # cc-code
 
-Development workflow toolkit with task management CLI. Language-agnostic core with Python language pack.
+AI-routed development toolkit — one command does everything. 3-engine system (Claude × Codex × Gemini), autopilot execution, PUA mutual challenge, failure recovery.
 
 ## Architecture
 
-- `scripts/cc_flow/` — Task & workflow CLI package (61 modules, 18K LOC, lazy-loaded, atomic writes, cross-platform)
-- `scripts/morph_client.py` — Pure Python Morph API client (Apply, WarpGrep, Embed, Rerank)
-- `scripts/worktree.sh` — Git worktree manager (create/list/switch/remove/cleanup/status + nesting guard)
-- `agents/` — 11 general agents + 12 scout agents (read-only specialists), all `model: inherit`
-- `templates/ralph/` — Ralph autonomous harness (goal-driven + self-heal + receipt gates)
-- `skills/` — 78 skills (all prefixed `cc-`):
-  - **Core (54):** brainstorming, plan, tdd, verification, refinement, code-review-loop, worker-protocol, task-tracking, debugging, research, parallel-agents, teams, autoimmune, readiness-audit, search-strategy, git-workflow, prompt-engineering, clean-architecture, context-tips, docs, incident, dependency-upgrade, feedback-loop, web-design, ui-ux, browser, optimize, go, work, worktree, plan-sync, epic-review, review-backend, ralph, rp, bridge, ship, autonomous-loops, clone-site, qa, qa-report, aside, grill-me, retro, office-hours, prd, requirement-gate, architecture, prd-validate, elicit, product-lens, browser-qa, team-builder, deps
-  - **Python pack (12):** python-patterns, python-testing, async-patterns, database, fastapi, error-handling, performance, logging, security-review, scaffold, deploy, task-queues
-  - **Scouts (12):** scout-practices, scout-repo, scout-docs, scout-docs-gap, scout-security, scout-testing, scout-tooling, scout-build, scout-env, scout-observability, scout-gaps, scout-context
-  - **Chains:** 46 predefined workflows in `chains.json` (idea-to-ship, feature, bugfix, hotfix, qa-fix, incident, security-audit, performance, deploy, testing, async-backend, db-migration, prd-to-ship, multi-engine, ci-cd, architecture, prd-review, + 5 light variants)
-- `commands/` — 85 slash commands (all prefixed `/cc-`, every skill has a command)
-- `tests/` — 443 tests (150 cc-flow integration + 87 unit + 22 skill-flow + 29 go + 15 morph + 15 bridge + 20 multi-review + 12 adversarial + 9 autopilot + 9 ai-router + 5 multi-plan + auto + wf_executor + wisdom + features)
-- `rules/` — 10 always-on rules: python-style, testing, security, git, docs-sync, agent-orchestration, workflow, performance, tool-priority, proactive-suggestions
-- `hooks/` — 13 hooks across 6 events: UserPromptSubmit (auto-context), PreToolUse (worktree-guard + config-protect + mode-guard + commit-gate + push-review), PostToolUse (task-hint + edit-verify), SessionStart, PreCompact, Stop
+- `scripts/cc_flow/` — 73 modules, 20K LOC (lazy-loaded, atomic writes, cross-platform)
+  - **Facades**: `engines.py` (review dispatch), `intelligence.py` (routing/learning), `routing.py` (Q-learning)
+  - **Execution**: `go.py` (entry), `skill_executor.py` (claude -p subprocess), `auto_ops.py` (worktree/verify/commit), `autopilot.py` (3-engine guided)
+  - **3-Engine**: `adversarial_review.py` (debate), `multi_review.py` (consensus), `pua_engine.py` (mutual challenge), `multi_plan.py` (collaborative plan)
+  - **Intelligence**: `ai_router.py` (LLM routing), `failure_engine.py` (methodology switch), `auto_learn.py` (feedback loops), `plan_verify.py` (plan→diff check)
+  - **Quality**: `design_review.py` (10-dim scoring), `review_dashboard.py` (history+gate), `browser_qa.py` (visual testing)
+- `agents/` — 11 general + 12 scout agents
+- `skills/` — 78 skills, `commands/` — 85 slash commands
+- `chains.json` — 46 predefined workflows (+ 5 light variants)
+- `rules/` — 11 always-on rules (incl. ask-user format)
+- `hooks/` — 13 hooks across 6 events
+- `tests/` — 449 tests
 
-## Quick Decision Tree
+## One Command
 
-| You want to... | Start with |
-|----------------|------------|
-| **Anything (auto-routed)** | **`cc-flow go "describe your goal"`** |
-| Build a new feature | `/cc-brainstorm` → `/cc-plan` → `/cc-work` (or `/cc-tdd`) |
-| Execute a plan end-to-end | `/cc-work epic-1` (worktree + worker + review loop) |
-| Verify epic completion | `/cc-epic-review epic-1` |
-| Run autonomously (unattended) | `cc-flow ralph` or `cc-flow ralph --goal "all tests pass"` |
-| Code review (auto 3-engine) | `cc-flow review` (auto-selects: debate / consensus / agent) |
-| Guided autonomous execution | `cc-flow autopilot "goal"` (3-engine steering committee) |
-| Clone/replicate a website | `/cc-clone-site https://example.com` |
-| QA test a site | `/cc-qa` (test + fix) or `/cc-qa-report` (report only) |
-| Configure review backend | `cc-flow review-setup` |
-| Fix a bug | `/cc-debug` (researcher → fixer → reviewer) |
-| Fix build/lint errors | `/cc-fix` (build-fixer agent) |
-| Review code quality | `/cc-review` (parallel reviewers) |
-| Understand unfamiliar code | `/cc-research` or `cc-flow deep-search "query"` |
-| Assess project health | `/cc-audit` or `/cc-prime` (all scouts) |
-| Manage worktrees | `cc-flow worktree create/list/status/info` |
-| Enable safety mode | `cc-flow careful --enable` or `cc-flow guard --enable` |
-| Not sure what to do | `/cc-route "describe your task"` |
+```bash
+cc-flow go "your goal"      # AI routes → auto-executes → review → commit
+```
 
-## Teams
+## How It Works
 
-| Team | Agents | Used by |
-|------|--------|---------|
-| feature-dev | scouts → architect → planner → worker | `/cc-brainstorm`, `/cc-plan`, `/cc-tdd` |
-| bug-fix | researcher → build-fixer → code-reviewer | `/cc-debug`, `/cc-fix` |
-| review | python-reviewer + security-reviewer (parallel) → consolidate | `/cc-review`, `/cc-pr-review` |
-| multi-review | codex ∥ gemini ∥ rp ∥ agent → consensus engine | `/cc-multi-review` |
-| refactor | researcher → refactor-cleaner → code-reviewer | `/cc-simplify` |
-| audit | all 12 scouts (parallel) | `/cc-prime`, `/cc-audit` |
+```
+cc-flow go "goal"
+  → AI Router (gemini/claude, 24h cache)
+  → Simple: light chain (2-3 steps, auto-exec via claude -p)
+  → Medium: standard chain (4-7 steps, team dispatch, worktree isolation)
+  → Complex: autopilot (3-engine plan → execute → checkpoint → review)
+  → After execution: plan-verify → review (3-engine debate, PUA if disputed) → commit
+  → Auto-learn: wisdom + metrics + Q-learning + supermemory
+```
 
-## AI Router
+## Quick Reference
 
-`cc-flow go` uses an LLM (gemini/claude) to analyze intent and select the best workflow. No keyword matching — pure AI analysis with 24h cache.
+| Goal | Command |
+|------|---------|
+| **Anything** | `cc-flow go "goal"` (AI auto-routes) |
+| Complex task | `cc-flow autopilot "goal"` (3-engine guided) |
+| Code review | `cc-flow review` (auto 3-engine debate + PUA) |
+| Design review | `cc-flow design-review` (10-dim scoring 0-10) |
+| Review history | `cc-flow review-dashboard` / `gate` |
+| Plan verification | `cc-flow plan-verify` |
+| Project health | `/cc-prime` (12 scouts parallel) |
+| Verify code | `cc-flow verify` (lint + test) |
+| Dashboard | `cc-flow dashboard` |
 
-Routes to: 46 chains + 18 standalone commands + autopilot + auto mode.
+## 3-Engine System
 
-## Team Agent Dispatch
+| Engine | Role | Used In |
+|--------|------|---------|
+| Claude | Security & Correctness | review, plan, PUA, autopilot, failure diagnosis |
+| Codex (GPT) | Bug Hunter & Patterns | review, plan, PUA, autopilot, failure diagnosis |
+| Gemini | Architecture & Research | review, plan, PUA, autopilot, failure diagnosis |
+| RP Builder | Deep Context Provider | review phase 0, autopilot phase 0 |
+
+### Review (auto-escalates)
+```
+cc-flow review → 3-engine debate → if disputed → PUA (multi-round challenge)
+```
+
+### Design Review (10 dimensions, 0-10)
+```
+cc-flow design-review → 3 engines score → below 8 → "what would make it 10?" + fix
+```
+
+### PUA (models challenge each other)
+```
+Round N: one engine proposes → other 2 challenge → must respond → improve → repeat
+Pass: 2 consecutive clean rounds | Stuck: 3rd engine mediates
+```
+
+### Failure Recovery
+```
+2+ failures → 3 engines diagnose WHY stuck → vote on methodology switch
+Methodologies: RCA, Simplify, Invert, First Principles, Divide & Conquer
+```
+
+## Team Dispatch
 
 Single skill steps auto-expand to specialist teams:
-- **REVIEW team**: code-reviewer + python-reviewer + security-reviewer (parallel)
-- **DESIGN team**: scout-repo + scout-practices + scout-gaps (parallel)
-- **RESEARCH team**: scout-repo + scout-practices + scout-gaps (parallel)
+- **REVIEW**: code-reviewer + python-reviewer + security-reviewer (parallel)
+- **DESIGN**: scout-repo + scout-practices + scout-gaps (parallel)
 
-## Worktree Isolation
+## Execution Pipeline
 
-Chains with code changes (≥3 steps) auto-create worktree → merge back on completion.
-
-## Scale-Adaptive Planning
-
-`cc-flow go` uses blast-radius scoring to auto-adjust planning depth:
-
-| Blast Radius | Complexity | Chain Type | Example |
-|-------------|-----------|------------|---------|
-| Zero (typo, config, rename) | simple | light variant (2-3 steps) | `cc-flow go "fix typo"` → hotfix |
-| Low (single component) | medium | standard chain (4-5 steps) | `cc-flow go "add auth"` → feature |
-| High (cross-system) | complex | Ralph autonomous | `cc-flow go "redesign platform"` → ralph |
-
-5 light chain variants: feature-light, bugfix-light, refactor-light, release-light, testing-light.
-
-## Unified Review (auto-escalates)
-
-```bash
-cc-flow review                          # auto: 3-engine debate (default)
-cc-flow review --mode agent             # force single-engine (fast)
-cc-flow review --range HEAD~5           # review multiple commits
-cc-flow review --path scripts/          # limit to directory
-cc-flow review-setup                    # detect available engines
-```
-
-Auto-selects best mode: 3 engines → adversarial debate, 2 → consensus, 1 → agent lint.
-
-| Engine | Role | Lens |
-|--------|------|------|
-| Claude | Security & Correctness | auth, injection, edge cases |
-| Codex (GPT) | Bug Hunter | patterns, anti-patterns, missing error paths |
-| Gemini | Architecture & Impact | cross-module, scalability, best practices |
-| RP Builder | Context Provider | auto-selects files, dependency analysis |
-
-## Autopilot (3-engine guided execution)
-
-```bash
-cc-flow autopilot "build user auth"     # 3 engines guide Claude Code
-cc-flow autopilot checkpoint            # consult steering committee
-cc-flow autopilot status                # check active session
-```
-
-Phase 0: RP context → Phase 1: 3-engine plan → Phase 2: execute with checkpoints → Phase 3: debate review → commit.
-
-## Phase-Based Parallel Execution
-
-Chain steps are annotated with phases (observe/design/mutate/verify/gate). Same-phase steps run in PARALLEL:
-
-```
-feature chain (7 steps → 4 phases):
-  Phase 1 [PARALLEL design]:  brainstorm ∥ requirement-gate ∥ plan ∥ architecture
-  Phase 2 [mutate]:           tdd
-  Phase 3 [verify]:           review
-  Phase 4 [gate]:             commit
-```
-
-## Tool Priority
-
-**RP MCP → cc-flow CLI → Built-in.** See `rules/tool-priority.md` for full decision matrix.
+| Phase | Method | Auto? |
+|-------|--------|-------|
+| Routing | AI Router (gemini/claude LLM) | ✅ subprocess |
+| Planning | multi-plan (3-engine collaborative) | ✅ subprocess |
+| Worktree | auto_ops.auto_worktree_create() | ✅ subprocess |
+| Skill execution | skill_executor (claude -p) | ✅ subprocess |
+| Plan verification | plan_verify (3-engine) | ✅ subprocess |
+| Review | unified_review (3-engine debate + PUA) | ✅ subprocess |
+| Commit | auto_ops.auto_commit() | ✅ subprocess |
+| Learning | auto_learn (wisdom + metrics + Q-learning) | ✅ auto callback |
 
 ## Bridge (Morph × RP × Supermemory)
 
 ```bash
-cc-flow bridge-status                          # check all 3 systems
-cc-flow deep-search "auth flow" --type plan    # Morph find → RP analyze
-cc-flow smart-chat "how to improve" --mode chat # memory-enhanced RP chat
-cc-flow embed-structure src/auth/              # code structure → vectors
-cc-flow recall-review "authentication"         # past review findings
-cc-flow rp plan "design user auth"             # RP architecture plan
-cc-flow rp review "check recent changes"       # RP code review
+cc-flow deep-search "auth flow"      # Morph → RP analysis
+cc-flow smart-chat "architecture"    # Supermemory → RP chat
+cc-flow bridge-status                # check all 3 systems
 ```
 
-## cc-flow Quick Reference
+## cc-flow Commands
 
 ```bash
-# Install: pip install -e .  →  cc-flow <command>
-
-cc-flow go "describe your goal"                # ONE COMMAND — auto-routes + executes
-cc-flow go "fix login bug" --dry-run           # preview plan without executing
-cc-flow review                                 # unified review (auto 3-engine debate)
-cc-flow autopilot "build auth"                 # 3-engine guided autonomous execution
-cc-flow multi-plan "design system"             # 3-engine collaborative plan
-cc-flow dashboard                              # one-screen overview
-cc-flow search "auth flow" --rerank            # semantic search + rerank
-cc-flow route "fix login bug"                  # smart routing
-cc-flow bridge-status                          # Morph × RP × SM status
-cc-flow deep-search "how does auth work"       # Morph search → RP analysis
-cc-flow worktree create feature-auth           # create isolated worktree
-cc-flow worktree list                          # list all worktrees
-cc-flow worktree info                          # current worktree context
-cc-flow ralph                                  # autonomous task execution
-cc-flow ralph --goal "all tests pass"          # goal-driven until achieved
-cc-flow careful --enable                       # safety mode (warn on destructive ops)
-cc-flow checkpoint create "before-refactor"    # save state snapshot
-cc-flow context-budget                         # analyze token overhead
-cc-flow session save --notes "context"         # persist session
-cc-flow session restore                        # resume
-cc-flow graph --format ascii                   # dependency tree
-cc-flow doctor                                 # health check
-cc-flow health                                 # project health score (0-100)
-cc-flow verify                                 # lint + test (auto-detect language)
-cc-flow verify --fix                           # auto-fix lint, then test
-cc-flow skill graph                            # skill flow graph (connections)
-cc-flow skill next --skill cc-brainstorm       # what comes after brainstorm?
-cc-flow skill ctx save cc-plan --data '{}'     # save context for next skill
-cc-flow skill ctx load cc-brainstorming        # load predecessor's context
-cc-flow chain suggest "what should I do"       # suggest best workflow chain
-cc-flow chain run feature                      # run chain with context passing
-cc-flow chain advance --data '{}'              # advance chain + save context
-cc-flow wisdom show                            # view wisdom entries
-cc-flow wisdom search "pattern"                # search learnings
-cc-flow export epic-1-xxx                      # export epic as markdown
-cc-flow clean --dry-run                        # preview old data cleanup
+cc-flow go "goal"                    # one command, full auto
+cc-flow review                       # 3-engine debate + PUA
+cc-flow design-review                # 10-dim design scoring
+cc-flow review-dashboard             # review history + gate
+cc-flow autopilot "goal"             # 3-engine guided execution
+cc-flow multi-plan "goal"            # 3-engine collaborative plan
+cc-flow plan-verify                  # 3-engine plan→diff check
+cc-flow verify                       # lint + test
+cc-flow dashboard                    # project overview
+cc-flow doctor                       # health check
+cc-flow health                       # score 0-100
 ```

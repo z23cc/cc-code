@@ -2,6 +2,17 @@
 
 ## [5.26.0] - 2026-03-25
 ### Added
+- **Design Review** — 3-engine scoring across 10 UI/UX dimensions (0-10), auto-fix below 8
+- **Review Dashboard** — review history, engine stats, ship readiness gate (4 checks)
+- **Plan Verification** — 3-engine plan→diff check (DONE/PARTIAL/NOT_DONE per item)
+- **Browser QA** — visual testing with screenshot capture (gstack browse / playwright)
+- **Failure Engine** — 3-engine methodology switching on consecutive failures (5 methods: RCA, Simplify, Invert, First Principles, Divide)
+- **PUA Engine** — 3 models mutually challenge each other until optimal (integrated into review auto-escalation)
+- **Auto-Learn** — automatic feedback to wisdom + metrics + Q-learning + supermemory on every execution
+- **Auto-Ops** — subprocess worktree create/merge, verify, commit (no manual intervention)
+- **Skill Executor** — run skills via claude -p subprocess (auto-exec default)
+- **Facade Modules** — engines.py, intelligence.py, routing.py unify 12 modules into 3 import paths
+- **AskUserQuestion Rule** — re-ground context, one decision per question, completeness scoring
 - **AI Router** — LLM-powered chain selection (gemini/claude), replaces keyword matching
   - Routes to 46 chains + 18 standalone commands + autopilot + auto
   - 24h cache, session-start pre-warms 5 common queries
