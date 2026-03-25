@@ -753,6 +753,13 @@ def _add_misc_commands(sub):
     mp_p.add_argument("--timeout", type=int, default=300, help="Per-engine timeout")
     mp_p.add_argument("--dry-run", action="store_true", help="Show plan without running")
 
+    # Design review (3-engine scoring)
+    dr_p = sub.add_parser("design-review", help="3-engine design scoring: 10 dimensions, 0-10 each, auto-fix below 8")
+    dr_p.add_argument("--context", default="", help="Design context or CSS/UI code")
+    dr_p.add_argument("--url", default="", help="URL to review")
+    dr_p.add_argument("--timeout", type=int, default=300)
+    dr_p.add_argument("--dry-run", action="store_true")
+
     # Review dashboard + readiness gate
     rd_p = sub.add_parser("review-dashboard", help="Review history dashboard + ship readiness gate")
     rd_sub = rd_p.add_subparsers(dest="dashboard_cmd")

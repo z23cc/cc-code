@@ -66,6 +66,7 @@ _COMMANDS = {
     "plan-verify": "plan_verify:cmd_plan_verify",
     "browser-qa": "browser_qa:cmd_browser_qa",
     "review-dashboard": "review_dashboard:cmd_review_dashboard",
+    "design-review": "design_review:cmd_design_review",
     "pua": "pua_engine:cmd_pua",
     # skill validation
     "validate-skills": "skill_validate:cmd_validate_skills",
