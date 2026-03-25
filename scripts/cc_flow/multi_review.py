@@ -123,18 +123,20 @@ def _build_review_context(diff_range="", paths=None):
 # ── Engine Runners ──
 
 def _run_codex(context, timeout=1000):
-    """Run codex review CLI (it auto-detects git changes)."""
-    custom_prompt = (
-        "Focus on: correctness, edge cases, error handling. "
-        "Output findings as: severity (critical/high/medium/low): description. "
-        "End with: Verdict: SHIP or NEEDS_WORK or MAJOR_RETHINK."
+    """Run codex exec with diff context (not codex review which scans entire repo)."""
+    prompt = (
+        "Review these code changes. For each issue, output a markdown table:\n"
+        "| Severity | File | Description |\n"
+        "End with: Verdict: SHIP or NEEDS_WORK or MAJOR_RETHINK.\n\n"
+        f"Changed files: {', '.join(context['files'][:10])}\n\n"
+        f"Diff:\n```\n{context['diff'][:15000]}\n```"
     )
     try:
         r = subprocess.run(
-            ["codex", "review", custom_prompt],
+            ["codex", "exec", "--approval-mode", "never", prompt],
             check=False, capture_output=True, text=True, timeout=timeout,
         )
-        # Codex outputs to STDERR (not stdout)
+        # Codex outputs to STDERR
         raw = (r.stderr or "") + "\n" + (r.stdout or "")
         lines = [
             line for line in raw.split("\n")
