@@ -414,6 +414,20 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="med
         if record_chain_start:
             record_chain_start(chain_name)
 
+    # Auto-ops: create worktree if chain modifies code
+    worktree_name = None
+    worktree_path = None
+    if not dry_run:
+        phases = _group_into_phases(steps)
+        has_mutate = any(p["phase"] == "mutate" for p in phases)
+        if has_mutate and len(steps) >= 3:
+            try:
+                from cc_flow.auto_ops import auto_worktree_create
+                worktree_name = f"cc-{chain_name}-{query.split()[0][:10]}".lower().replace(" ", "-")
+                worktree_path = auto_worktree_create(worktree_name)
+            except (ImportError, Exception):
+                pass
+
     execute_steps = []
     for i, s in enumerate(steps):
         step_info = {
@@ -468,7 +482,20 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="med
             if intent.get("ai_reason"):
                 result["ai_reason"] = intent["ai_reason"]
 
-    # Auto-learn: record chain start (completion recorded by chain advance)
+    # Auto-ops info
+    if worktree_path:
+        result["worktree"] = {"name": worktree_name, "path": worktree_path}
+        result["instruction"] = (
+            f"## Worktree Created: {worktree_name}\n"
+            f"Path: {worktree_path}\n"
+            f"cd {worktree_path}\n\n"
+            + result.get("instruction", "")
+            + f"\n\n## On Complete: merge + cleanup\n"
+            f"git checkout main && git merge {worktree_name}\n"
+            f"cc-flow worktree remove {worktree_name}\n"
+        )
+
+    # Auto-learn
     if not dry_run:
         try:
             from cc_flow.auto_learn import on_chain_complete

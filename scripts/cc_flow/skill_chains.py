@@ -345,13 +345,25 @@ def cmd_chain_advance(args):
         except (ImportError, Exception):
             pass
 
+        # Auto-ops: verify + commit on chain completion
+        verify_ok = False
+        commit_ok = False
+        try:
+            from cc_flow.auto_ops import auto_commit, auto_verify
+            verify_ok = auto_verify()
+            if verify_ok:
+                commit_ok = auto_commit(f"feat: {chain_name} chain completed ({total} steps)")
+        except (ImportError, Exception):
+            pass
+
         print(json.dumps({
             "success": True,
             "complete": True,
             "chain": chain_name,
             "message": f"Chain '{chain_name}' complete! All steps finished.",
+            "auto_verify": verify_ok,
+            "auto_commit": commit_ok,
             "wisdom_recorded": True,
-            "auto_learn": f"cc-flow learn --task '{chain_name} chain' --outcome success --approach 'chain execution' --lesson 'completed {total} steps'",
         }))
         return
 
