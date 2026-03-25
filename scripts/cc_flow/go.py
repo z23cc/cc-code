@@ -79,31 +79,76 @@ def analyze_intent(query):
 # ── Skill to Agent mapping ──
 
 _SKILL_AGENT_MAP = {
-    "cc-brainstorm": "cc-code:cc-brainstorm", "cc-brainstorming": "cc-code:cc-brainstorm",
-    "cc-plan": "cc-code:cc-plan", "cc-architecture": "cc-code:cc-architecture",
-    "cc-requirement-gate": "cc-code:cc-requirement-gate",
-    "cc-tdd": "cc-code:cc-tdd", "cc-review": "cc-code:cc-review",
-    "cc-debug": "cc-code:cc-debug", "cc-research": "cc-code:cc-research",
+    # Scouts (read-only specialists)
     "cc-scout-repo": "cc-code:cc-scout-repo", "cc-scout-practices": "cc-code:cc-scout-practices",
     "cc-scout-gaps": "cc-code:cc-scout-gaps", "cc-scout-security": "cc-code:cc-scout-security",
     "cc-scout-testing": "cc-code:cc-scout-testing", "cc-scout-docs": "cc-code:cc-scout-docs",
     "cc-scout-docs-gap": "cc-code:cc-scout-docs-gap", "cc-scout-build": "cc-code:cc-scout-build",
     "cc-scout-env": "cc-code:cc-scout-env", "cc-scout-tooling": "cc-code:cc-scout-tooling",
     "cc-scout-observability": "cc-code:cc-scout-observability", "cc-scout-context": "cc-code:cc-scout-context",
+    # Reviewers (lens-specific)
+    "cc-review": "cc-code:code-reviewer",
     "cc-security-review": "cc-code:security-reviewer",
     "cc-code-review-loop": "cc-code:code-reviewer",
+    # Specialists
     "cc-simplify": "cc-code:refactor-cleaner",
-    "cc-performance": "cc-code:cc-perf",
-    "cc-office-hours": "cc-code:cc-office-hours",
-    "cc-grill-me": "cc-code:cc-grill-me",
-    "cc-elicit": "cc-code:cc-elicit",
-    "cc-prd-validate": "cc-code:cc-prd-validate",
+    "cc-debug": "cc-code:cc-debug", "cc-research": "cc-code:cc-research",
+    "cc-brainstorm": "cc-code:cc-brainstorm", "cc-brainstorming": "cc-code:cc-brainstorm",
+    "cc-plan": "cc-code:cc-plan", "cc-architecture": "cc-code:cc-architecture",
+    "cc-requirement-gate": "cc-code:cc-requirement-gate",
+    "cc-tdd": "cc-code:cc-tdd", "cc-performance": "cc-code:cc-perf",
+    "cc-office-hours": "cc-code:cc-office-hours", "cc-grill-me": "cc-code:cc-grill-me",
+    "cc-elicit": "cc-code:cc-elicit", "cc-prd-validate": "cc-code:cc-prd-validate",
+    "cc-database": "cc-code:db-reviewer",
+}
+
+# Team patterns: skill combinations that should use team dispatch
+TEAM_PATTERNS = {
+    "review": {
+        "detect": {"cc-review", "cc-security-review", "cc-code-review-loop"},
+        "pattern": "parallel",  # All reviewers run simultaneously
+        "agents": [
+            {"type": "cc-code:code-reviewer", "role": "General code quality review", "filter": "all files"},
+            {"type": "cc-code:python-reviewer", "role": "Python-specific patterns", "filter": ".py files"},
+            {"type": "cc-code:security-reviewer", "role": "Security vulnerability scan", "filter": "auth/input/API files"},
+        ],
+        "consolidate": "Worst verdict wins. CRITICAL/HIGH from any reviewer = block.",
+    },
+    "research": {
+        "detect": {"cc-research", "cc-scout-repo", "cc-scout-practices", "cc-scout-gaps"},
+        "pattern": "parallel",  # All scouts run simultaneously
+        "agents": [
+            {"type": "cc-code:cc-scout-repo", "role": "Find existing patterns & conventions"},
+            {"type": "cc-code:cc-scout-practices", "role": "Current best practices & pitfalls"},
+            {"type": "cc-code:cc-scout-gaps", "role": "Edge cases & missing requirements"},
+        ],
+        "consolidate": "Merge findings, deduplicate, prioritize by relevance.",
+    },
+    "design": {
+        "detect": {"cc-brainstorm", "cc-brainstorming", "cc-plan", "cc-architecture", "cc-requirement-gate"},
+        "pattern": "parallel",
+        "agents": [
+            {"type": "cc-code:cc-scout-repo", "role": "Find existing patterns & conventions"},
+            {"type": "cc-code:cc-scout-practices", "role": "Best practices for this design"},
+            {"type": "cc-code:cc-scout-gaps", "role": "Edge cases & missing requirements"},
+        ],
+        "consolidate": "Merge scout findings, then use as input for plan/architecture.",
+    },
 }
 
 
 def _skill_to_agent(skill_name):
     """Map a skill name to the best agent subagent_type."""
     return _SKILL_AGENT_MAP.get(skill_name, "general-purpose")
+
+
+def _detect_team_for_phase(phase_steps):
+    """Check if a group of steps matches a team pattern. Returns team name or None."""
+    skill_names = {s["skill"].lstrip("/").strip() for s in phase_steps}
+    for team_name, pattern in TEAM_PATTERNS.items():
+        if skill_names & pattern["detect"]:
+            return team_name
+    return None
 
 
 # ── Phase-based parallel execution ──
@@ -174,22 +219,47 @@ def _build_auto_exec_instruction(chain_name, chain_data, query, steps):
 
         if phase["parallel"]:
             n_agents = len(phase["steps"])
-            lines.append(f"## Phase {pi+1}/{total_phases}: PARALLEL [{phase_label}] — {n_agents} agents simultaneously")
-            lines.append("")
-            lines.append(f"**DISPATCH ALL {n_agents} AGENTS IN ONE MESSAGE** (use multiple Agent tool calls):")
-            lines.append("")
-            for s in phase["steps"]:
-                step_num += 1
-                skill_name = s["skill"].lstrip("/").strip()
-                agent_type = _skill_to_agent(skill_name)
-                lines.append(f"Agent {step_num}: {s['skill']} — {s['role']}")
-                lines.append(f"  subagent_type: \"{agent_type}\"")
-                lines.append(f"  prompt: \"Activate {skill_name} skill for: {query}\"")
-                lines.append("  run_in_background: true")
+            team = _detect_team_for_phase(phase["steps"])
+
+            if team and team in TEAM_PATTERNS:
+                # Team dispatch — use predefined team agents
+                tp = TEAM_PATTERNS[team]
+                team_agents = tp.get("agents", [])
+                lines.append(f"## Phase {pi+1}/{total_phases}: TEAM [{team.upper()}] — {len(team_agents)} specialist agents")
                 lines.append("")
-            lines.append(f"Wait for ALL {n_agents} agents, then save context + advance:")
-            lines.append("`cc-flow chain advance`")
-            lines.append("")
+                lines.append(f"**DISPATCH TEAM in ONE message** ({tp.get('pattern', 'parallel')}):")
+                lines.append("")
+                for i, agent in enumerate(team_agents, 1):
+                    step_num += 1
+                    lines.append(f"Agent {step_num}: {agent['role']}")
+                    lines.append(f"  subagent_type: \"{agent['type']}\"")
+                    lines.append(f"  prompt: \"{agent['role']} for: {query}\"")
+                    lines.append("  run_in_background: true")
+                    if agent.get("filter"):
+                        lines.append(f"  focus: {agent['filter']}")
+                    lines.append("")
+                if tp.get("consolidate"):
+                    lines.append(f"**Consolidate**: {tp['consolidate']}")
+                lines.append("Then advance: `cc-flow chain advance`")
+                lines.append("")
+            else:
+                # Generic parallel dispatch
+                lines.append(f"## Phase {pi+1}/{total_phases}: PARALLEL [{phase_label}] — {n_agents} agents simultaneously")
+                lines.append("")
+                lines.append(f"**DISPATCH ALL {n_agents} AGENTS IN ONE MESSAGE:**")
+                lines.append("")
+                for s in phase["steps"]:
+                    step_num += 1
+                    skill_name = s["skill"].lstrip("/").strip()
+                    agent_type = _skill_to_agent(skill_name)
+                    lines.append(f"Agent {step_num}: {s['skill']} — {s['role']}")
+                    lines.append(f"  subagent_type: \"{agent_type}\"")
+                    lines.append(f"  prompt: \"Activate {skill_name} skill for: {query}\"")
+                    lines.append("  run_in_background: true")
+                    lines.append("")
+                lines.append(f"Wait for ALL {n_agents} agents, then advance:")
+                lines.append("`cc-flow chain advance`")
+                lines.append("")
         else:
             for s in phase["steps"]:
                 step_num += 1
@@ -197,6 +267,24 @@ def _build_auto_exec_instruction(chain_name, chain_data, query, steps):
                 required_tag = "REQUIRED" if s["required"] else "OPTIONAL"
                 outputs = s.get("outputs", [])
                 reads = s.get("reads", [])
+
+                # Check if this single step should use team dispatch
+                team = _detect_team_for_phase([s])
+                if team and team in TEAM_PATTERNS:
+                    tp = TEAM_PATTERNS[team]
+                    team_agents = tp.get("agents", [])
+                    lines.append(f"## Phase {pi+1}/{total_phases}: TEAM [{team.upper()}] via {s['skill']} [{required_tag}]")
+                    lines.append(f"Instead of single {skill_name}, dispatch {len(team_agents)} specialist agents:")
+                    lines.append("")
+                    for agent in team_agents:
+                        lines.append(f"  - {agent['type']}: {agent['role']}")
+                    lines.append("")
+                    lines.append("**DISPATCH ALL in ONE message** (parallel, run_in_background: true)")
+                    if tp.get("consolidate"):
+                        lines.append(f"**Consolidate**: {tp['consolidate']}")
+                    lines.append("Then advance: `cc-flow chain advance`")
+                    lines.append("")
+                    continue
 
                 lines.append(f"## Phase {pi+1}/{total_phases}: {s['skill']} [{required_tag}] [{phase_label}]")
                 lines.append(f"Role: {s['role']}")
