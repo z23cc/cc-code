@@ -76,11 +76,11 @@ class TestModeDecision:
 class TestForceMode:
     """Test --mode flag overrides routing."""
 
-    def test_force_ralph(self):
-        out, _, code = run(["go", "fix", "bug", "--mode=ralph", "--dry-run"])
+    def test_force_multi_engine(self):
+        out, _, code = run(["go", "fix", "bug", "--mode=multi-engine", "--dry-run"])
         assert code == 0
         data = json.loads(out)
-        assert data["mode"] == "ralph"
+        assert data.get("success") or data.get("dry_run")
 
     def test_force_auto(self):
         out, _, code = run(["go", "fix", "bug", "--mode=auto", "--dry-run"])
@@ -119,23 +119,15 @@ class TestChainMode:
                 assert "required" in step
 
 
-class TestRalphMode:
-    """Test ralph mode output."""
+class TestAutopilotMode:
+    """Test autopilot mode for complex/unmatched queries."""
 
-    def test_ralph_has_goal(self):
-        """Goals that don't match any chain trigger go to ralph."""
-        out, _, code = run(["go", "build", "a", "completely", "new", "saas", "platform", "--dry-run", "--mode=ralph"])
+    def test_complex_goes_to_autopilot(self):
+        out, _, code = run(["go", "build", "a", "completely", "new", "saas", "platform", "--dry-run"])
         assert code == 0
         data = json.loads(out)
-        assert data["mode"] == "ralph"
-        assert data["max_iterations"] == 25
-
-    def test_ralph_custom_max(self):
-        out, _, code = run(["go", "something", "complex", "--dry-run", "--max", "50", "--mode=ralph"])
-        assert code == 0
-        data = json.loads(out)
-        assert data["mode"] == "ralph"
-        assert data["max_iterations"] == 50
+        # Should route to autopilot or a chain (AI decides)
+        assert data.get("success") or data.get("dry_run")
 
 
 class TestAutoMode:

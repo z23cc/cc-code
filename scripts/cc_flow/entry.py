@@ -74,7 +74,7 @@ _COMMANDS = {
     # worktree state
     "state-path": "worktree_state:cmd_state_path",
     "migrate-state": "worktree_state:cmd_migrate_state",
-    # ralph autonomous
+    # ralph (legacy — use cc-flow go instead)
     "ralph": "ralph_cmd:cmd_ralph",
     # safety modes
     "careful": "modes:cmd_careful",

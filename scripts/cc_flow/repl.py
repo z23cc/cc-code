@@ -48,7 +48,7 @@ def _repl_help_all():
     """Show all commands grouped by category."""
     groups = [
         ("Automation",
-         "go \"goal\", ralph, auto scan/run/deep/full"),
+         "go \"goal\", autopilot \"goal\", auto scan/run/deep/full"),
         ("Task Management",
          "init, epic, task, dep, list, show, ready, next, progress, dashboard"),
         ("Work Execution",
@@ -147,7 +147,7 @@ _COMPLETIONS = [
     "chain list", "chain show", "chain suggest", "chain run", "chain advance", "chain stats",
     "skill next", "skill graph", "skill graph-build", "skill check-deps",
     "skill ctx save", "skill ctx load", "skill ctx current", "skill ctx clear",
-    "go", "go --dry-run", "go --mode=chain", "go --mode=ralph", "go --resume",
+    "go", "go --dry-run", "go --mode=chain", "go --mode=multi-engine", "go --resume",
     "wisdom show", "wisdom search", "wisdom add", "wisdom clear",
     "explore cache", "explore lookup", "explore clear",
     "wf run", "wf list", "wf show", "wf export",

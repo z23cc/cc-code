@@ -506,65 +506,6 @@ def _execute_chain(chain_name, chain_data, query, dry_run=False, complexity="med
     print(json.dumps(result))
 
 
-def _execute_ralph(query, max_iterations=25, dry_run=False):
-    """Execute Ralph autonomous loop."""
-    if dry_run:
-        print(json.dumps({
-            "success": True,
-            "mode": "ralph",
-            "goal": query,
-            "max_iterations": max_iterations,
-            "dry_run": True,
-            "instruction": (
-                f"Ralph will autonomously execute: {query}\n"
-                f"  - Creates epic + tasks from goal\n"
-                f"  - Fresh Claude session per iteration\n"
-                f"  - Self-healing on failures\n"
-                f"  - Max {max_iterations} iterations\n"
-                f"  - Receipt-based proof-of-work"
-            ),
-        }))
-        return
-
-    try:
-        from cc_flow.ralph_cmd import _find_ralph_sh, _init_ralph
-    except ImportError:
-        error("Ralph module not available")
-
-    ralph_dir = _init_ralph(query)
-    ralph_sh = ralph_dir / "ralph.sh"
-
-    if not ralph_sh.is_file():
-        sh = _find_ralph_sh()
-        if not sh:
-            error("Ralph not found. Install: cc-flow ralph --init")
-        ralph_sh = sh
-
-    env = os.environ.copy()
-    env["GOAL"] = query
-    env["SELF_HEAL"] = "1"
-    env["GOAL_VERIFY"] = "tests"
-    env["MAX_ITERATIONS"] = str(max_iterations)
-    env["YOLO"] = "1"
-
-    print(json.dumps({
-        "starting": True,
-        "mode": "ralph",
-        "goal": query,
-        "max_iterations": max_iterations,
-        "instruction": (
-            f"Launching Ralph autonomous execution for: {query}\n"
-            f"Ralph will create tasks and execute until goal achieved or {max_iterations} iterations."
-        ),
-    }))
-
-    try:
-        result = subprocess.run(["bash", str(ralph_sh)], check=False, env=env, cwd=os.getcwd())
-        sys.exit(result.returncode)
-    except KeyboardInterrupt:
-        print("\nRalph interrupted.")
-        sys.exit(130)
-
 
 def _execute_auto(query, dry_run=False):
     """Run OODA auto-improvement loop."""
@@ -606,7 +547,6 @@ def cmd_go(args):
     """One command, full automation: describe your goal, everything runs."""
     query = " ".join(args.goal) if args.goal else ""
     force_mode = getattr(args, "mode", "") or ""
-    max_iter = getattr(args, "max", 25)
     dry_run = getattr(args, "dry_run", False)
     resume = getattr(args, "resume", False)
     auto_exec = not getattr(args, "no_auto_exec", False)
@@ -729,9 +669,6 @@ def cmd_go(args):
         }))
     elif mode == "auto":
         _execute_auto(query, dry_run)
-    elif mode == "ralph":
-        # Legacy: explicit --mode=ralph
-        _execute_ralph(query, max_iter, dry_run)
     elif auto_exec and chain_data and not dry_run:
         # Full auto-exec: skill steps as subprocess + 3-engine review
         from cc_flow.skill_executor import execute_chain_auto
