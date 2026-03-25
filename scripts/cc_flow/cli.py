@@ -622,8 +622,8 @@ def _add_go_command(sub):
                        help="Show plan without executing")
     go_p.add_argument("--resume", action="store_true", default=False,
                        help="Resume interrupted chain from last step")
-    go_p.add_argument("--auto-exec", action="store_true", default=False,
-                       help="Full auto: every skill step runs as subprocess (claude -p)")
+    go_p.add_argument("--no-auto-exec", action="store_true", default=False,
+                       help="Disable auto-exec: output instructions instead of running subprocess")
 
 
 def _add_wf_commands(sub):
