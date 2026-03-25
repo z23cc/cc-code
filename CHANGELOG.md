@@ -1,5 +1,33 @@
 # Changelog
 
+## [5.26.0] - 2026-03-25
+### Added
+- **AI Router** — LLM-powered chain selection (gemini/claude), replaces keyword matching
+  - Routes to 46 chains + 18 standalone commands + autopilot + auto
+  - 24h cache, session-start pre-warms 5 common queries
+  - Bridge commands (deep-search, smart-chat, recall-review) now routable via go
+- **Team Agent Dispatch** — single skill steps auto-expand to specialist teams
+  - REVIEW: code-reviewer + python-reviewer + security-reviewer (parallel)
+  - DESIGN: scout-repo + scout-practices + scout-gaps (parallel)
+  - RESEARCH: same as DESIGN (parallel scouts)
+- **Worktree Isolation** — chains with code changes auto-create worktree
+  - Create before mutate phase, merge back on completion
+  - Autopilot also uses worktree
+- **Autopilot** — 3-engine steering committee guides Claude Code execution
+  - Phase 0: RP context → Phase 1: multi-plan → Phase 2: execute with checkpoints → Phase 3: review
+- **3-Engine Adversarial Debate** — Claude × Codex × Gemini battle review
+  - Round 1: independent review (parallel), Round 2: see each other's arguments (parallel)
+  - RP Builder as Phase 0 context provider
+
+### Changed
+- go.py rewritten: removed all keyword routing (~300 lines), AI router is sole path
+- Unified review: single `/cc-review` auto-escalates (debate > consensus > agent)
+- Parallel phases emit exact Agent tool params (subagent_type, run_in_background)
+
+### Fixed
+- 6 chain skill refs (cc-scout space names), removed duplicate chains/triggers
+- All docs synced: CLAUDE.md, README, session-start, repl help
+
 ## [5.25.0] - 2026-03-25
 ### Added
 - **Real multi-engine code review** (`cc-flow multi-review`) — parallel subprocess dispatch:

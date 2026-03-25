@@ -4,7 +4,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 
 ## Architecture
 
-- `scripts/cc_flow/` — Task & workflow CLI package (60 modules, 17K LOC, lazy-loaded, atomic writes, cross-platform)
+- `scripts/cc_flow/` — Task & workflow CLI package (61 modules, 18K LOC, lazy-loaded, atomic writes, cross-platform)
 - `scripts/morph_client.py` — Pure Python Morph API client (Apply, WarpGrep, Embed, Rerank)
 - `scripts/worktree.sh` — Git worktree manager (create/list/switch/remove/cleanup/status + nesting guard)
 - `agents/` — 11 general agents + 12 scout agents (read-only specialists), all `model: inherit`
@@ -15,7 +15,7 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
   - **Scouts (12):** scout-practices, scout-repo, scout-docs, scout-docs-gap, scout-security, scout-testing, scout-tooling, scout-build, scout-env, scout-observability, scout-gaps, scout-context
   - **Chains:** 46 predefined workflows in `chains.json` (idea-to-ship, feature, bugfix, hotfix, qa-fix, incident, security-audit, performance, deploy, testing, async-backend, db-migration, prd-to-ship, multi-engine, ci-cd, architecture, prd-review, + 5 light variants)
 - `commands/` — 85 slash commands (all prefixed `/cc-`, every skill has a command)
-- `tests/` — 436 tests (150 cc-flow integration + 87 unit + 22 skill-flow + 29 go + 15 morph + 15 bridge + 20 multi-review + 12 adversarial + 9 autopilot + auto + wf_executor + wisdom + features)
+- `tests/` — 443 tests (150 cc-flow integration + 87 unit + 22 skill-flow + 29 go + 15 morph + 15 bridge + 20 multi-review + 12 adversarial + 9 autopilot + 9 ai-router + 5 multi-plan + auto + wf_executor + wisdom + features)
 - `rules/` — 10 always-on rules: python-style, testing, security, git, docs-sync, agent-orchestration, workflow, performance, tool-priority, proactive-suggestions
 - `hooks/` — 13 hooks across 6 events: UserPromptSubmit (auto-context), PreToolUse (worktree-guard + config-protect + mode-guard + commit-gate + push-review), PostToolUse (task-hint + edit-verify), SessionStart, PreCompact, Stop
 
@@ -52,6 +52,23 @@ Development workflow toolkit with task management CLI. Language-agnostic core wi
 | multi-review | codex ∥ gemini ∥ rp ∥ agent → consensus engine | `/cc-multi-review` |
 | refactor | researcher → refactor-cleaner → code-reviewer | `/cc-simplify` |
 | audit | all 12 scouts (parallel) | `/cc-prime`, `/cc-audit` |
+
+## AI Router
+
+`cc-flow go` uses an LLM (gemini/claude) to analyze intent and select the best workflow. No keyword matching — pure AI analysis with 24h cache.
+
+Routes to: 46 chains + 18 standalone commands + autopilot + auto mode.
+
+## Team Agent Dispatch
+
+Single skill steps auto-expand to specialist teams:
+- **REVIEW team**: code-reviewer + python-reviewer + security-reviewer (parallel)
+- **DESIGN team**: scout-repo + scout-practices + scout-gaps (parallel)
+- **RESEARCH team**: scout-repo + scout-practices + scout-gaps (parallel)
+
+## Worktree Isolation
+
+Chains with code changes (≥3 steps) auto-create worktree → merge back on completion.
 
 ## Scale-Adaptive Planning
 

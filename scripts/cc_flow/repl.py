@@ -9,20 +9,21 @@ from cc_flow import skin
 
 def _repl_help():
     """Show curated REPL help — progressive disclosure."""
-    skin.heading("One Command")
+    skin.heading("One Command (AI routed)")
     go = [
-        ("go \"describe goal\"", "Auto-route + execute (chain/ralph/auto)"),
+        ("go \"describe goal\"", "AI analyzes → selects best workflow → execute"),
         ("go \"fix bug\" --dry-run", "Preview plan without executing"),
+        ("autopilot \"complex goal\"", "3-engine guided execution + checkpoints"),
+        ("review", "Auto 3-engine debate (Claude × Codex × Gemini)"),
     ]
     skin.table(["Command", "Description"], go)
 
     skin.heading("Start Here")
     start = [
-        ("route <task>", "Don't know what to do? Describe your task"),
         ("dashboard", "One-screen project overview"),
         ("verify", "Run lint + tests (auto-detect language)"),
         ("health", "Project health score (0-100)"),
-        ("next", "What to work on next"),
+        ("doctor", "Environment health check"),
     ]
     skin.table(["Command", "Description"], start)
 

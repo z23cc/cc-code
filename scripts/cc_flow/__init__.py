@@ -25,4 +25,4 @@ Package structure (58 modules):
     + 41 more modules (views, analytics, config, etc.)
 """
 
-VERSION = "5.25.0"
+VERSION = "5.26.0"
