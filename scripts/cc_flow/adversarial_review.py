@@ -383,10 +383,30 @@ def run_debate(context, engines=None, timeout=300, dry_run=False):
                 "issues": _parse_issues(text),
             }
 
-    print(json.dumps({
-        "status": "round1_done",
-        "verdicts": {e: r["r1_verdict"] for e, r in engine_results.items()},
-    }), file=sys.stderr)
+    r1_verdicts = {e: r["r1_verdict"] for e, r in engine_results.items()}
+    known_verdicts = {v for v in r1_verdicts.values() if v != "UNKNOWN"}
+
+    print(json.dumps({"status": "round1_done", "verdicts": r1_verdicts}), file=sys.stderr)
+
+    # Early exit: if all engines agree in Round 1, skip Round 2
+    if len(known_verdicts) == 1 and len(known_verdicts) <= len(engine_results):
+        unanimous = known_verdicts.pop()
+        total_issues = sum(len(r.get("issues", [])) for r in engine_results.values())
+        # Skip Round 2 if unanimous SHIP with few issues, or unanimous MAJOR_RETHINK
+        if (unanimous == "SHIP" and total_issues <= 2) or unanimous == "MAJOR_RETHINK":
+            elapsed = round(time.time() - start, 1)
+            all_issues = []
+            for r in engine_results.values():
+                all_issues.extend(r.get("issues", []))
+
+            print(json.dumps({"status": "early_exit", "unanimous": unanimous}), file=sys.stderr)
+
+            for r in engine_results.values():
+                r["r2_text"] = ""
+                r["r2_verdict"] = r["r1_verdict"]
+                r["r2_success"] = True
+
+            return _build_result(engine_results, all_issues, elapsed, rp_context, "Unanimous in Round 1 — skipped Round 2")
 
     # ── Round 2: Debate (PARALLEL — each sees the other two) ──
     print(json.dumps({"status": "round2", "engines": engine_names}), file=sys.stderr)
@@ -422,10 +442,9 @@ def run_debate(context, engines=None, timeout=300, dry_run=False):
             # Merge R2 issues
             engine_results[name]["issues"].extend(_parse_issues(text))
 
-    # ── Round 3: Compute verdict ──
-    final_verdict, reason = _compute_verdict(engine_results)
+    # ── Round 3: Build result ──
+    _verdict, _reason = _compute_verdict(engine_results)  # computed inside _build_result
 
-    # Collect all unique issues
     all_issues = []
     seen = set()
     for r in engine_results.values():
@@ -437,8 +456,15 @@ def run_debate(context, engines=None, timeout=300, dry_run=False):
     all_issues.sort(key=lambda x: SEVERITY_WEIGHT.get(x.get("severity", "low"), 1), reverse=True)
 
     elapsed = round(time.time() - start, 1)
+    return _build_result(engine_results, all_issues, elapsed, rp_context)
 
-    # Save artifacts
+
+def _build_result(engine_results, all_issues, elapsed, rp_context, reason_override=None):
+    """Build the final debate result dict."""
+    final_verdict, reason = _compute_verdict(engine_results)
+    if reason_override:
+        reason = reason_override
+
     review_dir = TASKS_DIR / "reviews"
     review_dir.mkdir(parents=True, exist_ok=True)
     ts = now_iso().replace(":", "-").replace("T", "_")[:19]
@@ -449,13 +475,12 @@ def run_debate(context, engines=None, timeout=300, dry_run=False):
         "engines": {e: {
             "label": ENGINE_CONFIG[e]["label"],
             "r1_verdict": r["r1_verdict"],
-            "r2_verdict": r["r2_verdict"],
+            "r2_verdict": r.get("r2_verdict", r["r1_verdict"]),
             "issues": r["issues"][:5],
-            "changed_position": r["r1_verdict"] != r["r2_verdict"] and r["r2_verdict"] != "UNKNOWN",
+            "changed_position": r["r1_verdict"] != r.get("r2_verdict", r["r1_verdict"]) and r.get("r2_verdict") != "UNKNOWN",
         } for e, r in engine_results.items()},
         "all_issues": all_issues[:10],
         "rp_context_used": bool(rp_context),
-        "rp_context_chars": len(rp_context),
         "elapsed_seconds": elapsed,
     }
     report_path = review_dir / f"debate-{ts}.json"
@@ -469,8 +494,8 @@ def run_debate(context, engines=None, timeout=300, dry_run=False):
         "engines": {e: {
             "label": ENGINE_CONFIG[e]["label"],
             "r1": r["r1_verdict"],
-            "r2": r["r2_verdict"],
-            "changed": r["r1_verdict"] != r["r2_verdict"] and r["r2_verdict"] != "UNKNOWN",
+            "r2": r.get("r2_verdict", r["r1_verdict"]),
+            "changed": r["r1_verdict"] != r.get("r2_verdict", r["r1_verdict"]) and r.get("r2_verdict") != "UNKNOWN",
             "issues_found": len(r["issues"]),
         } for e, r in engine_results.items()},
         "total_issues": len(all_issues),
