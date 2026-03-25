@@ -179,7 +179,8 @@ def run_autopilot(goal, timeout=300, max_checkpoints=5, dry_run=False):
                 f"4. **Review**: 3 engines adversarial debate on final code\n"
                 f"5. **Commit**: If debate verdict = SHIP\n\n"
                 f"Max checkpoints: {max_checkpoints}\n"
-                f"Timeout per engine: {timeout}s"
+                f"Timeout per engine: {timeout}s\n"
+                f"Worktree: auto-created for code isolation"
             ),
         }
 
@@ -206,6 +207,13 @@ def run_autopilot(goal, timeout=300, max_checkpoints=5, dry_run=False):
         f"This plan was created by 3-engine consensus (Claude + Codex + Gemini).\n"
         f"Execute it step by step. After each major phase, report progress.\n\n"
         f"## Plan\n{plan_text}\n\n"
+        f"## Execution Rules\n"
+        f"## Worktree Isolation\n"
+        f"Create an isolated worktree before making changes:\n"
+        f"```bash\n"
+        f"cc-flow worktree create autopilot-{goal.split()[0][:10].lower()}\n"
+        f"cd $(git rev-parse --show-toplevel)/.claude/worktrees/autopilot-{goal.split()[0][:10].lower()}\n"
+        f"```\n\n"
         f"## Execution Rules\n"
         f"1. Follow the plan phases IN ORDER\n"
         f"2. After completing each phase, save progress:\n"
@@ -243,6 +251,8 @@ def run_autopilot(goal, timeout=300, max_checkpoints=5, dry_run=False):
         "1. `cc-flow verify` — ensure everything passes\n"
         "2. `cc-flow review` — 3-engine adversarial debate\n"
         "3. `cc-flow commit` — if review passes\n"
+        f"4. Merge worktree: `git checkout main && git merge autopilot-{goal.split()[0][:10].lower()}`\n"
+        f"5. Cleanup: `cc-flow worktree remove autopilot-{goal.split()[0][:10].lower()}`\n"
     )
 
     elapsed = round(time.time() - start, 1)

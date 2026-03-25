@@ -204,6 +204,25 @@ def _build_auto_exec_instruction(chain_name, chain_data, query, steps):
         "",
     ]
 
+    # Determine if worktree isolation is needed
+    has_mutate = any(p["phase"] == "mutate" for p in phases)
+    use_worktree = has_mutate and total_steps >= 3  # Only for non-trivial chains
+
+    if use_worktree:
+        wt_name = f"cc-{chain_name}-{query.split()[0][:10]}".lower().replace(" ", "-")
+        lines.append("## Worktree Isolation")
+        lines.append("This chain modifies code. Create an isolated worktree first:")
+        lines.append("```bash")
+        lines.append(f"cc-flow worktree create {wt_name}")
+        lines.append(f"cd $(git rev-parse --show-toplevel)/.claude/worktrees/{wt_name}")
+        lines.append("```")
+        lines.append("All code changes happen in the worktree. Merge back when done:")
+        lines.append("```bash")
+        lines.append(f"git checkout main && git merge {wt_name}")
+        lines.append(f"cc-flow worktree remove {wt_name}")
+        lines.append("```")
+        lines.append("")
+
     if is_parallel:
         lines.append(f"This chain has {total_steps} steps organized into {total_phases} phases.")
         lines.append(f"⚡ {parallel_count} steps run in PARALLEL (same phase, no code conflicts).")
@@ -304,7 +323,12 @@ def _build_auto_exec_instruction(chain_name, chain_data, query, steps):
                 lines.append("")
 
     lines.append("## On Chain Complete")
-    lines.append(f"All {total_steps} steps done ({total_phases} phases). The chain will auto-report completion.")
+    lines.append(f"All {total_steps} steps done ({total_phases} phases).")
+    if use_worktree:
+        lines.append("**Merge worktree back to main:**")
+        lines.append("```bash")
+        lines.append(f"git checkout main && git merge {wt_name} && cc-flow worktree remove {wt_name}")
+        lines.append("```")
     lines.append(f"Record learning: `cc-flow learn --task '{chain_name}: {query}' --outcome success`")
 
     return "\n".join(lines)
