@@ -133,7 +133,7 @@ def _run_codex(context, timeout=1000):
     )
     try:
         r = subprocess.run(
-            ["codex", "exec", "--approval-mode", "never", prompt],
+            ["codex", "exec", prompt],
             check=False, capture_output=True, text=True, timeout=timeout,
         )
         # Codex outputs to STDERR

@@ -131,7 +131,7 @@ def _exec_engine(engine, prompt, timeout=300):
     if engine == "claude":
         cmd = ["claude", "-p", "--output-format", "text", prompt]
     elif engine == "codex":
-        cmd = ["codex", "exec", "--approval-mode", "never", prompt]
+        cmd = ["codex", "exec", prompt]
     elif engine == "gemini":
         cmd_path = shutil.which("gemini") or shutil.which("gemini-cli")
         if not cmd_path:

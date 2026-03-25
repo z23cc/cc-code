@@ -197,7 +197,7 @@ def _exec_claude(prompt, timeout=1000):
 def _exec_codex(prompt, timeout=1000):
     try:
         r = subprocess.run(
-            ["codex", "exec", "--approval-mode", "never", prompt],
+            ["codex", "exec", prompt],
             check=False, capture_output=True, text=True, timeout=timeout,
         )
         raw = (r.stderr or "") + "\n" + (r.stdout or "")
