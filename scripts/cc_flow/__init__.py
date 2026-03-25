@@ -3,26 +3,29 @@
 Usage:
     cc-flow <command>          (after pip install -e .)
 
-Package structure (58 modules):
-  cc_flow/
+Architecture (facade modules → implementation modules):
+
+  Facades (unified import paths):
+    engines.py       → unified_review, adversarial_review, multi_review, pua_engine, review_setup
+    intelligence.py  → ai_router, failure_engine, auto_learn, plan_verify
+    routing.py       → route_learn, qrouter, learning
+
+  Execution pipeline:
+    go.py            → unified entry (AI route → execute)
+    skill_executor.py → run skills via claude -p subprocess
+    auto_ops.py      → subprocess worktree/verify/commit
+    autopilot.py     → 3-engine guided execution with checkpoints
+
+  Core:
     entry.py         → lazy-loaded command dispatch
     cli.py           → argparse CLI definitions
-    core.py          → shared constants, atomic writes, ID resolution
-    go.py            → unified entry (route → complexity → execute)
-    autopilot.py     → 3-engine guided execution with checkpoints
-    multi_plan.py    → 3-engine collaborative planning
-    multi_review.py  → multi-engine parallel review + consensus
-    adversarial_review.py → 3-engine adversarial debate
-    unified_review.py → auto-escalate review (debate > consensus > agent)
-    skill_chains.py  → chain definitions loader (chains.json)
-    skill_flow.py    → skill flow graph, context protocol
-    work.py          → task execution with worker isolation
-    auto.py          → OODA-loop autoimmune scanner
-    quality.py       → verify (lint + test), scan
+    core.py          → shared constants, atomic writes
+
+  External integrations:
     rp.py            → RepoPrompt dual-transport SDK
-    bridge.py        → Morph × RP × Supermemory bridge
-    repl.py          → interactive REPL
-    + 41 more modules (views, analytics, config, etc.)
+    bridge.py        → Morph × RP × Supermemory
+    multi_plan.py    → 3-engine collaborative planning
+    browser_qa.py    → visual QA with screenshots
 """
 
 VERSION = "5.26.0"
