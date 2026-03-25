@@ -88,6 +88,12 @@ def _get_command_summary():
         ("dashboard", "Project overview"),
         ("doctor", "Health check"),
         ("health", "Health score 0-100"),
+        # Bridge commands (Morph × RP × Supermemory)
+        ("deep-search", "Deep code understanding: Morph search → RP analysis (how does X work?)"),
+        ("smart-chat", "Memory-enhanced AI chat: Supermemory recall → RP chat (ask about codebase)"),
+        ("recall-review", "Recall past review findings from Supermemory"),
+        ("embed-structure", "Embed code structure for similarity search (Morph vectors)"),
+        ("bridge-status", "Check Morph × RP × Supermemory connection status"),
     ]
     return "\n".join(f"- {name}: {desc}" for name, desc in commands)
 
