@@ -130,23 +130,22 @@ def _run_codex(context, timeout=1000):
         "End with: Verdict: SHIP or NEEDS_WORK or MAJOR_RETHINK."
     )
     try:
-        # codex review auto-reads git diff, just pass custom instructions
         r = subprocess.run(
             ["codex", "review", custom_prompt],
             check=False, capture_output=True, text=True, timeout=timeout,
         )
-        output = r.stdout
-        # Filter MCP/session header noise
+        # Codex outputs to STDERR (not stdout)
+        raw = (r.stderr or "") + "\n" + (r.stdout or "")
         lines = [
-            line for line in output.split("\n")
+            line for line in raw.split("\n")
             if not any(skip in line for skip in [
                 "mcp:", "session id:", "--------", "workdir:", "model:",
                 "provider:", "approval:", "sandbox:", "reasoning", "OpenAI Codex",
-                "tokens used",
+                "tokens used", "mcp startup:",
             ])
         ]
         clean_output = "\n".join(lines).strip()
-        return {"success": True, "output": clean_output, "stderr": r.stderr, "exit_code": r.returncode}
+        return {"success": True, "output": clean_output, "exit_code": r.returncode}
     except subprocess.TimeoutExpired:
         return {"success": False, "error": f"Codex timed out after {timeout}s"}
     except OSError as e:

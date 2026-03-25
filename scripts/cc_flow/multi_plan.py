@@ -194,13 +194,14 @@ def _exec_claude(prompt, timeout=300):
         return {"success": False, "error": str(e)}
 
 
-def _exec_codex(prompt, timeout=600):
+def _exec_codex(prompt, timeout=1000):
     try:
         r = subprocess.run(
             ["codex", "exec", "--approval-mode", "never", prompt],
             check=False, capture_output=True, text=True, timeout=timeout,
         )
-        return {"success": True, "output": _filter_noise(r.stdout)}
+        raw = (r.stderr or "") + "\n" + (r.stdout or "")
+        return {"success": True, "output": _filter_noise(raw)}
     except subprocess.TimeoutExpired:
         return {"success": False, "error": f"Codex timed out ({timeout}s)"}
     except OSError as e:

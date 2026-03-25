@@ -145,9 +145,14 @@ def _exec(engine, prompt, timeout=300):
 
     try:
         r = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=timeout)
+        # Codex outputs to stderr, others to stdout
+        raw = (r.stderr or "") + "\n" + (r.stdout or "") if engine == "codex" else r.stdout
         output = "\n".join(
-            line for line in r.stdout.split("\n")
-            if not any(skip in line for skip in ["mcp:", "session id:", "--------", "workdir:", "model:", "provider:", "OpenAI Codex", "tokens used"])
+            line for line in raw.split("\n")
+            if not any(skip in line for skip in [
+                "mcp:", "session id:", "--------", "workdir:", "model:",
+                "provider:", "OpenAI Codex", "tokens used", "mcp startup:",
+            ])
         ).strip()
         return {"success": True, "output": output}
     except subprocess.TimeoutExpired:

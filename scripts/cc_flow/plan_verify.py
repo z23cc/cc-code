@@ -64,7 +64,8 @@ def _exec_engine(engine, prompt, timeout=300):
 
     try:
         r = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=timeout)
-        return r.stdout.strip()
+        raw = (r.stderr or "") + "\n" + (r.stdout or "") if engine == "codex" else r.stdout
+        return raw.strip()
     except (subprocess.TimeoutExpired, OSError):
         return None
 

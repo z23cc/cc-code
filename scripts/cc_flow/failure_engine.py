@@ -142,7 +142,9 @@ def _exec_engine(engine, prompt, timeout=120):
 
     try:
         r = subprocess.run(cmd, check=False, capture_output=True, text=True, timeout=timeout)
-        output = r.stdout.strip()
+        # Codex outputs to stderr
+        raw = (r.stderr or "") + "\n" + (r.stdout or "") if engine == "codex" else r.stdout
+        output = raw.strip()
         # Try to parse JSON from output
         import re
         json_match = re.search(r'\{[^{}]*"recommended_method"[^{}]*\}', output)
