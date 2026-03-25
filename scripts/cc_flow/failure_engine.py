@@ -241,8 +241,16 @@ def diagnose_and_switch(goal, timeout=300):
     # Update state
     state["current_methodology"] = winner
     state["methodology_index"] = METHODOLOGY_CHAIN.index(winner) if winner in METHODOLOGY_CHAIN else 0
-    state["count"] = 0  # reset on methodology switch
+    state["count"] = 0
     atomic_write(FAILURE_FILE, json.dumps(state, indent=2) + "\n")
+
+    # Dashboard: emit methodology switch
+    try:
+        from cc_flow.dashboard_events import emit_failure_switch
+        emit_failure_switch(state.get("count", 0), METHODOLOGIES[winner]["name"],
+                            " | ".join(diagnoses) if diagnoses else "")
+    except ImportError:
+        pass
 
     return {
         "methodology": winner,

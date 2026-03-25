@@ -256,11 +256,16 @@ def run_pua(content, context="", mode="code", max_rounds=3, timeout=300, dry_run
             pass_streak += 1
             round_data["status"] = "CLEAN"
             rounds.append(round_data)
+            try:
+                from cc_flow.dashboard_events import emit_pua_round
+                emit_pua_round(round_num, author, challengers, 0, "CLEAN")
+            except ImportError:
+                pass
             if pass_streak >= 2:
-                break  # 2 consecutive clean rounds = done
+                break
             continue
 
-        pass_streak = 0  # reset on any challenge
+        pass_streak = 0
 
         # Improvement phase: author must address challenges
         c_list = list(challenges.items())
@@ -282,6 +287,11 @@ def run_pua(content, context="", mode="code", max_rounds=3, timeout=300, dry_run
 
         round_data["improvement"] = improved[:2000]
         round_data["status"] = "IMPROVED"
+        try:
+            from cc_flow.dashboard_events import emit_pua_round
+            emit_pua_round(round_num, author, challengers, total_issues, "IMPROVED")
+        except ImportError:
+            pass
         rounds.append(round_data)
 
     # Check if we need mediation

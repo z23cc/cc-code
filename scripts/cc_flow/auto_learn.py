@@ -22,6 +22,11 @@ def on_chain_complete(chain_name, goal, steps_completed, total_steps, verdict="s
     )
     _record_chain_metrics(chain_name, steps_completed, total_steps, verdict)
     _feed_q_learning(goal, f"/cc-go chain:{chain_name}", verdict)
+    try:
+        from cc_flow.dashboard_events import emit_learn_update
+        emit_learn_update("chain_complete", f"{chain_name}: {verdict} ({steps_completed}/{total_steps})")
+    except ImportError:
+        pass
 
 
 def on_review_complete(verdict, engines_used, issues_found, pua_escalated=False):
@@ -35,6 +40,11 @@ def on_review_complete(verdict, engines_used, issues_found, pua_escalated=False)
     )
     if issues_found > 0:
         _push_to_supermemory(f"Review found {issues_found} issues (verdict: {verdict}). Engines: {engines_str}")
+    try:
+        from cc_flow.dashboard_events import emit_learn_update
+        emit_learn_update("review_complete", f"{verdict} by {engines_str}, {issues_found} issues{pua_str}")
+    except ImportError:
+        pass
 
 
 def on_research_complete(query, result_summary):

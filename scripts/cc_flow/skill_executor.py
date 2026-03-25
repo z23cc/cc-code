@@ -158,6 +158,11 @@ def execute_chain_auto(chain_name, chain_data, goal, dry_run=False, timeout=600)
         phase_steps = phase["steps"]
 
         print(json.dumps({"auto_exec": "phase", "phase": pi + 1, "type": phase_type, "steps": len(phase_steps)}), file=sys.stderr)
+        try:
+            from cc_flow.dashboard_events import emit_pipeline_stage
+            emit_pipeline_stage(phase_type, "started", f"Phase {pi+1}: {len(phase_steps)} steps")
+        except ImportError:
+            pass
 
         if phase_type == "verify":
             # Use unified review (3-engine subprocess)

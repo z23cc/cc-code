@@ -32,7 +32,13 @@ def auto_worktree_create(name):
                 ["git", "rev-parse", "--show-toplevel"],
                 check=False, capture_output=True, text=True,
             ).stdout.strip()
-            return os.path.join(repo_root, ".claude", "worktrees", name)
+            path = os.path.join(repo_root, ".claude", "worktrees", name)
+            try:
+                from cc_flow.dashboard_events import emit_worktree_event
+                emit_worktree_event("create", name, path)
+            except ImportError:
+                pass
+            return path
         return None
     except (subprocess.TimeoutExpired, OSError):
         return None

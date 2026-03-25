@@ -471,6 +471,15 @@ def run_debate(context, engines=None, timeout=300, dry_run=False):
 def _build_result(engine_results, all_issues, elapsed, rp_context, reason_override=None):
     """Build the final debate result dict."""
     final_verdict, reason = _compute_verdict(engine_results)
+
+    # Dashboard: emit final vote
+    try:
+        from cc_flow.dashboard_events import emit_debate_vote
+        emit_debate_vote(final_verdict, reason_override or reason,
+                         sum(1 for r in engine_results.values() if r.get("r2_verdict", r["r1_verdict"]) == final_verdict),
+                         len(engine_results))
+    except ImportError:
+        pass
     if reason_override:
         reason = reason_override
 
